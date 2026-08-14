@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Sunrise Dental Clinic - Admin Dashboard</h1>
+        <div class="user-info" id="user-info"></div>
+    </div>
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
+        <div class="card">
+            <h2>Welcome, Admin</h2>
+            <p>You have full system access. Use the navigation above to manage staff, view reports, and oversee operations.</p>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px;">
+            <div class="card" style="text-align:center;">
+                <h3>Total Appointments</h3>
+                <p style="font-size:2rem; font-weight:bold; color:var(--primary);" id="stat-appointments">-</p>
+            </div>
+            <div class="card" style="text-align:center;">
+                <h3>Total Patients</h3>
+                <p style="font-size:2rem; font-weight:bold; color:var(--success);" id="stat-patients">-</p>
+            </div>
+            <div class="card" style="text-align:center;">
+                <h3>Total Bills</h3>
+                <p style="font-size:2rem; font-weight:bold; color:var(--warning);" id="stat-bills">-</p>
+            </div>
+            <div class="card" style="text-align:center;">
+                <h3>Revenue (Today)</h3>
+                <p style="font-size:2rem; font-weight:bold; color:var(--danger);" id="stat-revenue">-</p>
+            </div>
+        </div>
+    </div>
+    <div id="toast-container"></div>
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        async function loadStats() {
+            try {
+                const appointments = await apiGet('/appointments');
+                document.getElementById('stat-appointments').textContent = Array.isArray(appointments) ? appointments.length : '-';
+
+                const patients = await apiGet('/patients');
+                document.getElementById('stat-patients').textContent = Array.isArray(patients) ? patients.length : '-';
+
+                const bills = await apiGet('/bills');
+                document.getElementById('stat-bills').textContent = Array.isArray(bills) ? bills.length : '-';
+
+                const revenue = await apiGet('/reports/revenue/daily');
+                document.getElementById('stat-revenue').textContent = revenue.revenue ? 'LKR ' + revenue.revenue.toFixed(2) : '-';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        loadStats();
+    </script>
+</body>
+</html>

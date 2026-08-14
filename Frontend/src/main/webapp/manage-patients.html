@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Patients - Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Manage Patients</h1>
+    </div>
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
+        <div id="toast-container"></div>
+        <div class="card">
+            <h2>Patient List</h2>
+            <div style="margin-bottom:16px;">
+                <input type="text" id="searchNic" placeholder="Search by NIC" style="padding:8px; width:300px; border:1px solid var(--gray-300); border-radius:var(--radius);">
+                <button class="btn btn-primary" onclick="searchPatient()">Search</button>
+                <a href="/Frontend/patients?action=add" class="btn btn-success">Add Patient</a>
+            </div>
+            <table class="table" id="patientTable">
+                <thead><tr><th>ID</th><th>Name</th><th>Contact</th><th>NIC</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        async function loadPatients() {
+            try {
+                const patients = await apiGet('/patients');
+                const tbody = document.querySelector('#patientTable tbody');
+                tbody.innerHTML = '';
+                patients.forEach(p => {
+                    tbody.innerHTML += '<tr><td>' + p.patient_id + '</td><td>' + p.name + '</td><td>' + p.contact + '</td><td>' + p.nic + '</td>' +
+                        '<td><a href="/Frontend/patients?action=edit&patient_id=' + p.patient_id + '" class="btn btn-warning" style="padding:6px 12px; font-size:0.8rem;">Edit</a></td></tr>';
+                });
+            } catch (e) { showToast('Failed to load patients', 'error'); }
+        }
+        loadPatients();
+
+        async function searchPatient() {
+            const nic = document.getElementById('searchNic').value.trim();
+            if (!nic) return;
+            try {
+                const p = await apiGet('/patients/nic/' + encodeURIComponent(nic));
+                const tbody = document.querySelector('#patientTable tbody');
+                tbody.innerHTML = '<tr><td>' + p.patient_id + '</td><td>' + p.name + '</td><td>' + p.contact + '</td><td>' + p.nic + '</td>' +
+                    '<td><a href="/Frontend/patients?action=edit&patient_id=' + p.patient_id + '" class="btn btn-warning" style="padding:6px 12px; font-size:0.8rem;">Edit</a></td></tr>';
+            } catch (e) { showToast('Patient not found', 'error'); }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dentist Schedule - Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Dentist Schedule</h1>
+    </div>
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
+        <div class="card">
+            <h2>Daily Schedule</h2>
+            <div class="form-group">
+                <label>Select Dentist</label>
+                <select id="dentistSelect" onchange="loadSchedule()">
+                    <option value="">Select Dentist</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Select Date</label>
+                <input type="date" id="scheduleDate" value="" onchange="loadSchedule()">
+            </div>
+            <table class="table" id="scheduleTable">
+                <thead><tr><th>Time</th><th>Patient</th><th>Treatment</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        async function loadDentists() {
+            try {
+                const dentists = await apiGet('/dentists');
+                const select = document.getElementById('dentistSelect');
+                dentists.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.dentist_id;
+                    opt.textContent = d.name;
+                    select.appendChild(opt);
+                });
+            } catch (e) { showToast('Failed to load dentists', 'error'); }
+        }
+        loadDentists();
+
+        async function loadSchedule() {
+            const dentistId = document.getElementById('dentistSelect').value;
+            const date = document.getElementById('scheduleDate').value;
+            if (!dentistId || !date) return;
+            try {
+                const appointments = await apiGet('/appointments');
+                const filtered = appointments.filter(a => a.dentist_id == dentistId && a.appointment_date == date);
+                const tbody = document.querySelector('#scheduleTable tbody');
+                tbody.innerHTML = '';
+                filtered.forEach(a => {
+                    tbody.innerHTML += '<tr><td>' + a.appointment_time + '</td><td>Patient ' + a.patient_id + '</td><td>' + a.treatment_type + '</td><td>' + getStatusBadge(a.status) + '</td></tr>';
+                });
+            } catch (e) { showToast('Failed to load schedule', 'error'); }
+        }
+    </script>
+</body>
+</html>

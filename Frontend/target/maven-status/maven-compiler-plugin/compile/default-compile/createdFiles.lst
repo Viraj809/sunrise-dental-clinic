@@ -1,0 +1,11 @@
+servlets\DashboardServlet.class
+servlets\BillServlet.class
+servlets\AppointmentServlet.class
+servlets\LoginServlet.class
+servlets\LogoutServlet.class
+servlets\PatientServlet.class
+servlets\HelpServlet.class
+servlets\ReportServlet.class
+servlets\StaffServlet.class
+servlets\BaseServlet.class
+servlets\DentistServlet.class

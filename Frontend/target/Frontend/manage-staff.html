@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Staff - Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Manage Staff</h1>
+    </div>
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
+        <div id="toast-container"></div>
+        <div class="card">
+            <h2>Staff List</h2>
+            <table class="table" id="staffTable">
+                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Contact</th><th>Role</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        async function loadStaff() {
+            try {
+                const staff = await apiGet('/Backend/resources/staff'); // fallback if direct not available
+                // Since no staff REST endpoint in backend yet, show placeholder
+                const tbody = document.querySelector('#staffTable tbody');
+                tbody.innerHTML = '<tr><td>1</td><td>System Admin</td><td>admin@sunrisedental.com</td><td>0770000001</td><td>ADMIN</td><td>Active</td></tr>' +
+                    '<tr><td>2</td><td>Receptionist One</td><td>reception@sunrisedental.com</td><td>0770000002</td><td>RECEPTIONIST</td><td>Active</td></tr>' +
+                    '<tr><td>3</td><td>Dr. Perera</td><td>perera@sunrisedental.com</td><td>0770000003</td><td>DENTIST</td><td>Active</td></tr>';
+            } catch (e) { showToast('Failed to load staff', 'error'); }
+        }
+        loadStaff();
+    </script>
+</body>
+</html>

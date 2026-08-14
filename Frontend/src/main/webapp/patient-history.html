@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient History - Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Patient History</h1>
+    </div>
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
+        <div id="toast-container"></div>
+        <div class="card">
+            <h2>Search Patient History</h2>
+            <div style="display:flex; gap:10px; align-items:flex-end;">
+                <div class="form-group" style="flex:1; margin-bottom:0;">
+                    <label>Patient ID or NIC</label>
+                    <input type="text" id="searchInput" placeholder="Enter Patient ID or NIC">
+                </div>
+                <button class="btn btn-primary" onclick="searchHistory()">Search</button>
+            </div>
+        </div>
+        <div id="historyResult" class="card" style="display:none;">
+            <h2 id="patientName"></h2>
+            <table class="table">
+                <thead><tr><th>Date</th><th>Treatment</th><th>Dentist</th><th>Status</th></tr></thead>
+                <tbody id="historyTable"></tbody>
+            </table>
+        </div>
+    </div>
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        async function searchHistory() {
+            const input = document.getElementById('searchInput').value.trim();
+            if (!input) return;
+            let patient = null;
+            try {
+                if (/^\d+$/.test(input)) {
+                    patient = await apiGet('/patients/' + input);
+                } else {
+                    patient = await apiGet('/patients/nic/' + encodeURIComponent(input));
+                }
+                document.getElementById('patientName').textContent = 'History for: ' + patient.name;
+                const appointments = await apiGet('/appointments');
+                const patientAppts = appointments.filter(a => a.patient_id == patient.patient_id);
+                const tbody = document.getElementById('historyTable');
+                tbody.innerHTML = '';
+                patientAppts.forEach(a => {
+                    tbody.innerHTML += '<tr><td>' + a.appointment_date + '</td><td>' + a.treatment_type + '</td><td>Dentist ' + a.dentist_id + '</td><td>' + getStatusBadge(a.status) + '</td></tr>';
+                });
+                document.getElementById('historyResult').style.display = 'block';
+            } catch (e) { showToast('Patient not found', 'error'); }
+        }
+    </script>
+</body>
+</html>

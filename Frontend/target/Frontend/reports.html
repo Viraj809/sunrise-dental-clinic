@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Reports Dashboard</h1>
+    </div>
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
+        <div id="toast-container"></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            <div class="card">
+                <h3>Daily Appointments</h3>
+                <canvas id="dailyChart"></canvas>
+            </div>
+            <div class="card">
+                <h3>Revenue (Today)</h3>
+                <div id="revenueValue" style="font-size:2rem; font-weight:bold; text-align:center; padding:20px;">Loading...</div>
+            </div>
+            <div class="card">
+                <h3>Treatment Popularity</h3>
+                <canvas id="treatmentChart"></canvas>
+            </div>
+            <div class="card">
+                <h3>Dentist Workload (30 days)</h3>
+                <canvas id="dentistChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        async function loadReports() {
+            try {
+                const daily = await apiGet('/reports/daily/' + new Date().toISOString().split('T')[0]);
+                document.getElementById('dailyChart').replaceWith(createBarChart('dailyChart', 'Daily Appointments', ['Count'], [daily.total || 0]));
+
+                const revenue = await apiGet('/reports/revenue/daily');
+                document.getElementById('revenueValue').textContent = 'LKR ' + (revenue.revenue || 0).toFixed(2);
+
+                const treatment = await apiGet('/reports/treatment-popularity');
+                const tLabels = Object.keys(treatment);
+                const tData = Object.values(treatment);
+                document.getElementById('treatmentChart').replaceWith(createBarChart('treatmentChart', 'Treatment Popularity', tLabels, tData));
+
+                const dentist = await apiGet('/reports/dentist-workload');
+                const dLabels = Object.keys(dentist);
+                const dData = Object.values(dentist);
+                document.getElementById('dentistChart').replaceWith(createBarChart('dentistChart', 'Dentist Workload', dLabels, dData));
+            } catch (e) { console.error(e); }
+        }
+
+        function createBarChart(canvasId, label, labels, data) {
+            const canvas = document.createElement('canvas');
+            canvas.id = canvasId;
+            document.getElementById(canvasId).parentNode.replaceChild(canvas, document.getElementById(canvasId));
+            return new Chart(canvas, {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: label, data: data, backgroundColor: '#2563eb' }] },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+        loadReports();
+    </script>
+</body>
+</html>

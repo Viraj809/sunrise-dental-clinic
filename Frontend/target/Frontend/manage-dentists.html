@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Dentists - Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Manage Dentists</h1>
+    </div>
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
+        <div id="toast-container"></div>
+        <div class="card">
+            <h2>Dentist List</h2>
+            <table class="table" id="dentistTable">
+                <thead><tr><th>ID</th><th>Name</th><th>Specialization</th><th>Contact</th><th>Email</th><th>Available Days</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        async function loadDentists() {
+            try {
+                const dentists = await apiGet('/dentists');
+                const tbody = document.querySelector('#dentistTable tbody');
+                tbody.innerHTML = '';
+                dentists.forEach(d => {
+                    tbody.innerHTML += '<tr><td>' + d.dentist_id + '</td><td>' + d.name + '</td><td>' + d.specialization + '</td><td>' + d.contact + '</td><td>' + d.email + '</td><td>' + d.available_days + '</td></tr>';
+                });
+            } catch (e) { showToast('Failed to load dentists', 'error'); }
+        }
+        loadDentists();
+    </script>
+</body>
+</html>

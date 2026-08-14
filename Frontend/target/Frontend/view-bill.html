@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Bill - Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Bill Receipt</h1>
+    </div>
+    <div class="container" style="max-width:600px;">
+        <div class="card" id="billContent">
+            <h2 style="text-align:center;">Sunrise Dental Clinic</h2>
+            <p style="text-align:center;">123 Dental Road, Colombo 07</p>
+            <hr style="margin:16px 0;">
+            <div id="billDetails"></div>
+            <hr style="margin:16px 0;">
+            <p style="text-align:center;">Thank you for choosing Sunrise Dental Clinic!</p>
+        </div>
+        <div class="no-print" style="margin-top:20px;">
+            <button class="btn btn-primary" onclick="window.print()">Print</button>
+            <a href="/Frontend/api/bills" class="btn" style="background:var(--gray-200); margin-left:10px;">Back to Billing</a>
+        </div>
+    </div>
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const billId = urlParams.get('bill_id');
+        async function loadBill() {
+            if (!billId) return;
+            try {
+                const b = await apiGet('/bills/' + billId);
+                document.getElementById('billDetails').innerHTML =
+                    '<p><strong>Bill ID:</strong> #' + b.bill_id + '</p>' +
+                    '<p><strong>Appointment ID:</strong> ' + b.appointment_id + '</p>' +
+                    '<p><strong>Consultation Fee:</strong> LKR ' + b.consultation_fee.toFixed(2) + '</p>' +
+                    '<p><strong>Treatment Fee:</strong> LKR ' + b.treatment_fee.toFixed(2) + '</p>' +
+                    '<p><strong>Discount:</strong> LKR ' + b.discount.toFixed(2) + '</p>' +
+                    '<p><strong>Tax:</strong> LKR ' + b.tax.toFixed(2) + '</p>' +
+                    '<p><strong>Total Amount:</strong> LKR ' + b.total_amount.toFixed(2) + '</p>' +
+                    '<p><strong>Payment Method:</strong> ' + b.payment_method + '</p>' +
+                    '<p><strong>Payment Status:</strong> ' + b.payment_status + '</p>' +
+                    '<p><strong>Issued At:</strong> ' + b.issued_at + '</p>';
+            } catch (e) { showToast('Bill not found', 'error'); }
+        }
+        loadBill();
+    </script>
+</body>
+</html>

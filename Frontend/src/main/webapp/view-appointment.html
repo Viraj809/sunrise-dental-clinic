@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments - Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Appointment Management</h1>
+    </div>
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
+        <div id="toast-container"></div>
+        <div class="card">
+            <h2>Search Appointment</h2>
+            <form id="searchForm" style="display:flex; gap:10px; align-items:flex-end;">
+                <div class="form-group" style="flex:1; margin-bottom:0;">
+                    <label>Appointment Number</label>
+                    <input type="text" id="appointmentNo" placeholder="SDC-2026-0001">
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+        <div id="result" class="card" style="display:none;">
+            <h2>Appointment Details</h2>
+            <div id="appointmentDetails"></div>
+        </div>
+    </div>
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const no = document.getElementById('appointmentNo').value.trim();
+            if (!no) return;
+            try {
+                const data = await apiGet('/appointments/no/' + encodeURIComponent(no));
+                showAppointment(data);
+            } catch (e) {
+                showToast('Appointment not found', 'error');
+            }
+        });
+
+        async function showAppointment(a) {
+            const div = document.getElementById('appointmentDetails');
+            div.innerHTML = '<p><strong>Appointment No:</strong> ' + a.appointmentNo + '</p>' +
+                '<p><strong>Patient ID:</strong> ' + a.patientId + '</p>' +
+                '<p><strong>Dentist ID:</strong> ' + a.dentistId + '</p>' +
+                '<p><strong>Treatment:</strong> ' + a.treatmentType + '</p>' +
+                '<p><strong>Date:</strong> ' + a.appointmentDate + '</p>' +
+                '<p><strong>Time:</strong> ' + a.appointmentTime + '</p>' +
+                '<p><strong>Status:</strong> ' + getStatusBadge(a.status) + '</p>' +
+                '<p><strong>Notes:</strong> ' + (a.notes || '-') + '</p>';
+            document.getElementById('result').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

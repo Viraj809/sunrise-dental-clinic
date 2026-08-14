@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Appointment - Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Register New Appointment</h1>
+    </div>
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container" style="max-width:700px;">
+        <div id="toast-container"></div>
+        <div id="error-msg" class="alert alert-error" style="display:none;"></div>
+        <div class="card">
+            <h2>New Appointment</h2>
+            <form id="appointmentForm">
+                <div class="form-group">
+                    <label>Patient Name *</label>
+                    <input type="text" id="patientName" required>
+                </div>
+                <div class="form-group">
+                    <label>Contact Number (10 digits, starts with 0) *</label>
+                    <input type="text" id="contact" required placeholder="0712345678" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label>Treatment Type *</label>
+                    <select id="treatmentType" required>
+                        <option value="">Select Treatment</option>
+                        <option value="CHKUP">Dental Checkup</option>
+                        <option value="EXTRACT">Tooth Extraction</option>
+                        <option value="ROOTCANAL">Root Canal Treatment</option>
+                        <option value="FILLING">Dental Filling</option>
+                        <option value="CLEANING">Teeth Cleaning</option>
+                        <option value="WHITENING">Teeth Whitening</option>
+                        <option value="CROWN">Dental Crown</option>
+                        <option value="BRACES">Braces (Orthodontics)</option>
+                        <option value="IMPLANT">Dental Implant</option>
+                        <option value="WISDOM">Wisdom Tooth Removal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dentist *</label>
+                    <select id="dentistId" required>
+                        <option value="">Select Dentist</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Appointment Date *</label>
+                    <input type="date" id="appointmentDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Appointment Time (08:00 - 18:00) *</label>
+                    <input type="time" id="appointmentTime" required min="08:00" max="18:00">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="notes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Register Appointment</button>
+                <a href="/Frontend/dashboard" class="btn" style="background:var(--gray-200); margin-left:10px;">Cancel</a>
+            </form>
+        </div>
+    </div>
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        async function loadDentists() {
+            try {
+                const dentists = await apiGet('/dentists');
+                const select = document.getElementById('dentistId');
+                dentists.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.dentist_id;
+                    opt.textContent = d.name + ' - ' + d.specialization;
+                    select.appendChild(opt);
+                });
+            } catch (e) { console.error(e); }
+        }
+        loadDentists();
+
+        document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const errorDiv = document.getElementById('error-msg');
+            errorDiv.style.display = 'none';
+
+            const data = {
+                patient_id: 1,
+                dentist_id: parseInt(document.getElementById('dentistId').value),
+                treatment_type: document.getElementById('treatmentType').value,
+                appointment_date: document.getElementById('appointmentDate').value,
+                appointment_time: document.getElementById('appointmentTime').value + ':00',
+                notes: document.getElementById('contact').value,
+                created_by: parseInt(localStorage.getItem('staffId') || '1')
+            };
+
+            try {
+                const res = await apiPost('/appointments', data);
+                if (res.appointmentNo) {
+                    showToast('Appointment registered successfully: ' + res.appointmentNo);
+                    setTimeout(() => window.location.href = '/Frontend/appointments?action=search&appointment_no=' + res.appointmentNo, 1000);
+                } else if (res.error) {
+                    errorDiv.textContent = res.error;
+                    errorDiv.style.display = 'block';
+                }
+            } catch (e) {
+                errorDiv.textContent = 'Failed to create appointment';
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

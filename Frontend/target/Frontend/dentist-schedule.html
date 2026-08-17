@@ -53,10 +53,13 @@
             try {
                 const appointments = await apiGet('/appointments');
                 const filtered = appointments.filter(a => a.dentist_id == dentistId && a.appointment_date == date);
+                const patients = await apiGet('/patients');
                 const tbody = document.querySelector('#scheduleTable tbody');
                 tbody.innerHTML = '';
                 filtered.forEach(a => {
-                    tbody.innerHTML += '<tr><td>' + a.appointment_time + '</td><td>Patient ' + a.patient_id + '</td><td>' + a.treatment_type + '</td><td>' + getStatusBadge(a.status) + '</td></tr>';
+                    const patient = patients.find(p => p.patient_id === a.patient_id);
+                    const patientName = patient ? patient.name : 'Patient #' + a.patient_id;
+                    tbody.innerHTML += '<tr><td>' + a.appointment_time + '</td><td>' + patientName + '</td><td>' + a.treatment_type + '</td><td>' + getStatusBadge(a.status) + '</td></tr>';
                 });
             } catch (e) { showToast('Failed to load schedule', 'error'); }
         }

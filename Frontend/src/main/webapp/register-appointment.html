@@ -3,112 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Appointment - Sunrise Dental Clinic</title>
+    <title>Register Appointment – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Register New Appointment</h1>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container" style="max-width:760px;">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div><h2>Register New Appointment</h2><p>Fill in patient and appointment details below</p></div>
+        <a href="/Frontend/view-appointment.html" class="btn btn-ghost btn-sm">← Back to Appointments</a>
     </div>
-    <nav class="nav" id="main-nav"></nav>
-    <div class="container" style="max-width:700px;">
-        <div id="toast-container"></div>
+
+    <!-- Step 1: Patient -->
+    <div class="card">
+        <h2>👤 Step 1: Patient</h2>
+        <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;">
+            <div class="form-group" style="flex:1;margin-bottom:0;">
+                <label>Search by NIC</label>
+                <input type="text" id="searchNic" placeholder="e.g. 901234567V" onkeydown="if(event.key==='Enter'){searchPatient();}">
+            </div>
+            <button class="btn btn-primary" onclick="searchPatient()">🔍 Search</button>
+        </div>
+        <div id="patientResult" class="alert" style="display:none;"></div>
+
+        <div id="newPatientFields" style="display:none;">
+            <div style="background:var(--info-light);border-left:4px solid var(--info);padding:12px 16px;border-radius:var(--radius);margin-bottom:16px;font-size:0.875rem;color:#164e63;">
+                ℹ️ Patient not found. Please enter new patient details below.
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Full Name *</label><input type="text" id="newPatientName" placeholder="Patient full name" required></div>
+                <div class="form-group"><label>NIC *</label><input type="text" id="newPatientNic" placeholder="e.g. 901234567V" required></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Date of Birth</label><input type="date" id="newPatientDob"></div>
+                <div class="form-group"><label>Gender</label>
+                    <select id="newPatientGender"><option>Male</option><option>Female</option><option>Other</option></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Contact (10 digits) *</label><input type="text" id="newPatientContact" placeholder="07XXXXXXXX" maxlength="10" required></div>
+                <div class="form-group"><label>Email</label><input type="email" id="newPatientEmail" placeholder="patient@email.com"></div>
+            </div>
+            <div class="form-group"><label>Address</label><input type="text" id="newPatientAddress" placeholder="Home address"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Blood Group</label><input type="text" id="newPatientBlood" placeholder="e.g. B+"></div>
+                <div class="form-group"><label>Known Allergies</label><input type="text" id="newPatientAllergies" placeholder="e.g. Penicillin"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Appointment Details -->
+    <div class="card">
+        <h2>📋 Step 2: Appointment Details</h2>
         <div id="error-msg" class="alert alert-error" style="display:none;"></div>
-        <div class="card">
-            <h2>New Appointment</h2>
-            <form id="appointmentForm">
-                <div class="form-group">
-                    <label>Patient Name *</label>
-                    <input type="text" id="patientName" required>
-                </div>
-                <div class="form-group">
-                    <label>Contact Number (10 digits, starts with 0) *</label>
-                    <input type="text" id="contact" required placeholder="0712345678" maxlength="10">
-                </div>
+        <form id="appointmentForm">
+            <div class="form-row">
                 <div class="form-group">
                     <label>Treatment Type *</label>
-                    <select id="treatmentType" required>
-                        <option value="">Select Treatment</option>
-                        <option value="CHKUP">Dental Checkup</option>
-                        <option value="EXTRACT">Tooth Extraction</option>
-                        <option value="ROOTCANAL">Root Canal Treatment</option>
-                        <option value="FILLING">Dental Filling</option>
-                        <option value="CLEANING">Teeth Cleaning</option>
-                        <option value="WHITENING">Teeth Whitening</option>
-                        <option value="CROWN">Dental Crown</option>
-                        <option value="BRACES">Braces (Orthodontics)</option>
-                        <option value="IMPLANT">Dental Implant</option>
-                        <option value="WISDOM">Wisdom Tooth Removal</option>
+                    <select id="treatmentType" required onchange="previewPrice()">
+                        <option value="">— Select Treatment —</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Dentist *</label>
                     <select id="dentistId" required>
-                        <option value="">Select Dentist</option>
+                        <option value="">— Select Dentist —</option>
                     </select>
                 </div>
+            </div>
+
+            <div id="pricePreview" style="display:none;margin-bottom:16px;" class="alert alert-info"></div>
+
+            <div class="form-row">
                 <div class="form-group">
                     <label>Appointment Date *</label>
                     <input type="date" id="appointmentDate" required>
                 </div>
                 <div class="form-group">
-                    <label>Appointment Time (08:00 - 18:00) *</label>
+                    <label>Appointment Time (08:00–18:00) *</label>
                     <input type="time" id="appointmentTime" required min="08:00" max="18:00">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Contact Number *</label>
+                    <input type="text" id="contact" required placeholder="07XXXXXXXX" maxlength="10">
                 </div>
                 <div class="form-group">
                     <label>Notes</label>
-                    <textarea id="notes" rows="3"></textarea>
+                    <input type="text" id="notes" placeholder="Optional notes">
                 </div>
-                <button type="submit" class="btn btn-primary">Register Appointment</button>
-                <a href="/Frontend/dashboard" class="btn" style="background:var(--gray-200); margin-left:10px;">Cancel</a>
-            </form>
-        </div>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:8px;">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">✅ Register Appointment</button>
+                <a href="/Frontend/view-appointment.html" class="btn btn-ghost btn-lg">Cancel</a>
+            </div>
+        </form>
     </div>
-    <script src="/Frontend/js/app.js"></script>
-    <script>
-        async function loadDentists() {
-            try {
-                const dentists = await apiGet('/dentists');
-                const select = document.getElementById('dentistId');
-                dentists.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.dentist_id;
-                    opt.textContent = d.name + ' - ' + d.specialization;
-                    select.appendChild(opt);
-                });
-            } catch (e) { console.error(e); }
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['RECEPTIONIST', 'ADMIN']);
+
+    let selectedPatientId = null;
+    let treatmentsList = [];
+
+    // Set min date to today
+    document.getElementById('appointmentDate').min = new Date().toISOString().split('T')[0];
+
+    async function loadDropdowns() {
+        try {
+            const [dentists, treatments] = await Promise.all([
+                apiGet('/dentists'),
+                apiGet('/treatments')
+            ]);
+            treatmentsList = treatments;
+
+            const dSelect = document.getElementById('dentistId');
+            dentists.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.dentistId;
+                opt.textContent = d.name + (d.specialization ? ' – ' + d.specialization : '');
+                dSelect.appendChild(opt);
+            });
+
+            const tSelect = document.getElementById('treatmentType');
+            treatments.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.treatmentCode;
+                opt.textContent = t.treatmentName + ' (LKR ' + t.basePrice.toLocaleString() + ')';
+                tSelect.appendChild(opt);
+            });
+        } catch (e) { showToast('Failed to load options', 'error'); }
+    }
+
+    function previewPrice() {
+        const code = document.getElementById('treatmentType').value;
+        const t = treatmentsList.find(x => x.treatmentCode === code);
+        const div = document.getElementById('pricePreview');
+        if (t) {
+            div.style.display = 'flex';
+            div.innerHTML = `💰 Estimated: Consultation <strong>LKR ${t.consultationFee.toLocaleString()}</strong> + Treatment <strong>LKR ${t.basePrice.toLocaleString()}</strong> + 5% Tax`;
+        } else {
+            div.style.display = 'none';
         }
-        loadDentists();
+    }
 
-        document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const errorDiv = document.getElementById('error-msg');
-            errorDiv.style.display = 'none';
+    async function searchPatient() {
+        const nic = document.getElementById('searchNic').value.trim();
+        if (!nic) { showToast('Please enter a NIC number', 'error'); return; }
+        const res = document.getElementById('patientResult');
+        try {
+            const p = await apiGet('/patients/nic/' + encodeURIComponent(nic));
+            selectedPatientId = p.patientId;
+            document.getElementById('newPatientFields').style.display = 'none';
+            res.className = 'alert alert-success';
+            res.style.display = 'flex';
+            res.innerHTML = `✅ Patient found: <strong style="margin-left:6px;">${p.name}</strong>&nbsp;(ID: ${p.patientId}, ${p.contact})`;
+            document.getElementById('contact').value = p.contact || '';
+        } catch (e) {
+            selectedPatientId = null;
+            res.className = 'alert alert-warning';
+            res.style.display = 'flex';
+            res.innerHTML = '⚠️ Patient not found. Please enter new patient details below.';
+            document.getElementById('newPatientFields').style.display = 'block';
+        }
+    }
 
-            const data = {
-                patient_id: 1,
-                dentist_id: parseInt(document.getElementById('dentistId').value),
-                treatment_type: document.getElementById('treatmentType').value,
-                appointment_date: document.getElementById('appointmentDate').value,
-                appointment_time: document.getElementById('appointmentTime').value + ':00',
-                notes: document.getElementById('contact').value,
-                created_by: parseInt(localStorage.getItem('staffId') || '1')
-            };
+    document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const errorDiv = document.getElementById('error-msg');
+        errorDiv.style.display = 'none';
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Registering...';
 
-            try {
-                const res = await apiPost('/appointments', data);
-                if (res.appointmentNo) {
-                    showToast('Appointment registered successfully: ' + res.appointmentNo);
-                    setTimeout(() => window.location.href = '/Frontend/appointments?action=search&appointment_no=' + res.appointmentNo, 1000);
-                } else if (res.error) {
-                    errorDiv.textContent = res.error;
-                    errorDiv.style.display = 'block';
-                }
-            } catch (e) {
-                errorDiv.textContent = 'Failed to create appointment';
-                errorDiv.style.display = 'block';
+        let patientId = selectedPatientId;
+
+        // Register new patient if needed
+        if (patientId == null) {
+            const name    = document.getElementById('newPatientName').value.trim();
+            const nic     = document.getElementById('newPatientNic').value.trim();
+            const contact = document.getElementById('newPatientContact').value.trim();
+            if (!name || !nic || !contact) {
+                errorDiv.textContent = 'Patient Name, NIC and Contact are required for new patients.';
+                errorDiv.style.display = 'flex';
+                btn.disabled = false; btn.textContent = '✅ Register Appointment';
+                return;
             }
-        });
-    </script>
+            if (!/^0\d{9}$/.test(contact)) {
+                errorDiv.textContent = 'Contact number must be 10 digits starting with 0.';
+                errorDiv.style.display = 'flex';
+                btn.disabled = false; btn.textContent = '✅ Register Appointment';
+                return;
+            }
+            try {
+                const np = {
+                    name,
+                    nic,
+                    contact,
+                    dateOfBirth: document.getElementById('newPatientDob').value || null,
+                    gender:      document.getElementById('newPatientGender').value,
+                    address:     document.getElementById('newPatientAddress').value,
+                    email:       document.getElementById('newPatientEmail').value,
+                    bloodGroup:  document.getElementById('newPatientBlood').value,
+                    allergies:   document.getElementById('newPatientAllergies').value
+                };
+                const created = await apiPost('/patients', np);
+                if (created.error) throw new Error(created.error);
+                patientId = created.patientId;
+                showToast('New patient registered: ' + name);
+            } catch (err) {
+                errorDiv.textContent = 'Failed to register patient: ' + (err.message || 'Unknown error');
+                errorDiv.style.display = 'flex';
+                btn.disabled = false; btn.textContent = '✅ Register Appointment';
+                return;
+            }
+        }
+
+        const appointmentTime = document.getElementById('appointmentTime').value;
+        const contact = document.getElementById('contact').value.trim();
+        if (!/^0\d{9}$/.test(contact)) {
+            errorDiv.textContent = 'Contact number must be 10 digits starting with 0.';
+            errorDiv.style.display = 'flex';
+            btn.disabled = false; btn.textContent = '✅ Register Appointment';
+            return;
+        }
+
+        const data = {
+            patientId:       patientId,
+            dentistId:       parseInt(document.getElementById('dentistId').value),
+            treatmentType:   document.getElementById('treatmentType').value,
+            appointmentDate: document.getElementById('appointmentDate').value,
+            appointmentTime: appointmentTime + ':00',
+            notes:           document.getElementById('notes').value,
+            contact:         contact,
+            createdBy:       parseInt(localStorage.getItem('staffId') || '1')
+        };
+
+        if (!data.dentistId || !data.treatmentType || !data.appointmentDate || !data.appointmentTime) {
+            errorDiv.textContent = 'Please fill in all required appointment fields.';
+            errorDiv.style.display = 'flex';
+            btn.disabled = false; btn.textContent = '✅ Register Appointment';
+            return;
+        }
+
+        try {
+            const res = await apiPost('/appointments', data);
+            if (res.error) {
+                errorDiv.textContent = res.error;
+                errorDiv.style.display = 'flex';
+                btn.disabled = false; btn.textContent = '✅ Register Appointment';
+            } else {
+                showToast('🎉 Appointment registered: ' + res.appointmentNo);
+                setTimeout(() => {
+                    window.location.href = '/Frontend/view-appointment.html?no=' + res.appointmentNo;
+                }, 1200);
+            }
+        } catch (e) {
+            errorDiv.textContent = 'Failed to register appointment. Check that the backend is running.';
+            errorDiv.style.display = 'flex';
+            btn.disabled = false; btn.textContent = '✅ Register Appointment';
+        }
+    });
+
+    loadDropdowns();
+</script>
 </body>
 </html>

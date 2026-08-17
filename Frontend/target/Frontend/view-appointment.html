@@ -23,6 +23,13 @@
                 <button type="submit" class="btn btn-primary">Search</button>
             </form>
         </div>
+        <div class="card">
+            <h2>All Appointments</h2>
+            <table class="table" id="apptTable">
+                <thead><tr><th>No</th><th>Patient</th><th>Dentist</th><th>Treatment</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
         <div id="result" class="card" style="display:none;">
             <h2>Appointment Details</h2>
             <div id="appointmentDetails"></div>
@@ -30,26 +37,55 @@
     </div>
     <script src="/Frontend/js/app.js"></script>
     <script>
+        async function loadAppointments() {
+            try {
+                const appointments = await apiGet('/appointments');
+                const tbody = document.querySelector('#apptTable tbody');
+                tbody.innerHTML = '';
+                const dentists = await apiGet('/dentists');
+                appointments.forEach(a => {
+                    const dentist = dentists.find(d => d.dentist_id === a.dentistId);
+                    const dentistName = dentist ? dentist.name : 'Dentist #' + a.dentistId;
+                    tbody.innerHTML += '<tr><td>' + a.appointmentNo + '</td><td>' + a.patientId + '</td><td>' + dentistName + '</td><td>' + a.treatmentType + '</td><td>' + a.appointmentDate + '</td><td>' + a.appointmentTime + '</td><td>' + getStatusBadge(a.status) + '</td></tr>';
+                });
+            } catch (e) { showToast('Failed to load appointments', 'error'); }
+        }
+        loadAppointments();
+
         document.getElementById('searchForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const no = document.getElementById('appointmentNo').value.trim();
             if (!no) return;
             try {
                 const data = await apiGet('/appointments/no/' + encodeURIComponent(no));
-                showAppointment(data);
+                await showAppointment(data);
             } catch (e) {
                 showToast('Appointment not found', 'error');
             }
         });
 
         async function showAppointment(a) {
+            let patientName = 'Patient #' + a.patientId;
+            let dentistName = 'Dentist #' + a.dentistId;
+            try {
+                const patient = await apiGet('/patients/' + a.patientId);
+                patientName = patient.name;
+            } catch (e) {}
+            try {
+                const dentists = await apiGet('/dentists');
+                const dentist = dentists.find(d => d.dentist_id === a.dentistId);
+                if (dentist) dentistName = dentist.name + ' - ' + dentist.specialization;
+            } catch (e) {}
+
             const div = document.getElementById('appointmentDetails');
-            div.innerHTML = '<p><strong>Appointment No:</strong> ' + a.appointmentNo + '</p>' +
-                '<p><strong>Patient ID:</strong> ' + a.patientId + '</p>' +
-                '<p><strong>Dentist ID:</strong> ' + a.dentistId + '</p>' +
+            div.innerHTML =
+                '<p><strong>Appointment No:</strong> ' + a.appointmentNo + '</p>' +
+                '<p><strong>Patient:</strong> ' + patientName + ' (ID: ' + a.patientId + ')</p>' +
+                '<p><strong>Dentist:</strong> ' + dentistName + '</p>' +
                 '<p><strong>Treatment:</strong> ' + a.treatmentType + '</p>' +
                 '<p><strong>Date:</strong> ' + a.appointmentDate + '</p>' +
                 '<p><strong>Time:</strong> ' + a.appointmentTime + '</p>' +
+                '<p><strong>Contact:</strong> ' + (a.contact || '-') + '</p>' +
                 '<p><strong>Status:</strong> ' + getStatusBadge(a.status) + '</p>' +
                 '<p><strong>Notes:</strong> ' + (a.notes || '-') + '</p>';
             document.getElementById('result').style.display = 'block';

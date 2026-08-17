@@ -14,6 +14,17 @@ public class StaffDAO {
         this.db = DatabaseUtil.getInstance();
     }
 
+    public Staff findById(int staffId) {
+        String sql = "SELECT * FROM staff WHERE staff_id = ?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, staffId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return mapStaff(rs);
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
     public Staff findByEmail(String email) {
         String sql = "SELECT * FROM staff WHERE email = ? AND is_active = TRUE";
         try (Connection conn = db.getConnection();
@@ -79,4 +90,25 @@ public class StaffDAO {
         s.setCreatedAt(rs.getString("created_at"));
         return s;
     }
+
+    public boolean update(Staff staff) {
+        String sql = "UPDATE staff SET name=?, email=?, contact=?, address=?, password_hash=?, role=?, shift_hours=?, is_active=? WHERE staff_id=?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, staff.getName());
+            ps.setString(2, staff.getEmail());
+            ps.setString(3, staff.getContact());
+            ps.setString(4, staff.getAddress());
+            ps.setString(5, staff.getPasswordHash());
+            ps.setString(6, staff.getRole());
+            ps.setString(7, staff.getShiftHours());
+            ps.setBoolean(8, staff.isActive());
+            ps.setInt(9, staff.getStaffId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
+

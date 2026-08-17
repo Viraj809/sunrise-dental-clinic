@@ -6,7 +6,7 @@ import DAO.AppointmentDAO;
 public class ContactNumberValidator extends AppointmentValidator {
     @Override
     public String validate(Appointment appointment, AppointmentDAO dao) {
-        String contact = appointment.getNotes();
+        String contact = appointment.getContact();
         if (contact == null || !contact.matches("^0\\d{9}$")) {
             return "Contact number must be exactly 10 digits and start with 0.";
         }

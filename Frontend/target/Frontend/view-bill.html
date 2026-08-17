@@ -31,7 +31,7 @@
         async function loadBill() {
             if (!billId) return;
             try {
-                const b = await apiGet('/bills/' + billId);
+                const b = await apiGet('/bills/id/' + billId);
                 document.getElementById('billDetails').innerHTML =
                     '<p><strong>Bill ID:</strong> #' + b.bill_id + '</p>' +
                     '<p><strong>Appointment ID:</strong> ' + b.appointment_id + '</p>' +

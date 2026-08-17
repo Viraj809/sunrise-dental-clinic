@@ -16,9 +16,11 @@ public class PatientServlet extends BaseServlet {
         String action = req.getParameter("action");
         if ("add".equals(action)) {
             forward(req, resp, "/add-patient.html");
-        } else if ("history".equals(action)) {
+        } else if ("edit".equals(action)) {
             req.setAttribute("patientId", req.getParameter("patient_id"));
-            forward(req, resp, "/patient-history.html");
+            forward(req, resp, "/edit-patient.html");
+        } else if ("history".equals(action)) {
+            resp.sendRedirect(req.getContextPath() + "/patient-history.html?patient_id=" + req.getParameter("patient_id"));
         } else {
             forward(req, resp, "/manage-patients.html");
         }

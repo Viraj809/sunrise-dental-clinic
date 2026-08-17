@@ -10,6 +10,7 @@ public class Appointment {
     private String appointmentTime;
     private String status;
     private String notes;
+    private String contact;
     private int createdBy;
     private String createdAt;
     private String updatedAt;
@@ -32,6 +33,8 @@ public class Appointment {
     public void setStatus(String status) { this.status = status; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public String getContact() { return contact; }
+    public void setContact(String contact) { this.contact = contact; }
     public int getCreatedBy() { return createdBy; }
     public void setCreatedBy(int createdBy) { this.createdBy = createdBy; }
     public String getCreatedAt() { return createdAt; }

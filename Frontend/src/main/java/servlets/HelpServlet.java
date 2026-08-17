@@ -11,6 +11,7 @@ import java.io.IOException;
 public class HelpServlet extends BaseServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!isLoggedIn(req, resp)) return;
         forward(req, resp, "/help.html");
     }
 }

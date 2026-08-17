@@ -15,7 +15,8 @@ public class AppointmentServlet extends BaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!isLoggedIn(req, resp)) return;
         String action = req.getParameter("action");
-        String backendBase = "http://localhost:8080/Backend/resources";
+        String backendBase = getServletContext().getInitParameter("backendUrl");
+        if (backendBase == null) backendBase = "http://localhost:8080/Backend/resources";
         String token = (String) req.getSession().getAttribute("token");
 
         if ("search".equals(action)) {
@@ -37,24 +38,26 @@ public class AppointmentServlet extends BaseServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!isLoggedIn(req, resp)) return;
         String token = (String) req.getSession().getAttribute("token");
-        String backendBase = "http://localhost:8080/Backend/resources";
+        String backendBase = getServletContext().getInitParameter("backendUrl");
+        if (backendBase == null) backendBase = "http://localhost:8080/Backend/resources";
 
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         sb.append("\"patient_id\":").append(req.getParameter("patient_id")).append(",");
         sb.append("\"dentist_id\":").append(req.getParameter("dentist_id")).append(",");
         sb.append("\"treatment_type\":\"").append(escape(req.getParameter("treatment_type"))).append("\",");
-        sb.append("\"appointment_date\":\"").append(req.getParameter("appointment_date")).append("\",");
-        sb.append("\"appointment_time\":\"").append(req.getParameter("appointment_time")).append("\",");
-        sb.append("\"notes\":\"").append(escape(req.getParameter("contact"))).append("\",");
+        sb.append("\"appointment_date\":\"").append(escape(req.getParameter("appointment_date"))).append("\",");
+        sb.append("\"appointment_time\":\"").append(escape(req.getParameter("appointment_time"))).append("\",");
+        sb.append("\"contact\":\"").append(escape(req.getParameter("contact"))).append("\",");
+        sb.append("\"notes\":\"").append(escape(req.getParameter("notes"))).append("\",");
         sb.append("\"created_by\":").append(req.getSession().getAttribute("staffId"));
         sb.append("}");
 
         String result = callPost(backendBase + "/appointments", sb.toString(), token);
         if (result != null && !result.contains("\"error\"")) {
-            resp.sendRedirect(req.getContextPath() + "/appointments?action=search&appointment_no=" + extractValue(result, "appointmentNo"));
+            resp.sendRedirect(req.getContextPath() + "/api/appointments?action=search&appointment_no=" + extractValue(result, "appointmentNo"));
         } else {
-            resp.sendRedirect(req.getContextPath() + "/appointments?action=register&error=Failed+to+create+appointment");
+            resp.sendRedirect(req.getContextPath() + "/api/appointments?action=register&error=Failed+to+create+appointment");
         }
     }
 

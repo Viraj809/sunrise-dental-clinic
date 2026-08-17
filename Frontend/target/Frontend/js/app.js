@@ -66,13 +66,13 @@ function showNav() {
         html += '<a href="/Frontend/api/reports">Reports</a>';
     }
     if (role === 'ADMIN' || role === 'RECEPTIONIST') {
-        html += '<a href="/Frontend/appointments?action=register">Register Appointment</a>';
-        html += '<a href="/Frontend/appointments">Appointments</a>';
-        html += '<a href="/Frontend/patients">Patients</a>';
+        html += '<a href="/Frontend/api/appointments?action=register">Register Appointment</a>';
+        html += '<a href="/Frontend/api/appointments">Appointments</a>';
+        html += '<a href="/Frontend/api/patients">Patients</a>';
         html += '<a href="/Frontend/api/bills">Billing</a>';
     }
     if (role === 'DENTIST') {
-        html += '<a href="/Frontend/appointments">My Schedule</a>';
+        html += '<a href="/Frontend/api/appointments">My Schedule</a>';
     }
     html += '<a href="/Frontend/help">Help</a>';
     html += '<a href="/Frontend/logout">Logout</a>';

@@ -3,61 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Sunrise Dental Clinic</title>
+    <title>Admin Dashboard – Sunrise Dental Clinic</title>
+    <meta name="description" content="Admin dashboard for Sunrise Dental Clinic management system">
     <link rel="stylesheet" href="/Frontend/css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <div class="header">
-        <h1>Sunrise Dental Clinic - Admin Dashboard</h1>
-        <div class="user-info" id="user-info"></div>
-    </div>
-    <nav class="nav" id="main-nav"></nav>
-    <div class="container">
-        <div class="card">
-            <h2>Welcome, Admin</h2>
-            <p>You have full system access. Use the navigation above to manage staff, view reports, and oversee operations.</p>
-        </div>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px;">
-            <div class="card" style="text-align:center;">
-                <h3>Total Appointments</h3>
-                <p style="font-size:2rem; font-weight:bold; color:var(--primary);" id="stat-appointments">-</p>
-            </div>
-            <div class="card" style="text-align:center;">
-                <h3>Total Patients</h3>
-                <p style="font-size:2rem; font-weight:bold; color:var(--success);" id="stat-patients">-</p>
-            </div>
-            <div class="card" style="text-align:center;">
-                <h3>Total Bills</h3>
-                <p style="font-size:2rem; font-weight:bold; color:var(--warning);" id="stat-bills">-</p>
-            </div>
-            <div class="card" style="text-align:center;">
-                <h3>Revenue (Today)</h3>
-                <p style="font-size:2rem; font-weight:bold; color:var(--danger);" id="stat-revenue">-</p>
-            </div>
-        </div>
-    </div>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
     <div id="toast-container"></div>
-    <script src="/Frontend/js/app.js"></script>
-    <script>
-        async function loadStats() {
-            try {
-                const appointments = await apiGet('/appointments');
-                document.getElementById('stat-appointments').textContent = Array.isArray(appointments) ? appointments.length : '-';
 
-                const patients = await apiGet('/patients');
-                document.getElementById('stat-patients').textContent = Array.isArray(patients) ? patients.length : '-';
+    <div class="page-header">
+        <div>
+            <h2>Admin Dashboard</h2>
+            <p>Full system overview and management access</p>
+        </div>
+        <span id="current-date" style="color:var(--text-muted);font-size:0.875rem;"></span>
+    </div>
 
-                const bills = await apiGet('/bills');
-                document.getElementById('stat-bills').textContent = Array.isArray(bills) ? bills.length : '-';
+    <!-- Stats Row -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:28px;">
+        <div class="card-stat">
+            <span class="stat-icon">📅</span>
+            <div class="stat-value" id="stat-appointments" style="color:var(--primary);">–</div>
+            <div class="stat-label">Total Appointments</div>
+        </div>
+        <div class="card-stat">
+            <span class="stat-icon">👥</span>
+            <div class="stat-value" id="stat-patients" style="color:var(--success);">–</div>
+            <div class="stat-label">Total Patients</div>
+        </div>
+        <div class="card-stat">
+            <span class="stat-icon">💰</span>
+            <div class="stat-value" id="stat-revenue" style="color:var(--warning);font-size:1.3rem;">–</div>
+            <div class="stat-label">Today's Revenue (LKR)</div>
+        </div>
+        <div class="card-stat">
+            <span class="stat-icon">🦷</span>
+            <div class="stat-value" id="stat-dentists" style="color:var(--info);">–</div>
+            <div class="stat-label">Active Dentists</div>
+        </div>
+    </div>
 
-                const revenue = await apiGet('/reports/revenue/daily');
-                document.getElementById('stat-revenue').textContent = revenue.revenue ? 'LKR ' + revenue.revenue.toFixed(2) : '-';
-            } catch (e) {
-                console.error(e);
+    <!-- Quick Actions -->
+    <div class="action-grid">
+        <a href="/Frontend/register-appointment.html" class="action-card">
+            <div class="ac-icon">➕</div>
+            <div><div class="ac-label">New Appointment</div><div class="ac-sub">Register patient visit</div></div>
+        </a>
+        <a href="/Frontend/view-appointment.html" class="action-card">
+            <div class="ac-icon">📋</div>
+            <div><div class="ac-label">Appointments</div><div class="ac-sub">View &amp; manage all</div></div>
+        </a>
+        <a href="/Frontend/manage-patients.html" class="action-card">
+            <div class="ac-icon">👤</div>
+            <div><div class="ac-label">Patients</div><div class="ac-sub">Search &amp; manage records</div></div>
+        </a>
+        <a href="/Frontend/billing.html" class="action-card">
+            <div class="ac-icon">🧾</div>
+            <div><div class="ac-label">Billing</div><div class="ac-sub">Generate &amp; print bills</div></div>
+        </a>
+        <a href="/Frontend/manage-staff.html" class="action-card">
+            <div class="ac-icon">🧑‍💼</div>
+            <div><div class="ac-label">Staff</div><div class="ac-sub">Manage team members</div></div>
+        </a>
+        <a href="/Frontend/manage-dentists.html" class="action-card">
+            <div class="ac-icon">🦷</div>
+            <div><div class="ac-label">Dentists</div><div class="ac-sub">Manage dental team</div></div>
+        </a>
+        <a href="/Frontend/reports.html" class="action-card">
+            <div class="ac-icon">📊</div>
+            <div><div class="ac-label">Reports</div><div class="ac-sub">Analytics &amp; insights</div></div>
+        </a>
+        <a href="/Frontend/help.html" class="action-card">
+            <div class="ac-icon">❓</div>
+            <div><div class="ac-label">Help</div><div class="ac-sub">User guide</div></div>
+        </a>
+    </div>
+
+    <!-- Recent Appointments + Revenue Chart -->
+    <div style="display:grid;grid-template-columns:1.8fr 1fr;gap:20px;">
+        <div class="card">
+            <h2>📅 Today's Appointments</h2>
+            <div class="table-wrapper">
+                <table class="table" id="todayTable">
+                    <thead><tr><th>No</th><th>Patient ID</th><th>Treatment</th><th>Time</th><th>Status</th></tr></thead>
+                    <tbody><tr><td colspan="5" class="empty-state" style="padding:30px;text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <h2>💰 Revenue This Month</h2>
+            <canvas id="revenueChart" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['ADMIN']);
+
+    document.getElementById('current-date').textContent =
+        new Date().toLocaleDateString('en-LK', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+    async function loadDashboard() {
+        try {
+            const [appointments, patients, dentists] = await Promise.all([
+                apiGet('/appointments'),
+                apiGet('/patients'),
+                apiGet('/dentists')
+            ]);
+
+            document.getElementById('stat-appointments').textContent = appointments.length;
+            document.getElementById('stat-patients').textContent     = patients.length;
+            document.getElementById('stat-dentists').textContent     = dentists.filter(d => d.active).length;
+
+            // Revenue
+            const revenue = await apiGet('/reports/revenue/daily');
+            document.getElementById('stat-revenue').textContent =
+                (revenue.revenue || 0).toLocaleString('en-LK', {minimumFractionDigits: 2});
+
+            // Today's appointments
+            const today = new Date().toISOString().split('T')[0];
+            const todayAppts = appointments.filter(a => a.appointmentDate === today);
+            const tbody = document.querySelector('#todayTable tbody');
+            if (todayAppts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted);">No appointments today</td></tr>';
+            } else {
+                tbody.innerHTML = todayAppts.map(a =>
+                    `<tr><td><strong>${a.appointmentNo}</strong></td><td>${a.patientId}</td>
+                     <td>${a.treatmentType}</td><td>${a.appointmentTime}</td>
+                     <td>${getStatusBadge(a.status)}</td></tr>`
+                ).join('');
             }
-        }
-        loadStats();
-    </script>
+
+            // Chart
+            const monthly = await apiGet('/reports/revenue/monthly');
+            renderRevenueChart(monthly.revenue || 0, revenue.revenue || 0);
+
+        } catch (e) { showToast('Failed to load dashboard data', 'error'); }
+    }
+
+    function renderRevenueChart(monthly, daily) {
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Today', 'Rest of Month'],
+                datasets: [{
+                    data: [daily, Math.max(0, monthly - daily)],
+                    backgroundColor: ['#2563eb', '#dbeafe'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ' LKR ' + ctx.raw.toLocaleString('en-LK', {minimumFractionDigits:2})
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    loadDashboard();
+</script>
 </body>
 </html>

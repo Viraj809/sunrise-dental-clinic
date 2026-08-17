@@ -10,7 +10,12 @@
     <session-config>
         <session-timeout>30</session-timeout>
     </session-config>
-    
+
+    <context-param>
+        <param-name>backendUrl</param-name>
+        <param-value>http://localhost:8080/Backend/resources</param-value>
+    </context-param>
+
     <welcome-file-list>
         <welcome-file>login.html</welcome-file>
     </welcome-file-list>

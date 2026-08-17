@@ -25,12 +25,12 @@
     <script>
         async function loadStaff() {
             try {
-                const staff = await apiGet('/Backend/resources/staff'); // fallback if direct not available
-                // Since no staff REST endpoint in backend yet, show placeholder
+                const staff = await apiGet('/staff');
                 const tbody = document.querySelector('#staffTable tbody');
-                tbody.innerHTML = '<tr><td>1</td><td>System Admin</td><td>admin@sunrisedental.com</td><td>0770000001</td><td>ADMIN</td><td>Active</td></tr>' +
-                    '<tr><td>2</td><td>Receptionist One</td><td>reception@sunrisedental.com</td><td>0770000002</td><td>RECEPTIONIST</td><td>Active</td></tr>' +
-                    '<tr><td>3</td><td>Dr. Perera</td><td>perera@sunrisedental.com</td><td>0770000003</td><td>DENTIST</td><td>Active</td></tr>';
+                tbody.innerHTML = '';
+                staff.forEach(s => {
+                    tbody.innerHTML += '<tr><td>' + s.staff_id + '</td><td>' + s.name + '</td><td>' + s.email + '</td><td>' + s.contact + '</td><td>' + s.role + '</td><td>' + (s.is_active ? 'Active' : 'Inactive') + '</td></tr>';
+                });
             } catch (e) { showToast('Failed to load staff', 'error'); }
         }
         loadStaff();

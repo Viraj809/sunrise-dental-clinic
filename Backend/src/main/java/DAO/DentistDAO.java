@@ -73,4 +73,23 @@ public class DentistDAO {
         d.setCreatedAt(rs.getString("created_at"));
         return d;
     }
+
+    public boolean update(Dentist dentist) {
+        String sql = "UPDATE dentists SET name=?, specialization=?, contact=?, email=?, available_days=?, is_active=? WHERE dentist_id=?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, dentist.getName());
+            ps.setString(2, dentist.getSpecialization());
+            ps.setString(3, dentist.getContact());
+            ps.setString(4, dentist.getEmail());
+            ps.setString(5, dentist.getAvailableDays());
+            ps.setBoolean(6, dentist.isActive());
+            ps.setInt(7, dentist.getDentistId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
+

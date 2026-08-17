@@ -6,8 +6,14 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 
 @WebServlet("/login")
 public class LoginServlet extends BaseServlet {
@@ -16,43 +22,60 @@ public class LoginServlet extends BaseServlet {
         String email = req.getParameter("email");
         String password = req.getParameter("password");
 
-        String backendUrl = "http://localhost:8080/Backend/resources/auth/login";
-        String json = "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
-
-        java.net.URL url = new java.net.URL(backendUrl);
-        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setDoOutput(true);
-        conn.getOutputStream().write(json.getBytes());
-
-        int status = conn.getResponseCode();
-        java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            sb.append(line);
+        if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
+            resp.sendRedirect(req.getContextPath() + "/login.html?error=Email+and+password+are+required");
+            return;
         }
-        reader.close();
 
-        if (status == 200) {
-            String response = sb.toString();
-            String token = extractValue(response, "token");
-            String role = extractValue(response, "role");
-            String name = extractValue(response, "name");
-            int staffId = Integer.parseInt(extractValue(response, "staffId"));
+        String backendBase = getServletContext().getInitParameter("backendUrl");
+        if (backendBase == null) backendBase = "http://localhost:8080/Backend/resources";
+        String backendUrl = backendBase + "/auth/login";
+        String json = "{\"email\":\"" + escapeJson(email) + "\",\"password\":\"" + escapeJson(password) + "\"}";
 
-            HttpSession session = req.getSession();
-            session.setAttribute("token", token);
-            session.setAttribute("role", role);
-            session.setAttribute("name", name);
-            session.setAttribute("staffId", staffId);
-            session.setAttribute("user", name);
+        try {
+            URL url = new URL(backendUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+            conn.getOutputStream().write(json.getBytes());
 
-            resp.sendRedirect(req.getContextPath() + "/dashboard");
-        } else {
-            resp.sendRedirect(req.getContextPath() + "/login.html?error=Invalid+email+or+password");
+            int status = conn.getResponseCode();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(status < 400 ? conn.getInputStream() : conn.getErrorStream()));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            reader.close();
+
+            if (status == 200) {
+                String response = sb.toString();
+                String token = extractValue(response, "token");
+                String role = extractValue(response, "role");
+                String name = extractValue(response, "name");
+                int staffId = Integer.parseInt(extractValue(response, "staffId"));
+
+                HttpSession session = req.getSession();
+                session.setAttribute("token", token);
+                session.setAttribute("role", role);
+                session.setAttribute("name", name);
+                session.setAttribute("staffId", staffId);
+                session.setAttribute("user", name);
+                session.setMaxInactiveInterval(30 * 60);
+
+                resp.sendRedirect(req.getContextPath() + "/dashboard");
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/login.html?error=" + URLEncoder.encode("Invalid email or password"));
+            }
+        } catch (Exception e) {
+            resp.sendRedirect(req.getContextPath() + "/login.html?error=" + URLEncoder.encode("Cannot connect to server"));
         }
+    }
+
+    private String escapeJson(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     private String extractValue(String json, String key) {

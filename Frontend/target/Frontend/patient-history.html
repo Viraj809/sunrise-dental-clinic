@@ -33,6 +33,13 @@
     </div>
     <script src="/Frontend/js/app.js"></script>
     <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const prefillId = urlParams.get('patient_id');
+        if (prefillId) {
+            document.getElementById('searchInput').value = prefillId;
+            searchHistory();
+        }
+
         async function searchHistory() {
             const input = document.getElementById('searchInput').value.trim();
             if (!input) return;
@@ -46,10 +53,13 @@
                 document.getElementById('patientName').textContent = 'History for: ' + patient.name;
                 const appointments = await apiGet('/appointments');
                 const patientAppts = appointments.filter(a => a.patient_id == patient.patient_id);
+                const dentists = await apiGet('/dentists');
                 const tbody = document.getElementById('historyTable');
                 tbody.innerHTML = '';
                 patientAppts.forEach(a => {
-                    tbody.innerHTML += '<tr><td>' + a.appointment_date + '</td><td>' + a.treatment_type + '</td><td>Dentist ' + a.dentist_id + '</td><td>' + getStatusBadge(a.status) + '</td></tr>';
+                    const dentist = dentists.find(d => d.dentist_id === a.dentist_id);
+                    const dentistName = dentist ? dentist.name : 'Dentist #' + a.dentist_id;
+                    tbody.innerHTML += '<tr><td>' + a.appointment_date + '</td><td>' + a.treatment_type + '</td><td>' + dentistName + '</td><td>' + getStatusBadge(a.status) + '</td></tr>';
                 });
                 document.getElementById('historyResult').style.display = 'block';
             } catch (e) { showToast('Patient not found', 'error'); }

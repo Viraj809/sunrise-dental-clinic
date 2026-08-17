@@ -25,6 +25,7 @@ Model\Staff.class
 DAO\AppointmentDAO.class
 DAO\NotificationDAO.class
 com\mycompany\backend\resources\ApplicationConfig.class
+com\mycompany\backend\resources\StaffResource.class
 Model\Appointment.class
 Validation\ContactNumberValidator.class
 Service\EmailNotificationObserver.class

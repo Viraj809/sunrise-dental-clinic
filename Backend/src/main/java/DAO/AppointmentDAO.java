@@ -29,6 +29,22 @@ public class AppointmentDAO {
         return null;
     }
 
+    public Appointment findById(int appointmentId) {
+        String sql = "SELECT * FROM appointments WHERE appointment_id = ?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, appointmentId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapAppointment(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
     public List<Appointment> findByPatientId(int patientId) {
         List<Appointment> list = new ArrayList<>();
         String sql = "SELECT * FROM appointments WHERE patient_id = ? ORDER BY appointment_date DESC, appointment_time DESC";
@@ -78,7 +94,7 @@ public class AppointmentDAO {
     }
 
     public boolean insert(Appointment appointment) {
-        String sql = "INSERT INTO appointments (appointment_no, patient_id, dentist_id, treatment_type, appointment_date, appointment_time, status, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO appointments (appointment_no, patient_id, dentist_id, treatment_type, appointment_date, appointment_time, status, notes, contact, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, appointment.getAppointmentNo());
@@ -89,7 +105,8 @@ public class AppointmentDAO {
             ps.setString(6, appointment.getAppointmentTime());
             ps.setString(7, appointment.getStatus());
             ps.setString(8, appointment.getNotes());
-            ps.setInt(9, appointment.getCreatedBy());
+            ps.setString(9, appointment.getContact());
+            ps.setInt(10, appointment.getCreatedBy());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -98,7 +115,7 @@ public class AppointmentDAO {
     }
 
     public boolean update(Appointment appointment) {
-        String sql = "UPDATE appointments SET patient_id=?, dentist_id=?, treatment_type=?, appointment_date=?, appointment_time=?, status=?, notes=?, updated_at=NOW() WHERE appointment_id=?";
+        String sql = "UPDATE appointments SET patient_id=?, dentist_id=?, treatment_type=?, appointment_date=?, appointment_time=?, status=?, notes=?, contact=?, updated_at=NOW() WHERE appointment_id=?";
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, appointment.getPatientId());
@@ -108,7 +125,8 @@ public class AppointmentDAO {
             ps.setString(5, appointment.getAppointmentTime());
             ps.setString(6, appointment.getStatus());
             ps.setString(7, appointment.getNotes());
-            ps.setInt(8, appointment.getAppointmentId());
+            ps.setString(8, appointment.getContact());
+            ps.setInt(9, appointment.getAppointmentId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -154,6 +172,7 @@ public class AppointmentDAO {
         a.setAppointmentTime(rs.getString("appointment_time"));
         a.setStatus(rs.getString("status"));
         a.setNotes(rs.getString("notes"));
+        a.setContact(rs.getString("contact"));
         a.setCreatedBy(rs.getInt("created_by"));
         a.setCreatedAt(rs.getString("created_at"));
         a.setUpdatedAt(rs.getString("updated_at"));

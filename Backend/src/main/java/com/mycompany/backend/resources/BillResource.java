@@ -1,51 +1,141 @@
 package com.mycompany.backend.resources;
 
 import Model.Bill;
+import Model.Appointment;
+import Model.Patient;
+import Model.Dentist;
+import Model.Treatment;
 import DAO.BillDAO;
-import Service.BillFactory;
-import Service.BillCalculationStrategy;
+import DAO.AppointmentDAO;
 import DAO.PatientDAO;
 import DAO.TreatmentDAO;
+import DAO.DentistDAO;
+import Service.BillFactory;
+import Service.BillCalculationStrategy;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
+/**
+ * Bill REST Resource.
+ * Design Patterns used:
+ *   - Factory (BillFactory) to select billing strategy
+ *   - Strategy (BillCalculationStrategy) for senior/standard pricing
+ */
 @Path("/bills")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class BillResource {
-    private BillDAO billDao = new BillDAO();
-    private PatientDAO patientDao = new PatientDAO();
-    private TreatmentDAO treatmentDao = new TreatmentDAO();
 
+    private final BillDAO       billDao       = new BillDAO();
+    private final AppointmentDAO appointmentDao = new AppointmentDAO();
+    private final PatientDAO    patientDao    = new PatientDAO();
+    private final TreatmentDAO  treatmentDao  = new TreatmentDAO();
+    private final DentistDAO    dentistDao    = new DentistDAO();
+
+    // ── GET /bills  ────────────────────────────────────────────────────────
+    @GET
+    public Response getAll() {
+        List<Bill> bills = billDao.findAll();
+        return Response.ok(bills).build();
+    }
+
+    // ── GET /bills/appointment/{appointmentId}  ────────────────────────────
+    @GET
+    @Path("/appointment/{appointmentId}")
+    public Response getByAppointmentId(@PathParam("appointmentId") int appointmentId) {
+        Bill bill = billDao.findByAppointmentId(appointmentId);
+        if (bill == null) {
+            return Response.status(404).entity(error("Bill not found for appointment " + appointmentId)).build();
+        }
+        return Response.ok(bill).build();
+    }
+
+    // ── GET /bills/{billId}  ───────────────────────────────────────────────
+    @GET
+    @Path("/{billId}")
+    public Response getByBillId(@PathParam("billId") int billId) {
+        Bill bill = billDao.findAll().stream()
+                .filter(b -> b.getBillId() == billId)
+                .findFirst().orElse(null);
+        if (bill == null) {
+            return Response.status(404).entity(error("Bill not found")).build();
+        }
+        return Response.ok(bill).build();
+    }
+
+    // ── GET /bills/{billId}/receipt  ──────────────────────────────────────
+    // Full enriched receipt including patient, dentist, appointment, treatment
+    @GET
+    @Path("/{billId}/receipt")
+    public Response getReceipt(@PathParam("billId") int billId) {
+        Bill bill = billDao.findAll().stream()
+                .filter(b -> b.getBillId() == billId)
+                .findFirst().orElse(null);
+        if (bill == null) {
+            return Response.status(404).entity(error("Bill not found")).build();
+        }
+
+        Map<String, Object> receipt = buildReceipt(bill);
+        return Response.ok(receipt).build();
+    }
+
+    // ── GET /bills/appointment/{appointmentId}/receipt  ───────────────────
+    @GET
+    @Path("/appointment/{appointmentId}/receipt")
+    public Response getReceiptByAppointment(@PathParam("appointmentId") int appointmentId) {
+        Bill bill = billDao.findByAppointmentId(appointmentId);
+        if (bill == null) {
+            return Response.status(404).entity(error("Bill not found for this appointment")).build();
+        }
+        return Response.ok(buildReceipt(bill)).build();
+    }
+
+    // ── POST /bills/generate  ─────────────────────────────────────────────
     @POST
     @Path("/generate")
     public Response generateBill(Map<String, Integer> request) {
-        int appointmentId = request.get("appointment_id");
-        int patientId = request.get("patient_id");
+        Integer appointmentId = request.get("appointment_id");
+        if (appointmentId == null) {
+            return Response.status(400).entity(error("appointment_id is required")).build();
+        }
 
-        BillCalculationStrategy strategy = BillFactory.createBill(patientId, patientDao);
-        Model.Treatment treatment = treatmentDao.findByCode("CHKUP");
+        // Check if bill already exists
+        Bill existing = billDao.findByAppointmentId(appointmentId);
+        if (existing != null) {
+            return Response.ok(buildReceipt(existing)).build();
+        }
+
+        Appointment appointment = appointmentDao.findById(appointmentId);
+        if (appointment == null) {
+            return Response.status(404).entity(error("Appointment not found")).build();
+        }
+
+        String treatmentCode = appointment.getTreatmentType();
+        Treatment treatment  = treatmentDao.findByCode(treatmentCode);
         if (treatment == null) {
-            return Response.status(500).entity("{\"error\":\"Treatment not found\"}").build();
+            return Response.status(400).entity(error("Treatment not found: " + treatmentCode)).build();
         }
 
+        Patient patient = patientDao.findById(appointment.getPatientId());
         int patientAge = 0;
-        Model.Patient patient = patientDao.findById(patientId);
-        if (patient != null && patient.getDateOfBirth() != null) {
-            patientAge = java.time.Period.between(
-                    java.time.LocalDate.parse(patient.getDateOfBirth()),
-                    java.time.LocalDate.now()
-            ).getYears();
+        if (patient != null && patient.getDateOfBirth() != null && !patient.getDateOfBirth().isEmpty()) {
+            try {
+                patientAge = java.time.Period.between(
+                        java.time.LocalDate.parse(patient.getDateOfBirth()),
+                        java.time.LocalDate.now()).getYears();
+            } catch (Exception ignored) {}
         }
 
-        double treatmentFee = strategy.calculateTreatmentFee(treatment.getBasePrice(), patientAge);
+        BillCalculationStrategy strategy = BillFactory.createBill(appointment.getPatientId(), patientDao);
+        double treatmentFee    = strategy.calculateTreatmentFee(treatment.getBasePrice(), patientAge);
         double consultationFee = treatment.getConsultationFee();
-        double discount = 0.0;
-        double tax = Math.round((treatmentFee + consultationFee) * 0.05 * 100.0) / 100.0;
-        double total = Math.round((consultationFee + treatmentFee - discount + tax) * 100.0) / 100.0;
+        double discount = (patientAge >= 60) ? Math.round(treatmentFee * 0.10 * 100.0) / 100.0 : 0.0;
+        double tax      = Math.round((treatmentFee + consultationFee) * 0.05 * 100.0) / 100.0;
+        double total    = Math.round((consultationFee + treatmentFee - discount + tax) * 100.0) / 100.0;
+
+        String issuedByStr = request.containsKey("issued_by") ? String.valueOf(request.get("issued_by")) : "1";
 
         Bill bill = new Bill();
         bill.setAppointmentId(appointmentId);
@@ -56,21 +146,82 @@ public class BillResource {
         bill.setTotalAmount(total);
         bill.setPaymentMethod("CASH");
         bill.setPaymentStatus("PENDING");
-        bill.setIssuedBy(1);
+        bill.setIssuedBy(Integer.parseInt(issuedByStr));
 
         if (billDao.insert(bill)) {
-            return Response.ok(bill).build();
+            // Reload to get generated bill_id and issued_at
+            Bill saved = billDao.findByAppointmentId(appointmentId);
+            return Response.ok(buildReceipt(saved != null ? saved : bill)).build();
         }
-        return Response.status(500).entity("{\"error\":\"Failed to generate bill\"}").build();
+        return Response.status(500).entity(error("Failed to generate bill")).build();
     }
 
-    @GET
-    @Path("/{id}")
-    public Response getById(@PathParam("id") int id) {
-        Bill bill = billDao.findByAppointmentId(id);
-        if (bill == null) {
-            return Response.status(404).entity("{\"error\":\"Bill not found\"}").build();
+    // ── PUT /bills/{billId}/payment  ──────────────────────────────────────
+    @PUT
+    @Path("/{billId}/payment")
+    public Response updatePayment(@PathParam("billId") int billId, Map<String, String> body) {
+        String paymentMethod = body.getOrDefault("payment_method", "CASH");
+        String paymentStatus = body.getOrDefault("payment_status", "PAID");
+
+        boolean ok = billDao.updatePaymentDetails(billId, paymentMethod, paymentStatus);
+        if (ok) {
+            Map<String, Object> res = new HashMap<>();
+            res.put("message", "Payment updated");
+            res.put("billId", billId);
+            res.put("paymentStatus", paymentStatus);
+            res.put("paymentMethod", paymentMethod);
+            return Response.ok(res).build();
         }
-        return Response.ok(bill).build();
+        return Response.status(500).entity(error("Failed to update payment")).build();
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+    private Map<String, Object> buildReceipt(Bill bill) {
+        Map<String, Object> receipt = new LinkedHashMap<>();
+        receipt.put("billId",          bill.getBillId());
+        receipt.put("appointmentId",   bill.getAppointmentId());
+        receipt.put("consultationFee", bill.getConsultationFee());
+        receipt.put("treatmentFee",    bill.getTreatmentFee());
+        receipt.put("discount",        bill.getDiscount());
+        receipt.put("tax",             bill.getTax());
+        receipt.put("totalAmount",     bill.getTotalAmount());
+        receipt.put("paymentMethod",   bill.getPaymentMethod());
+        receipt.put("paymentStatus",   bill.getPaymentStatus());
+        receipt.put("issuedAt",        bill.getIssuedAt());
+        receipt.put("issuedBy",        bill.getIssuedBy());
+
+        // Enrich with appointment info
+        Appointment appt = appointmentDao.findById(bill.getAppointmentId());
+        if (appt != null) {
+            receipt.put("appointmentNo",   appt.getAppointmentNo());
+            receipt.put("appointmentDate", appt.getAppointmentDate());
+            receipt.put("appointmentTime", appt.getAppointmentTime());
+            receipt.put("treatmentCode",   appt.getTreatmentType());
+
+            Patient p = patientDao.findById(appt.getPatientId());
+            if (p != null) {
+                receipt.put("patientName",    p.getName());
+                receipt.put("patientContact", p.getContact());
+                receipt.put("patientAddress", p.getAddress());
+            }
+
+            Dentist d = dentistDao.findById(appt.getDentistId());
+            if (d != null) {
+                receipt.put("dentistName",           d.getName());
+                receipt.put("dentistSpecialization", d.getSpecialization());
+            }
+
+            Treatment t = treatmentDao.findByCode(appt.getTreatmentType());
+            if (t != null) {
+                receipt.put("treatmentName", t.getTreatmentName());
+            }
+        }
+        return receipt;
+    }
+
+    private Map<String, String> error(String message) {
+        Map<String, String> m = new HashMap<>();
+        m.put("error", message);
+        return m;
     }
 }

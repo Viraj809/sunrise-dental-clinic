@@ -3,57 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appointments - Sunrise Dental Clinic</title>
+    <title>Appointments – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Appointment Management</h1>
-    </div>
-    <nav class="nav" id="main-nav"></nav>
-    <div class="container">
-        <div id="toast-container"></div>
-        <div class="card">
-            <h2>Search Appointment</h2>
-            <form id="searchForm" style="display:flex; gap:10px; align-items:flex-end;">
-                <div class="form-group" style="flex:1; margin-bottom:0;">
-                    <label>Appointment Number</label>
-                    <input type="text" id="appointmentNo" placeholder="SDC-2026-0001">
-                </div>
-                <button type="submit" class="btn btn-primary">Search</button>
-            </form>
-        </div>
-        <div id="result" class="card" style="display:none;">
-            <h2>Appointment Details</h2>
-            <div id="appointmentDetails"></div>
-        </div>
-    </div>
-    <script src="/Frontend/js/app.js"></script>
-    <script>
-        document.getElementById('searchForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const no = document.getElementById('appointmentNo').value.trim();
-            if (!no) return;
-            try {
-                const data = await apiGet('/appointments/no/' + encodeURIComponent(no));
-                showAppointment(data);
-            } catch (e) {
-                showToast('Appointment not found', 'error');
-            }
-        });
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
 
-        async function showAppointment(a) {
-            const div = document.getElementById('appointmentDetails');
-            div.innerHTML = '<p><strong>Appointment No:</strong> ' + a.appointmentNo + '</p>' +
-                '<p><strong>Patient ID:</strong> ' + a.patientId + '</p>' +
-                '<p><strong>Dentist ID:</strong> ' + a.dentistId + '</p>' +
-                '<p><strong>Treatment:</strong> ' + a.treatmentType + '</p>' +
-                '<p><strong>Date:</strong> ' + a.appointmentDate + '</p>' +
-                '<p><strong>Time:</strong> ' + a.appointmentTime + '</p>' +
-                '<p><strong>Status:</strong> ' + getStatusBadge(a.status) + '</p>' +
-                '<p><strong>Notes:</strong> ' + (a.notes || '-') + '</p>';
-            document.getElementById('result').style.display = 'block';
+<div class="container">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div><h2>Appointment Management</h2><p>Search, view and manage all appointments</p></div>
+        <a href="/Frontend/register-appointment.html" class="btn btn-primary">➕ New Appointment</a>
+    </div>
+
+    <!-- Search -->
+    <div class="card">
+        <h2>🔍 Search Appointment</h2>
+        <div class="search-bar">
+            <input type="text" id="searchNo" placeholder="Enter appointment number e.g. SDC-2026-0001"
+                   onkeydown="if(event.key==='Enter') searchAppointment();">
+            <button class="btn btn-primary" onclick="searchAppointment()">Search</button>
+            <button class="btn btn-ghost" onclick="loadAll()">Show All</button>
+        </div>
+        <div id="searchResult" style="display:none;"></div>
+    </div>
+
+    <!-- Appointment Detail Card (shown after search) -->
+    <div id="detailCard" class="card" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h2>📋 Appointment Details</h2>
+            <div style="display:flex;gap:8px;" id="actionButtons"></div>
+        </div>
+        <div id="apptDetails"></div>
+    </div>
+
+    <!-- All Appointments Table -->
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h2>📅 All Appointments</h2>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <select id="statusFilter" onchange="filterTable()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:0.875rem;">
+                    <option value="">All Statuses</option>
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+                <input type="date" id="dateFilter" onchange="filterTable()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:0.875rem;">
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table class="table" id="apptTable">
+                <thead>
+                    <tr><th>Appt No</th><th>Patient</th><th>Dentist</th><th>Treatment</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div id="statusModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <h3>Update Appointment Status</h3>
+        <div class="form-group">
+            <label>New Status</label>
+            <select id="newStatus">
+                <option value="Scheduled">Scheduled</option>
+                <option value="Confirmed">Confirmed</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveStatus()">Update Status</button>
+        </div>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth();
+
+    let allAppointments = [];
+    let allDentists = [];
+    let allPatients = [];
+    let currentApptId = null;
+    const role = localStorage.getItem('role');
+
+    async function loadAll() {
+        try {
+            [allAppointments, allDentists, allPatients] = await Promise.all([
+                apiGet('/appointments'),
+                apiGet('/dentists'),
+                apiGet('/patients')
+            ]);
+            renderTable(allAppointments);
+        } catch (e) { showToast('Failed to load appointments', 'error'); }
+    }
+
+    function renderTable(appointments) {
+        const dentistMap  = {};
+        allDentists.forEach(d  => dentistMap[d.dentistId]   = d.name);
+        const patientMap = {};
+        allPatients.forEach(p => patientMap[p.patientId] = p.name);
+
+        const tbody = document.querySelector('#apptTable tbody');
+        if (!appointments.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">No appointments found</td></tr>';
+            return;
         }
-    </script>
+        tbody.innerHTML = appointments.map(a => `
+            <tr>
+                <td><strong>${a.appointmentNo}</strong></td>
+                <td>${patientMap[a.patientId] || 'Patient #' + a.patientId}</td>
+                <td>${dentistMap[a.dentistId] || 'Dr. #' + a.dentistId}</td>
+                <td>${a.treatmentType}</td>
+                <td>${a.appointmentDate}</td>
+                <td>${a.appointmentTime ? a.appointmentTime.substring(0,5) : ''}</td>
+                <td>${getStatusBadge(a.status)}</td>
+                <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="btn btn-sm btn-ghost" onclick="showDetail(${a.appointmentId})">View</button>
+                    ${(role === 'ADMIN' || role === 'RECEPTIONIST') ?
+                      `<button class="btn btn-sm btn-warning" onclick="openStatusModal(${a.appointmentId}, '${a.status}')">Status</button>` : ''}
+                    ${(role === 'ADMIN' || role === 'RECEPTIONIST') ?
+                      `<a class="btn btn-sm btn-success" href="/Frontend/billing.html?appt_id=${a.appointmentId}">Bill</a>` : ''}
+                </td>
+            </tr>`).join('');
+    }
+
+    function filterTable() {
+        const status = document.getElementById('statusFilter').value;
+        const date   = document.getElementById('dateFilter').value;
+        let filtered = allAppointments;
+        if (status) filtered = filtered.filter(a => a.status === status);
+        if (date)   filtered = filtered.filter(a => a.appointmentDate === date);
+        renderTable(filtered);
+    }
+
+    async function searchAppointment() {
+        const no = document.getElementById('searchNo').value.trim();
+        if (!no) return;
+        const res = document.getElementById('searchResult');
+        try {
+            const a = await apiGet('/appointments/no/' + encodeURIComponent(no));
+            res.style.display = 'none';
+            await showDetail(a.appointmentId);
+            document.getElementById('detailCard').scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            res.className = 'alert alert-error';
+            res.style.display = 'flex';
+            res.textContent = '❌ Appointment "' + no + '" not found.';
+        }
+    }
+
+    async function showDetail(apptId) {
+        try {
+            const a = await apiGet('/appointments/' + apptId);
+            const dentist = allDentists.find(d => d.dentistId === a.dentistId);
+            const patient = allPatients.find(p => p.patientId === a.patientId);
+
+            const dentistName = dentist ? dentist.name + ' – ' + dentist.specialization : 'Dentist #' + a.dentistId;
+            const patientName = patient ? patient.name + ' (' + patient.contact + ')' : 'Patient #' + a.patientId;
+
+            document.getElementById('apptDetails').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Appointment No</p>
+                         <p style="font-size:1.1rem;font-weight:700;color:var(--primary);">${a.appointmentNo}</p></div>
+                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Status</p>
+                         <p>${getStatusBadge(a.status)}</p></div>
+                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Patient</p>
+                         <p style="font-weight:600;">${patientName}</p></div>
+                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Dentist</p>
+                         <p style="font-weight:600;">${dentistName}</p></div>
+                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Treatment</p>
+                         <p>${a.treatmentType}</p></div>
+                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Contact</p>
+                         <p>${a.contact || '–'}</p></div>
+                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Date</p>
+                         <p>${a.appointmentDate}</p></div>
+                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Time</p>
+                         <p>${a.appointmentTime ? a.appointmentTime.substring(0,5) : '–'}</p></div>
+                    <div style="grid-column:1/-1;"><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Notes</p>
+                         <p>${a.notes || '–'}</p></div>
+                </div>`;
+
+            // Action buttons based on role
+            const btns = document.getElementById('actionButtons');
+            btns.innerHTML = '';
+            if (role === 'ADMIN' || role === 'RECEPTIONIST') {
+                btns.innerHTML += `<button class="btn btn-warning btn-sm" onclick="openStatusModal(${a.appointmentId}, '${a.status}')">✏️ Update Status</button>`;
+                btns.innerHTML += `<a class="btn btn-success btn-sm" href="/Frontend/billing.html?appt_id=${a.appointmentId}">🧾 Generate Bill</a>`;
+                if (a.patientId) {
+                    btns.innerHTML += `<a class="btn btn-ghost btn-sm" href="/Frontend/patient-history.html?patient_id=${a.patientId}">📁 Patient History</a>`;
+                }
+            }
+
+            currentApptId = a.appointmentId;
+            document.getElementById('detailCard').style.display = 'block';
+        } catch (e) { showToast('Failed to load appointment details', 'error'); }
+    }
+
+    function openStatusModal(apptId, currentStatus) {
+        currentApptId = apptId;
+        document.getElementById('newStatus').value = currentStatus;
+        document.getElementById('statusModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('statusModal').style.display = 'none';
+        currentApptId = null;
+    }
+
+    async function saveStatus() {
+        if (!currentApptId) return;
+        const status = document.getElementById('newStatus').value;
+        try {
+            await apiPut('/appointments/' + currentApptId + '/status', { status });
+            showToast('Status updated to ' + status + ' ✅');
+            closeModal();
+            loadAll();
+            if (document.getElementById('detailCard').style.display !== 'none') {
+                showDetail(currentApptId);
+            }
+        } catch (e) { showToast('Failed to update status', 'error'); }
+    }
+
+    // Auto-search from URL param
+    const urlParams = new URLSearchParams(window.location.search);
+    const preNo = urlParams.get('no');
+    if (preNo) {
+        document.getElementById('searchNo').value = preNo;
+    }
+
+    loadAll().then(() => {
+        if (preNo) searchAppointment();
+    });
+</script>
 </body>
 </html>

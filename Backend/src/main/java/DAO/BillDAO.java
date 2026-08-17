@@ -77,6 +77,21 @@ public class BillDAO {
         }
     }
 
+    public boolean updatePaymentDetails(int billId, String paymentMethod, String paymentStatus) {
+        String sql = "UPDATE bills SET payment_method = ?, payment_status = ? WHERE bill_id = ?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, paymentMethod);
+            ps.setString(2, paymentStatus);
+            ps.setInt(3, billId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
     private Bill mapBill(ResultSet rs) throws SQLException {
         Bill b = new Bill();
         b.setBillId(rs.getInt("bill_id"));

@@ -3,94 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Billing - Sunrise Dental Clinic</title>
+    <title>Billing – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Billing</h1>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container" style="max-width:800px;">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div><h2>Billing</h2><p>Generate and manage patient bills</p></div>
+        <a href="/Frontend/view-appointment.html" class="btn btn-ghost btn-sm">← Back to Appointments</a>
     </div>
-    <nav class="nav" id="main-nav"></nav>
-    <div class="container" style="max-width:700px;">
-        <div id="toast-container"></div>
-        <div class="card">
-            <h2>Generate Bill</h2>
-            <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:16px;">
-                <div class="form-group" style="flex:1; margin-bottom:0;">
-                    <label>Search Appointment by Number</label>
-                    <input type="text" id="appointmentNoSearch" placeholder="SDC-2026-0001">
-                </div>
-                <button type="button" class="btn btn-primary" onclick="searchAppointment()">Find</button>
+
+    <!-- Search -->
+    <div class="card">
+        <h2>🔍 Find Appointment</h2>
+        <div class="search-bar">
+            <input type="text" id="apptNoSearch" placeholder="Enter appointment number e.g. SDC-2026-0001"
+                   onkeydown="if(event.key==='Enter') searchAppointment();">
+            <button class="btn btn-primary" onclick="searchAppointment()">Find</button>
+        </div>
+        <div id="searchMsg" class="alert" style="display:none;"></div>
+
+        <!-- Appointment summary (shown after search) -->
+        <div id="apptSummary" style="display:none;margin-top:16px;">
+            <div style="background:var(--surface-alt);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+                <div><div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Appt No</div><div id="s-apptNo" style="font-weight:700;color:var(--primary);"></div></div>
+                <div><div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Patient</div><div id="s-patient" style="font-weight:600;"></div></div>
+                <div><div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Dentist</div><div id="s-dentist"></div></div>
+                <div><div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Treatment</div><div id="s-treatment"></div></div>
+                <div><div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Date</div><div id="s-date"></div></div>
             </div>
-            <div id="apptResult" style="display:none; margin-bottom:16px;" class="alert alert-success"></div>
-            <form id="billForm">
-                <div class="form-group">
-                    <label>Appointment ID *</label>
-                    <input type="number" id="appointmentId" required>
+            <div style="display:flex;gap:10px;margin-top:14px;align-items:center;">
+                <div class="form-group" style="margin-bottom:0;flex:1;">
+                    <label>Payment Method</label>
+                    <select id="paymentMethod">
+                        <option value="CASH">💵 Cash</option>
+                        <option value="CARD">💳 Card</option>
+                        <option value="INSURANCE">🏥 Insurance</option>
+                    </select>
                 </div>
-                <div class="form-group">
-                    <label>Patient ID *</label>
-                    <input type="number" id="patientId" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Generate Bill</button>
-            </form>
-        </div>
-        <div id="billResult" class="card" style="display:none;">
-            <h2>Bill Receipt</h2>
-            <div id="billDetails"></div>
-            <button class="btn btn-primary no-print" onclick="window.print()">Print Bill</button>
+                <button class="btn btn-primary btn-lg" onclick="generateBill()" id="genBtn" style="margin-top:16px;">🧾 Generate Bill</button>
+            </div>
         </div>
     </div>
-    <script src="/Frontend/js/app.js"></script>
-    <script>
-        async function searchAppointment() {
-            const no = document.getElementById('appointmentNoSearch').value.trim();
-            if (!no) { showToast('Enter appointment number', 'error'); return; }
-            try {
-                const a = await apiGet('/appointments/no/' + encodeURIComponent(no));
-                document.getElementById('appointmentId').value = a.appointmentId;
-                document.getElementById('patientId').value = a.patientId;
-                document.getElementById('apptResult').style.display = 'block';
-                document.getElementById('apptResult').textContent = 'Found: Appointment #' + a.appointmentNo + ' | Patient ID: ' + a.patientId + ' | Treatment: ' + a.treatmentType;
-                document.getElementById('apptResult').className = 'alert alert-success';
-            } catch (e) {
-                document.getElementById('apptResult').style.display = 'block';
-                document.getElementById('apptResult').textContent = 'Appointment not found';
-                document.getElementById('apptResult').className = 'alert alert-error';
+
+    <!-- Bill Receipt -->
+    <div id="billCard" class="card" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;" class="no-print">
+            <h2>🧾 Bill Receipt</h2>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-ghost" onclick="window.print()">🖨️ Print</button>
+                <button id="markPaidBtn" class="btn btn-success" onclick="markPaid()" style="display:none;">✅ Mark as PAID</button>
+            </div>
+        </div>
+        <div id="billContent" class="receipt"></div>
+    </div>
+
+    <!-- All Bills List -->
+    <div class="card">
+        <h2>📋 All Bills</h2>
+        <div class="table-wrapper">
+            <table class="table" id="billsTable">
+                <thead><tr><th>Bill ID</th><th>Appt No</th><th>Total (LKR)</th><th>Method</th><th>Status</th><th>Issued At</th><th>Actions</th></tr></thead>
+                <tbody><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['RECEPTIONIST', 'ADMIN']);
+
+    let currentBillId = null;
+    let foundApptId   = null;
+    let allDentists   = [];
+    let allPatients   = [];
+
+    async function init() {
+        try {
+            [allDentists, allPatients] = await Promise.all([
+                apiGet('/dentists'),
+                apiGet('/patients')
+            ]);
+            loadBills();
+
+            // Auto-search from URL param
+            const params = new URLSearchParams(window.location.search);
+            const apptId = params.get('appt_id');
+            if (apptId) {
+                const a = await apiGet('/appointments/' + apptId);
+                prefillFromAppointment(a);
             }
-        }
+        } catch (e) { console.error(e); }
+    }
 
-        document.getElementById('billForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const data = {
-                appointment_id: parseInt(document.getElementById('appointmentId').value),
-                patient_id: parseInt(document.getElementById('patientId').value)
-            };
-            try {
-                const res = await apiPost('/bills/generate', data);
-                if (!res.error) {
-                    showBill(res);
-                    showToast('Bill generated successfully');
-                } else {
-                    showToast(res.error, 'error');
-                }
-            } catch (e) { showToast('Failed to generate bill', 'error'); }
-        });
-
-        function showBill(b) {
-            document.getElementById('billResult').style.display = 'block';
-            document.getElementById('billDetails').innerHTML =
-                '<p><strong>Bill ID:</strong> ' + b.bill_id + '</p>' +
-                '<p><strong>Appointment ID:</strong> ' + b.appointment_id + '</p>' +
-                '<p><strong>Consultation Fee:</strong> LKR ' + b.consultation_fee.toFixed(2) + '</p>' +
-                '<p><strong>Treatment Fee:</strong> LKR ' + b.treatment_fee.toFixed(2) + '</p>' +
-                '<p><strong>Discount:</strong> LKR ' + b.discount.toFixed(2) + '</p>' +
-                '<p><strong>Tax:</strong> LKR ' + b.tax.toFixed(2) + '</p>' +
-                '<p><strong>Total Amount:</strong> LKR ' + b.total_amount.toFixed(2) + '</p>' +
-                '<p><strong>Payment Method:</strong> ' + b.payment_method + '</p>' +
-                '<p><strong>Payment Status:</strong> ' + b.payment_status + '</p>' +
-                '<p><strong>Issued At:</strong> ' + b.issued_at + '</p>';
+    async function searchAppointment() {
+        const no = document.getElementById('apptNoSearch').value.trim();
+        const msg = document.getElementById('searchMsg');
+        if (!no) { showToast('Enter appointment number', 'error'); return; }
+        try {
+            const a = await apiGet('/appointments/no/' + encodeURIComponent(no));
+            prefillFromAppointment(a);
+            msg.style.display = 'none';
+        } catch (e) {
+            msg.className = 'alert alert-error';
+            msg.style.display = 'flex';
+            msg.textContent = '❌ Appointment "' + no + '" not found.';
+            document.getElementById('apptSummary').style.display = 'none';
         }
-    </script>
+    }
+
+    function prefillFromAppointment(a) {
+        foundApptId = a.appointmentId;
+        const dentist = allDentists.find(d => d.dentistId === a.dentistId);
+        const patient = allPatients.find(p => p.patientId === a.patientId);
+
+        document.getElementById('s-apptNo').textContent    = a.appointmentNo;
+        document.getElementById('s-patient').textContent   = patient ? patient.name : 'Patient #' + a.patientId;
+        document.getElementById('s-dentist').textContent   = dentist ? dentist.name : 'Dr. #' + a.dentistId;
+        document.getElementById('s-treatment').textContent = a.treatmentType;
+        document.getElementById('s-date').textContent      = a.appointmentDate + ' ' + (a.appointmentTime||'').substring(0,5);
+        document.getElementById('apptSummary').style.display = 'block';
+
+        // Check if bill already exists
+        apiGet('/bills/appointment/' + a.appointmentId)
+            .then(bill => { showReceipt(bill); })
+            .catch(() => { /* no bill yet, that's fine */ });
+    }
+
+    async function generateBill() {
+        if (!foundApptId) { showToast('Search for an appointment first', 'error'); return; }
+        const btn = document.getElementById('genBtn');
+        btn.disabled = true; btn.textContent = 'Generating...';
+        try {
+            const method = document.getElementById('paymentMethod').value;
+            const res = await apiPost('/bills/generate', {
+                appointment_id: foundApptId,
+                issued_by: parseInt(localStorage.getItem('staffId') || '1')
+            });
+            if (res.error) { showToast(res.error, 'error'); return; }
+            // Update payment method immediately
+            if (method !== 'CASH') {
+                await apiPut('/bills/' + res.billId + '/payment', { payment_method: method, payment_status: 'PENDING' });
+                res.paymentMethod = method;
+            }
+            showReceipt(res);
+            showToast('Bill generated successfully 🎉');
+            loadBills();
+        } catch (e) { showToast('Failed to generate bill', 'error'); }
+        finally { btn.disabled = false; btn.textContent = '🧾 Generate Bill'; }
+    }
+
+    function showReceipt(b) {
+        currentBillId = b.billId;
+        const isPaid  = b.paymentStatus === 'PAID';
+
+        document.getElementById('billContent').innerHTML = `
+            <div class="receipt-header">
+                <h2>🦷 Sunrise Dental Clinic</h2>
+                <p>123 Dental Road, Colombo 07 | Tel: +94 11 234 5678</p>
+                <p style="margin-top:8px;">OFFICIAL RECEIPT</p>
+            </div>
+            <div class="receipt-row"><span class="r-label">Bill No.</span><span class="r-value">#${b.billId}</span></div>
+            <div class="receipt-row"><span class="r-label">Appointment No.</span><span class="r-value">${b.appointmentNo || '–'}</span></div>
+            <div class="receipt-row"><span class="r-label">Date</span><span class="r-value">${b.appointmentDate || new Date().toISOString().split('T')[0]}</span></div>
+            <div class="receipt-row"><span class="r-label">Patient</span><span class="r-value">${b.patientName || '–'}</span></div>
+            <div class="receipt-row"><span class="r-label">Contact</span><span class="r-value">${b.patientContact || '–'}</span></div>
+            <div class="receipt-row"><span class="r-label">Dentist</span><span class="r-value">${b.dentistName || '–'}</span></div>
+            <div class="receipt-row"><span class="r-label">Treatment</span><span class="r-value">${b.treatmentName || b.treatmentCode || '–'}</span></div>
+            <hr>
+            <div class="receipt-row"><span class="r-label">Consultation Fee</span><span class="r-value">LKR ${Number(b.consultationFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
+            <div class="receipt-row"><span class="r-label">Treatment Fee</span><span class="r-value">LKR ${Number(b.treatmentFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
+            ${b.discount > 0 ? `<div class="receipt-row"><span class="r-label">Discount (Senior)</span><span class="r-value" style="color:var(--success);">– LKR ${Number(b.discount).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>` : ''}
+            <div class="receipt-row"><span class="r-label">Tax (5%)</span><span class="r-value">LKR ${Number(b.tax).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
+            <div class="receipt-total"><span>TOTAL AMOUNT</span><span>LKR ${Number(b.totalAmount).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
+            <div class="receipt-row"><span class="r-label">Payment Method</span><span class="r-value">${b.paymentMethod || '–'}</span></div>
+            <div class="receipt-row"><span class="r-label">Payment Status</span>
+                <span class="r-value"><span class="badge ${isPaid ? 'badge-paid' : 'badge-pending'}">${b.paymentStatus}</span></span></div>
+            <p style="text-align:center;margin-top:20px;color:var(--text-muted);font-size:0.875rem;">Thank you for choosing Sunrise Dental Clinic! 😊</p>`;
+
+        document.getElementById('billCard').style.display = 'block';
+        document.getElementById('markPaidBtn').style.display = isPaid ? 'none' : 'inline-flex';
+        document.getElementById('billCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function markPaid() {
+        if (!currentBillId) return;
+        const method = document.getElementById('paymentMethod').value;
+        try {
+            const res = await apiPut('/bills/' + currentBillId + '/payment', {
+                payment_method: method,
+                payment_status: 'PAID'
+            });
+            showToast('Payment recorded ✅');
+            // Reload receipt
+            const bill = await apiGet('/bills/' + currentBillId + '/receipt');
+            showReceipt(bill);
+            loadBills();
+        } catch (e) { showToast('Failed to update payment', 'error'); }
+    }
+
+    async function loadBills() {
+        try {
+            const bills = await apiGet('/bills');
+            const tbody = document.querySelector('#billsTable tbody');
+            if (!bills.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">No bills yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = bills.map(b => `
+                <tr>
+                    <td><strong>#${b.billId}</strong></td>
+                    <td>${b.appointmentId}</td>
+                    <td style="font-weight:700;">LKR ${Number(b.totalAmount).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
+                    <td>${b.paymentMethod}</td>
+                    <td><span class="badge ${b.paymentStatus === 'PAID' ? 'badge-paid' : 'badge-pending'}">${b.paymentStatus}</span></td>
+                    <td>${(b.issuedAt||'').substring(0,16)}</td>
+                    <td><button class="btn btn-sm btn-ghost" onclick="viewBill(${b.billId})">View</button></td>
+                </tr>`).join('');
+        } catch (e) { console.error('Failed to load bills', e); }
+    }
+
+    async function viewBill(billId) {
+        try {
+            const b = await apiGet('/bills/' + billId + '/receipt');
+            showReceipt(b);
+        } catch (e) { showToast('Failed to load bill', 'error'); }
+    }
+
+    init();
+</script>
 </body>
 </html>

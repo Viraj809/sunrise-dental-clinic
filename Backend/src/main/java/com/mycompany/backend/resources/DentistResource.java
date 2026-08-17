@@ -1,7 +1,9 @@
 package com.mycompany.backend.resources;
 
 import Model.Dentist;
+import Model.Staff;
 import DAO.DentistDAO;
+import DAO.StaffDAO;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -15,6 +17,7 @@ import java.util.Map;
 public class DentistResource {
 
     private final DentistDAO dao = new DentistDAO();
+    private final StaffDAO   staffDao = new StaffDAO();
 
     @GET
     public Response getAll() {
@@ -40,6 +43,71 @@ public class DentistResource {
             return Response.ok(dentist).build();
         }
         return Response.status(500).entity(error("Failed to add dentist")).build();
+    }
+
+    /**
+     * Register a dentist together with a login (staff) account so the new dentist
+     * can immediately sign in and access their dashboard. The staff email is kept
+     * identical to the dentist email so the dentist dashboard can be scoped by email.
+     */
+    @POST
+    @Path("/register")
+    public Response register(Map<String, String> body) {
+        String name          = body.get("name");
+        String email         = body.get("email");
+        String nic           = body.get("nic");
+        String contact       = body.get("contact");
+        String specialization= body.get("specialization");
+        String availableDays = body.get("available_days");
+        String rawPassword   = body.get("password");
+
+        if (name == null || name.isEmpty() || email == null || email.isEmpty()
+                || nic == null || nic.isEmpty()) {
+            return Response.status(400)
+                    .entity(error("Name, email and NIC are required to create a dentist with login")).build();
+        }
+        // Prevent duplicate login accounts.
+        if (staffDao.findByEmail(email) != null) {
+            return Response.status(400)
+                    .entity(error("A login account with email " + email + " already exists")).build();
+        }
+        if (rawPassword == null || rawPassword.isEmpty()) {
+            rawPassword = "dentist123";
+        }
+
+        // 1) Save the dentist profile (dentists table).
+        Dentist d = new Dentist();
+        d.setName(name);
+        d.setSpecialization(specialization != null ? specialization : "");
+        d.setContact(contact != null ? contact : "");
+        d.setEmail(email);
+        d.setAvailableDays(availableDays != null ? availableDays : "");
+        d.setActive(true);
+        if (!dao.insert(d)) {
+            return Response.status(500).entity(error("Failed to save dentist")).build();
+        }
+
+        // 2) Create the staff login account (staff table, role DENTIST).
+        String hash = org.mindrot.jbcrypt.BCrypt.hashpw(rawPassword, org.mindrot.jbcrypt.BCrypt.gensalt());
+        Staff s = new Staff();
+        s.setName(name);
+        s.setEmail(email);
+        s.setContact(contact != null ? contact : "");
+        s.setNic(nic);
+        s.setPasswordHash(hash);
+        s.setRole("DENTIST");
+        s.setShiftHours("09:00 - 17:00");
+        s.setActive(true);
+        if (!staffDao.insert(s)) {
+            return Response.status(500)
+                    .entity(error("Dentist saved, but failed to create the login account")).build();
+        }
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("message", "Dentist and login account created successfully");
+        res.put("email", email);
+        res.put("password", rawPassword);
+        return Response.ok(res).build();
     }
 
     @PUT

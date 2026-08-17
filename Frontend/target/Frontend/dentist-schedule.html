@@ -3,66 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dentist Schedule - Sunrise Dental Clinic</title>
+    <title>Dentist Schedule – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Dentist Schedule</h1>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div><h2>Dentist Schedule</h2><p>View daily appointment schedule by dentist</p></div>
     </div>
-    <nav class="nav" id="main-nav"></nav>
-    <div class="container">
-        <div class="card">
-            <h2>Daily Schedule</h2>
-            <div class="form-group">
+
+    <div class="card">
+        <div class="form-row" style="margin-bottom:0;">
+            <div class="form-group" style="margin-bottom:0;">
                 <label>Select Dentist</label>
                 <select id="dentistSelect" onchange="loadSchedule()">
-                    <option value="">Select Dentist</option>
+                    <option value="">— All Dentists —</option>
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom:0;">
                 <label>Select Date</label>
-                <input type="date" id="scheduleDate" value="" onchange="loadSchedule()">
+                <input type="date" id="scheduleDate" onchange="loadSchedule()">
             </div>
+        </div>
+    </div>
+
+    <!-- Stats row -->
+    <div id="statsRow" style="display:none;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;">
+        <div class="card-stat"><span class="stat-icon">📅</span><div class="stat-value" id="s-total" style="color:var(--primary);">0</div><div class="stat-label">Total</div></div>
+        <div class="card-stat"><span class="stat-icon">✅</span><div class="stat-value" id="s-confirmed" style="color:var(--warning);">0</div><div class="stat-label">Confirmed</div></div>
+        <div class="card-stat"><span class="stat-icon">🏁</span><div class="stat-value" id="s-completed" style="color:var(--success);">0</div><div class="stat-label">Completed</div></div>
+        <div class="card-stat"><span class="stat-icon">❌</span><div class="stat-value" id="s-cancelled" style="color:var(--danger);">0</div><div class="stat-label">Cancelled</div></div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Schedule</h2>
+        <div class="table-wrapper">
             <table class="table" id="scheduleTable">
-                <thead><tr><th>Time</th><th>Patient</th><th>Treatment</th><th>Status</th></tr></thead>
-                <tbody></tbody>
+                <thead>
+                    <tr><th>Time</th><th>Appt No</th><th>Patient</th><th>Dentist</th><th>Treatment</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Select a date to view schedule</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
-    <script src="/Frontend/js/app.js"></script>
-    <script>
-        async function loadDentists() {
-            try {
-                const dentists = await apiGet('/dentists');
-                const select = document.getElementById('dentistSelect');
-                dentists.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.dentist_id;
-                    opt.textContent = d.name;
-                    select.appendChild(opt);
-                });
-            } catch (e) { showToast('Failed to load dentists', 'error'); }
-        }
-        loadDentists();
+</div>
 
-        async function loadSchedule() {
-            const dentistId = document.getElementById('dentistSelect').value;
-            const date = document.getElementById('scheduleDate').value;
-            if (!dentistId || !date) return;
-            try {
-                const appointments = await apiGet('/appointments');
-                const filtered = appointments.filter(a => a.dentist_id == dentistId && a.appointment_date == date);
-                const patients = await apiGet('/patients');
-                const tbody = document.querySelector('#scheduleTable tbody');
-                tbody.innerHTML = '';
-                filtered.forEach(a => {
-                    const patient = patients.find(p => p.patient_id === a.patient_id);
-                    const patientName = patient ? patient.name : 'Patient #' + a.patient_id;
-                    tbody.innerHTML += '<tr><td>' + a.appointment_time + '</td><td>' + patientName + '</td><td>' + a.treatment_type + '</td><td>' + getStatusBadge(a.status) + '</td></tr>';
-                });
-            } catch (e) { showToast('Failed to load schedule', 'error'); }
-        }
-    </script>
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth();
+
+    let allDentists = [];
+    let allPatients = [];
+
+    async function init() {
+        try {
+            [allDentists, allPatients] = await Promise.all([
+                apiGet('/dentists'),
+                apiGet('/patients')
+            ]);
+            const select = document.getElementById('dentistSelect');
+            allDentists.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.dentistId;
+                opt.textContent = d.name + (d.specialization ? ' – ' + d.specialization : '');
+                select.appendChild(opt);
+            });
+
+            // If the logged-in user is a dentist, pre-select their own row.
+            const role = localStorage.getItem('role');
+            if (role === 'DENTIST') {
+                const email = (localStorage.getItem('email') || '').toLowerCase();
+                const me = allDentists.find(d => (d.email || '').toLowerCase() === email);
+                if (me) select.value = me.dentistId;
+            }
+
+            // Default to today
+            document.getElementById('scheduleDate').value = new Date().toISOString().split('T')[0];
+
+            // If dentist role, try to pre-select their dentist entry
+            // (admin can select any)
+            loadSchedule();
+        } catch (e) { showToast('Failed to load data', 'error'); }
+    }
+
+    async function loadSchedule() {
+        const dentistId = document.getElementById('dentistSelect').value;
+        const date      = document.getElementById('scheduleDate').value;
+        if (!date) return;
+
+        try {
+            // Get appointments - filter by date and optionally by dentist
+            const appointments = await apiGet('/appointments');
+            let filtered = appointments.filter(a => a.appointmentDate === date);
+            if (dentistId) filtered = filtered.filter(a => a.dentistId == dentistId);
+
+            // Update stats
+            document.getElementById('statsRow').style.display = 'grid';
+            document.getElementById('s-total').textContent     = filtered.length;
+            document.getElementById('s-confirmed').textContent = filtered.filter(a => a.status === 'Confirmed' || a.status === 'Scheduled').length;
+            document.getElementById('s-completed').textContent = filtered.filter(a => a.status === 'Completed').length;
+            document.getElementById('s-cancelled').textContent = filtered.filter(a => a.status === 'Cancelled').length;
+
+            const dentistMap = {};
+            allDentists.forEach(d => dentistMap[d.dentistId] = d.name);
+            const patientMap = {};
+            allPatients.forEach(p => patientMap[p.patientId] = p.name);
+
+            const tbody = document.querySelector('#scheduleTable tbody');
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No appointments for this selection</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered
+                .sort((a,b) => (a.appointmentTime||'').localeCompare(b.appointmentTime||''))
+                .map(a => `
+                <tr>
+                    <td><strong>${(a.appointmentTime||'').substring(0,5)}</strong></td>
+                    <td>${a.appointmentNo}</td>
+                    <td>${patientMap[a.patientId] || 'Patient #' + a.patientId}</td>
+                    <td>${dentistMap[a.dentistId] || 'Dr. #' + a.dentistId}</td>
+                    <td>${a.treatmentType}</td>
+                    <td>${getStatusBadge(a.status)}</td>
+                    <td style="display:flex;gap:6px;">
+                        <a href="/Frontend/view-appointment.html?no=${a.appointmentNo}" class="btn btn-sm btn-ghost">View</a>
+                        <a href="/Frontend/patient-history.html?patient_id=${a.patientId}" class="btn btn-sm btn-ghost">History</a>
+                    </td>
+                </tr>`).join('');
+        } catch (e) { showToast('Failed to load schedule', 'error'); }
+    }
+
+    init();
+</script>
 </body>
 </html>

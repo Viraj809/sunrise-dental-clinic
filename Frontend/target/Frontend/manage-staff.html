@@ -3,37 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Staff - Sunrise Dental Clinic</title>
+    <title>Manage Staff – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Manage Staff</h1>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div><h2>Staff Management</h2><p>View, add and manage staff accounts</p></div>
+        <button class="btn btn-primary" onclick="openModal()">➕ Add Staff</button>
     </div>
-    <nav class="nav" id="main-nav"></nav>
-    <div class="container">
-        <div id="toast-container"></div>
-        <div class="card">
-            <h2>Staff List</h2>
+
+    <div class="card">
+        <div class="table-wrapper">
             <table class="table" id="staffTable">
-                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Contact</th><th>Role</th><th>Status</th></tr></thead>
-                <tbody></tbody>
+                <thead>
+                    <tr><th>ID</th><th>Name</th><th>Email</th><th>Contact</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
-    <script src="/Frontend/js/app.js"></script>
-    <script>
-        async function loadStaff() {
-            try {
-                const staff = await apiGet('/staff');
-                const tbody = document.querySelector('#staffTable tbody');
-                tbody.innerHTML = '';
-                staff.forEach(s => {
-                    tbody.innerHTML += '<tr><td>' + s.staff_id + '</td><td>' + s.name + '</td><td>' + s.email + '</td><td>' + s.contact + '</td><td>' + s.role + '</td><td>' + (s.is_active ? 'Active' : 'Inactive') + '</td></tr>';
-                });
-            } catch (e) { showToast('Failed to load staff', 'error'); }
+</div>
+
+<!-- Add Staff Modal -->
+<div id="addModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <h3>➕ Add New Staff</h3>
+        <div id="modalError" class="alert alert-error" style="display:none;"></div>
+        <div class="form-row">
+            <div class="form-group"><label>Full Name *</label><input type="text" id="m-name" placeholder="Full name"></div>
+            <div class="form-group"><label>NIC *</label><input type="text" id="m-nic" placeholder="NIC number"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Email *</label><input type="email" id="m-email" placeholder="email@example.com"></div>
+            <div class="form-group"><label>Password *</label><input type="password" id="m-password" placeholder="Min 8 characters"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Contact</label><input type="text" id="m-contact" placeholder="07XXXXXXXX"></div>
+            <div class="form-group"><label>Role *</label>
+                <select id="m-role">
+                    <option value="RECEPTIONIST">Receptionist</option>
+                    <option value="DENTIST">Dentist</option>
+                    <option value="ADMIN">Admin</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group"><label>Shift Hours</label><input type="text" id="m-shift" placeholder="e.g. 08:00–16:00"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveStaff()" id="saveStaffBtn">💾 Save Staff</button>
+        </div>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['ADMIN']);
+
+    async function loadStaff() {
+        try {
+            const staff = await apiGet('/staff');
+            const tbody = document.querySelector('#staffTable tbody');
+            if (!staff.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No staff found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = staff.map(s => `
+                <tr>
+                    <td><strong>${s.staffId}</strong></td>
+                    <td>${s.name}</td>
+                    <td>${s.email}</td>
+                    <td>${s.contact || '–'}</td>
+                    <td><span class="badge badge-${s.role.toLowerCase()}">${s.role}</span></td>
+                    <td><span class="badge ${s.active ? 'badge-paid' : 'badge-cancelled'}">${s.active ? 'Active' : 'Inactive'}</span></td>
+                    <td style="display:flex;gap:6px;">
+                        <button class="btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}"
+                                onclick="toggleStatus(${s.staffId}, ${s.active})">
+                            ${s.active ? '🔒 Deactivate' : '🔓 Activate'}
+                        </button>
+                    </td>
+                </tr>`).join('');
+        } catch (e) { showToast('Failed to load staff', 'error'); }
+    }
+
+    async function toggleStatus(staffId, isActive) {
+        try {
+            await apiPut('/staff/' + staffId + '/toggle', {});
+            showToast((isActive ? 'Staff deactivated' : 'Staff activated') + ' ✅');
+            loadStaff();
+        } catch (e) { showToast('Failed to update status', 'error'); }
+    }
+
+    function openModal() {
+        document.getElementById('addModal').style.display = 'flex';
+        document.getElementById('modalError').style.display = 'none';
+    }
+
+    function closeModal() {
+        document.getElementById('addModal').style.display = 'none';
+        ['m-name','m-nic','m-email','m-password','m-contact','m-shift'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    async function saveStaff() {
+        const errDiv = document.getElementById('modalError');
+        errDiv.style.display = 'none';
+
+        const name     = document.getElementById('m-name').value.trim();
+        const nic      = document.getElementById('m-nic').value.trim();
+        const email    = document.getElementById('m-email').value.trim();
+        const password = document.getElementById('m-password').value;
+        const role     = document.getElementById('m-role').value;
+
+        if (!name || !nic || !email || !password || !role) {
+            errDiv.textContent = 'Name, NIC, email, password and role are required.';
+            errDiv.style.display = 'flex'; return;
         }
-        loadStaff();
-    </script>
+        if (password.length < 8) {
+            errDiv.textContent = 'Password must be at least 8 characters.';
+            errDiv.style.display = 'flex'; return;
+        }
+
+        const btn = document.getElementById('saveStaffBtn');
+        btn.disabled = true; btn.textContent = 'Saving...';
+
+        try {
+            const res = await apiPost('/staff', {
+                name,
+                nic,
+                email,
+                password,
+                role,
+                contact:     document.getElementById('m-contact').value,
+                shift_hours: document.getElementById('m-shift').value
+            });
+            if (res.error) {
+                errDiv.textContent = res.error;
+                errDiv.style.display = 'flex';
+            } else {
+                showToast('Staff added successfully ✅');
+                closeModal();
+                loadStaff();
+            }
+        } catch (e) {
+            errDiv.textContent = 'Failed to add staff.';
+            errDiv.style.display = 'flex';
+        }
+        btn.disabled = false; btn.textContent = '💾 Save Staff';
+    }
+
+    loadStaff();
+</script>
 </body>
 </html>

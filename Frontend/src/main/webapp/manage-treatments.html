@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treatment Management – Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div><h2>Treatment Management</h2><p>View, add, edit and price treatment types</p></div>
+        <button class="btn btn-primary" onclick="openModal()">➕ Add Treatment</button>
+    </div>
+
+    <div class="card">
+        <h2>🦷 Treatment Types</h2>
+        <div class="table-wrapper">
+            <table class="table" id="treatmentTable">
+                <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Consultation (LKR)</th><th>Treatment (LKR)</th><th>Duration</th><th>Actions</th></tr></thead>
+                <tbody><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Treatment Modal -->
+<div id="treatmentModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <h3 id="modalTitle">➕ Add Treatment</h3>
+        <div id="modalError" class="alert alert-error" style="display:none;"></div>
+        <div class="form-row">
+            <div class="form-group"><label>Treatment Code *</label><input type="text" id="m-code" placeholder="e.g. WHITENING"></div>
+            <div class="form-group"><label>Treatment Name *</label><input type="text" id="m-name" placeholder="Teeth Whitening"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Consultation Fee (LKR) *</label><input type="number" step="0.01" min="0" id="m-consult"></div>
+            <div class="form-group"><label>Treatment Price (LKR) *</label><input type="number" step="0.01" min="0" id="m-price"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Category</label><input type="text" id="m-category" placeholder="e.g. Cosmetic"></div>
+            <div class="form-group"><label>Duration (minutes)</label><input type="number" min="0" id="m-duration"></div>
+        </div>
+        <div class="form-group"><label>Description</label><textarea id="m-desc" placeholder="Short description"></textarea></div>
+        <input type="hidden" id="m-originalCode">
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveTreatment()" id="saveBtn">💾 Save Treatment</button>
+        </div>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['ADMIN']);
+
+    let editingCode = null;
+
+    async function loadTreatments() {
+        try {
+            const treatments = await apiGet('/treatments');
+            const tbody = document.querySelector('#treatmentTable tbody');
+            if (!treatments.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">No treatments found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = treatments.map(t => `
+                <tr>
+                    <td><strong>${t.treatmentCode}</strong></td>
+                    <td>${t.treatmentName}</td>
+                    <td>${t.category || '–'}</td>
+                    <td>LKR ${Number(t.consultationFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
+                    <td>LKR ${Number(t.basePrice).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
+                    <td>${t.durationMinutes ? t.durationMinutes + ' min' : '–'}</td>
+                    <td style="display:flex;gap:6px;">
+                        <button class="btn btn-sm btn-warning" onclick="openEditModal('${t.treatmentCode}')">✏️ Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteTreatment('${t.treatmentCode}')">🗑️ Delete</button>
+                    </td>
+                </tr>`).join('');
+        } catch (e) { showToast('Failed to load treatments', 'error'); }
+    }
+
+    function openModal() {
+        editingCode = null;
+        document.getElementById('modalTitle').textContent = '➕ Add Treatment';
+        ['m-code','m-name','m-consult','m-price','m-category','m-duration','m-desc'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('m-code').readOnly = false;
+        document.getElementById('modalError').style.display = 'none';
+        document.getElementById('treatmentModal').style.display = 'flex';
+    }
+
+    async function openEditModal(code) {
+        try {
+            const t = await apiGet('/treatments/' + encodeURIComponent(code));
+            editingCode = code;
+            document.getElementById('modalTitle').textContent = '✏️ Edit Treatment';
+            document.getElementById('m-code').value = t.treatmentCode;
+            document.getElementById('m-code').readOnly = true;
+            document.getElementById('m-name').value = t.treatmentName || '';
+            document.getElementById('m-consult').value = t.consultationFee || 0;
+            document.getElementById('m-price').value = t.basePrice || 0;
+            document.getElementById('m-category').value = t.category || '';
+            document.getElementById('m-duration').value = t.durationMinutes || '';
+            document.getElementById('m-desc').value = t.description || '';
+            document.getElementById('modalError').style.display = 'none';
+            document.getElementById('treatmentModal').style.display = 'flex';
+        } catch (e) { showToast('Failed to load treatment', 'error'); }
+    }
+
+    function closeModal() {
+        document.getElementById('treatmentModal').style.display = 'none';
+    }
+
+    async function saveTreatment() {
+        const errDiv = document.getElementById('modalError');
+        errDiv.style.display = 'none';
+
+        const code = document.getElementById('m-code').value.trim();
+        const name = document.getElementById('m-name').value.trim();
+        const consult = parseFloat(document.getElementById('m-consult').value);
+        const price = parseFloat(document.getElementById('m-price').value);
+        if (!code || !name) { errDiv.textContent = 'Treatment code and name are required.'; errDiv.style.display = 'flex'; return; }
+        if (isNaN(consult) || isNaN(price) || consult < 0 || price < 0) {
+            errDiv.textContent = 'Please enter valid, non-negative prices.'; errDiv.style.display = 'flex'; return;
+        }
+
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true; btn.textContent = 'Saving...';
+        const data = {
+            treatmentCode:   code,
+            treatmentName:   name,
+            consultationFee: consult,
+            basePrice:       price,
+            category:        document.getElementById('m-category').value,
+            durationMinutes: parseInt(document.getElementById('m-duration').value) || 0,
+            description:     document.getElementById('m-desc').value
+        };
+        try {
+            let res;
+            if (editingCode) res = await apiPut('/treatments/' + encodeURIComponent(editingCode), data);
+            else             res = await apiPost('/treatments', data);
+            if (res.error) {
+                errDiv.textContent = res.error; errDiv.style.display = 'flex';
+            } else {
+                showToast((editingCode ? 'Treatment updated' : 'Treatment added') + ' ✅');
+                closeModal(); loadTreatments();
+            }
+        } catch (e) { errDiv.textContent = 'Failed to save treatment.'; errDiv.style.display = 'flex'; }
+        btn.disabled = false; btn.textContent = '💾 Save Treatment';
+    }
+
+    async function deleteTreatment(code) {
+        if (!confirm('Delete treatment "' + code + '"? This cannot be undone.')) return;
+        try {
+            const res = await apiDelete('/treatments/' + encodeURIComponent(code));
+            if (res.error) showToast(res.error, 'error');
+            else { showToast('Treatment deleted ✅'); loadTreatments(); }
+        } catch (e) { showToast('Failed to delete treatment', 'error'); }
+    }
+
+    loadTreatments();
+</script>
+</body>
+</html>

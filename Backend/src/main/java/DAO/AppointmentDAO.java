@@ -96,7 +96,7 @@ public class AppointmentDAO {
     public boolean insert(Appointment appointment) {
         String sql = "INSERT INTO appointments (appointment_no, patient_id, dentist_id, treatment_type, appointment_date, appointment_time, status, notes, contact, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, appointment.getAppointmentNo());
             ps.setInt(2, appointment.getPatientId());
             ps.setInt(3, appointment.getDentistId());
@@ -107,7 +107,16 @@ public class AppointmentDAO {
             ps.setString(8, appointment.getNotes());
             ps.setString(9, appointment.getContact());
             ps.setInt(10, appointment.getCreatedBy());
-            return ps.executeUpdate() > 0;
+            int affected = ps.executeUpdate();
+            if (affected > 0) {
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        appointment.setAppointmentId(keys.getInt(1));
+                    }
+                }
+                return true;
+            }
+            return false;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;

@@ -62,6 +62,36 @@ public class TreatmentDAO {
         }
     }
 
+    public boolean update(Treatment treatment) {
+        String sql = "UPDATE treatments SET treatment_name=?, base_price=?, consultation_fee=?, category=?, duration_minutes=?, description=? WHERE treatment_code=?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, treatment.getTreatmentName());
+            ps.setDouble(2, treatment.getBasePrice());
+            ps.setDouble(3, treatment.getConsultationFee());
+            ps.setString(4, treatment.getCategory());
+            ps.setInt(5, treatment.getDurationMinutes());
+            ps.setString(6, treatment.getDescription());
+            ps.setString(7, treatment.getTreatmentCode());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean delete(String code) {
+        String sql = "DELETE FROM treatments WHERE treatment_code = ?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, code);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private Treatment mapTreatment(ResultSet rs) throws SQLException {
         Treatment t = new Treatment();
         t.setTreatmentId(rs.getInt("treatment_id"));

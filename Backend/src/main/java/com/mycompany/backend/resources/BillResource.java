@@ -128,12 +128,17 @@ public class BillResource {
             } catch (Exception ignored) {}
         }
 
+        // The Strategy returns the treatment fee ALREADY adjusted for the senior
+        // discount (StandardBillStrategy = full price, SeniorBillStrategy = 10% off).
+        // Therefore the discount column is purely informational (base - charged fee)
+        // and must NOT be subtracted again from the total.
+        double basePrice        = treatment.getBasePrice();
         BillCalculationStrategy strategy = BillFactory.createBill(appointment.getPatientId(), patientDao);
-        double treatmentFee    = strategy.calculateTreatmentFee(treatment.getBasePrice(), patientAge);
+        double treatmentFee    = strategy.calculateTreatmentFee(basePrice, patientAge);
         double consultationFee = treatment.getConsultationFee();
-        double discount = (patientAge >= 60) ? Math.round(treatmentFee * 0.10 * 100.0) / 100.0 : 0.0;
+        double discount = Math.round((basePrice - treatmentFee) * 100.0) / 100.0;
         double tax      = Math.round((treatmentFee + consultationFee) * 0.05 * 100.0) / 100.0;
-        double total    = Math.round((consultationFee + treatmentFee - discount + tax) * 100.0) / 100.0;
+        double total    = Math.round((consultationFee + treatmentFee + tax) * 100.0) / 100.0;
 
         String issuedByStr = request.containsKey("issued_by") ? String.valueOf(request.get("issued_by")) : "1";
 

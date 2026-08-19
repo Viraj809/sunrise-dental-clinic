@@ -1,5 +1,5 @@
 -- ============================================================
--- Sunrise Dental Clinic — Database Schema
+-- Sunrise Dental Clinic - Database Schema
 -- Database: sunrise_dental_db
 -- ============================================================
 
@@ -155,12 +155,12 @@ BEGIN
     SET v_treatment_fee = fn_get_treatment_cost(v_treatment_code, v_patient_id);
     SET v_tax = ROUND((v_treatment_fee + v_consultation_fee) * 0.05, 2);
 
-    -- Senior citizen (>= 60) gets a 10% discount on the treatment fee.
-    IF fn_calculate_age(v_patient_id) >= 60 THEN
-        SET v_discount = ROUND(v_treatment_fee * 0.10, 2);
-    END IF;
+    -- fn_get_treatment_cost already applies the 10% senior discount to v_treatment_fee,
+    -- so v_discount is purely informational (base price - charged fee) and must NOT be
+    -- subtracted again from the total. This keeps the calculation accurate (single 10%).
+    SET v_discount = ROUND(v_base_price - v_treatment_fee, 2);
 
-    SET v_total = v_consultation_fee + v_treatment_fee - v_discount + v_tax;
+    SET v_total = v_consultation_fee + v_treatment_fee + v_tax;
 
     INSERT INTO bills (appointment_id, consultation_fee, treatment_fee, discount, tax, total_amount, payment_method, payment_status, issued_by, issued_at)
     VALUES (p_appointment_id, v_consultation_fee, v_treatment_fee, v_discount, v_tax, v_total, 'CASH', 'PENDING', 1, NOW())
@@ -232,7 +232,8 @@ DELIMITER ;
 -- Trigger: trg_appointment_audit (AFTER INSERT/UPDATE/DELETE)
 DELIMITER $$
 
-CREATE TRIGGER IF NOT EXISTS trg_appointment_audit_insert
+DROP TRIGGER IF EXISTS trg_appointment_audit_insert$$
+CREATE TRIGGER trg_appointment_audit_insert
 AFTER INSERT ON appointments
 FOR EACH ROW
 BEGIN
@@ -242,7 +243,8 @@ BEGIN
                    ', dentist_id=', NEW.dentist_id, ', status=', NEW.status));
 END$$
 
-CREATE TRIGGER IF NOT EXISTS trg_appointment_audit_update
+DROP TRIGGER IF EXISTS trg_appointment_audit_update$$
+CREATE TRIGGER trg_appointment_audit_update
 AFTER UPDATE ON appointments
 FOR EACH ROW
 BEGIN
@@ -252,7 +254,8 @@ BEGIN
             CONCAT('status=', NEW.status, ', date=', DATE_FORMAT(NEW.appointment_date, '%Y-%m-%d'), ', time=', TIME_FORMAT(NEW.appointment_time, '%H:%i')));
 END$$
 
-CREATE TRIGGER IF NOT EXISTS trg_appointment_audit_delete
+DROP TRIGGER IF EXISTS trg_appointment_audit_delete$$
+CREATE TRIGGER trg_appointment_audit_delete
 AFTER DELETE ON appointments
 FOR EACH ROW
 BEGIN
@@ -336,15 +339,13 @@ JOIN dentists d ON a.dentist_id = d.dentist_id;
 INSERT INTO staff (name, email, contact, address, NIC, password_hash, role, shift_hours, is_active) VALUES
 ('System Admin', 'admin@sunrisedental.com', '0770000001', 'Colombo 07', '123456789V', '$2a$10$7dnupNlC1efH2b0prmbabeIgBN0KHXehX3HZ2Tbxlq6UtA1fZBElu', 'ADMIN', '08:00 - 18:00', TRUE),
 ('Receptionist One', 'reception@sunrisedental.com', '0770000002', 'Colombo 03', '987654321V', '$2a$10$wzVS.PmJfc9l9cqCAjQ5z.gcb96I9FzE7KUXVEcslL0p3Oli9Vdt6', 'RECEPTIONIST', '08:00 - 17:00', TRUE),
-('Dr. Perera', 'perera@sunrisedental.com', '0770000003', 'Colombo 05', '456789123V', '$2a$10$1zSgjfnH95gqFqXkTCvJ6etuoX17I9gO4m8MckbcKDbrFZVqW4NA.', 'DENTIST', '09:00 - 17:00', TRUE)
-AS new_staff ON DUPLICATE KEY UPDATE name = new_staff.name;
+('Dr. Perera', 'perera@sunrisedental.com', '0770000003', 'Colombo 05', '456789123V', '$2a$10$1zSgjfnH95gqFqXkTCvJ6etuoX17I9gO4m8MckbcKDbrFZVqW4NA.', 'DENTIST', '09:00 - 17:00', TRUE) ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- Dentists
 INSERT INTO dentists (name, specialization, contact, email, available_days, is_active) VALUES
 ('Dr. Perera', 'General Dentistry', '0770000003', 'perera@sunrisedental.com', 'Mon,Tue,Wed,Thu,Fri', TRUE),
 ('Dr. Silva', 'Orthodontics', '0770000004', 'silva@sunrisedental.com', 'Mon,Wed,Fri', TRUE),
-('Dr. Fernando', 'Oral Surgery', '0770000005', 'fernando@sunrisedental.com', 'Tue,Thu,Sat', TRUE)
-AS new_dentist ON DUPLICATE KEY UPDATE name = new_dentist.name;
+('Dr. Fernando', 'Oral Surgery', '0770000005', 'fernando@sunrisedental.com', 'Tue,Thu,Sat', TRUE) ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- Treatments
 INSERT INTO treatments (treatment_code, treatment_name, base_price, consultation_fee, category, duration_minutes, description) VALUES
@@ -357,8 +358,7 @@ INSERT INTO treatments (treatment_code, treatment_name, base_price, consultation
 ('CROWN', 'Dental Crown', 25000.00, 500.00, 'Restorative', 60, 'Crown placement'),
 ('BRACES', 'Braces (Orthodontics)', 80000.00, 1000.00, 'Orthodontics', 30, 'Orthodontic braces consultation'),
 ('IMPLANT', 'Dental Implant', 60000.00, 1000.00, 'Surgical', 90, 'Dental implant consultation'),
-('WISDOM', 'Wisdom Tooth Removal', 5000.00, 500.00, 'Surgical', 60, 'Wisdom tooth extraction consultation')
-AS new_treatment ON DUPLICATE KEY UPDATE treatment_name = new_treatment.treatment_name;
+('WISDOM', 'Wisdom Tooth Removal', 5000.00, 500.00, 'Surgical', 60, 'Wisdom tooth extraction consultation') ON DUPLICATE KEY UPDATE treatment_name = VALUES(treatment_name);
 
 -- Dummy Patients
 INSERT INTO patients (name, date_of_birth, gender, address, contact, email, NIC, blood_group, allergies) VALUES
@@ -366,8 +366,7 @@ INSERT INTO patients (name, date_of_birth, gender, address, contact, email, NIC,
 ('Nimali Silva', '1990-08-25', 'Female', '45, Kandy Road, Kadawatha', '0779876543', 'nimali@yahoo.com', '907384123V', 'A+', 'Penicillin'),
 ('Sunil Fernando', '1960-02-15', 'Male', '78, Negombo Road, Wattala', '0723456789', 'sunil.f@hotmail.com', '600460123V', 'B-', 'Latex'),
 ('Amal Perera', '1995-11-05', 'Male', '34, Main Street, Gampaha', '0754321987', 'amal.p@gmail.com', '953100123V', 'AB+', 'None'),
-('Kumari Silva', '1988-07-20', 'Female', '56, Temple Road, Kelaniya', '0787654321', 'kumari.s@yahoo.com', '887020123V', 'O-', 'Ibuprofen')
-AS new_patient ON DUPLICATE KEY UPDATE name = new_patient.name;
+('Kumari Silva', '1988-07-20', 'Female', '56, Temple Road, Kelaniya', '0787654321', 'kumari.s@yahoo.com', '887020123V', 'O-', 'Ibuprofen') ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- Dummy Appointments (Some today, some past, some future)
 -- Assume created_by = 2 (Receptionist)
@@ -378,8 +377,7 @@ INSERT INTO appointments (appointment_no, patient_id, dentist_id, treatment_type
 ('SDC-2026-0003', 3, 3, 'EXTRACT', CURDATE(), '14:00:00', 'Confirmed', 'Wisdom tooth', '0723456789', 2),
 ('SDC-2026-0004', 4, 1, 'CLEANING', DATE_ADD(CURDATE(), INTERVAL 1 DAY), '09:30:00', 'Scheduled', 'Cleaning', '0754321987', 2),
 ('SDC-2026-0005', 5, 2, 'WHITENING', DATE_SUB(CURDATE(), INTERVAL 2 DAY), '11:00:00', 'Completed', 'Whitening', '0787654321', 2),
-('SDC-2026-0006', 1, 3, 'ROOTCANAL', CURDATE(), '16:00:00', 'Cancelled', 'Patient sick', '0712345678', 2)
-AS new_appointment ON DUPLICATE KEY UPDATE status = new_appointment.status;
+('SDC-2026-0006', 1, 3, 'ROOTCANAL', CURDATE(), '16:00:00', 'Cancelled', 'Patient sick', '0712345678', 2) ON DUPLICATE KEY UPDATE status = VALUES(status);
 
 -- Additional patients (ids 6-15) so reports have meaningful volume
 INSERT INTO patients (name, date_of_birth, gender, address, contact, email, NIC, blood_group, allergies) VALUES
@@ -392,8 +390,7 @@ INSERT INTO patients (name, date_of_birth, gender, address, contact, email, NIC,
 ('Madhavi Perera',      '1983-07-07', 'Female', '88, Park Avenue, Colombo 05',    '0777777777', 'madhavi.p@yahoo.com',     '834567815V', 'B+',  'Penicillin'),
 ('Pasan Weerasinghe',   '2000-11-11', 'Male',   '5, Temple Lane, Avissawella',    '0788888888', 'pasan.w@gmail.com',       '004567816V', 'AB-', 'None'),
 ('Chamari Dissanayake', '1991-02-02', 'Female', '61, Green Path, Colombo 03',     '0799999999', 'chamari.d@yahoo.com',     '914567817V', 'O+',  'None'),
-('Ravi Thalagala',      '1975-05-05', 'Male',   '27, Main Street, Horana',        '0700000000', 'ravi.t@gmail.com',        '754567818V', 'A+',  'None')
-AS new_patient2 ON DUPLICATE KEY UPDATE name = new_patient2.name;
+('Ravi Thalagala',      '1975-05-05', 'Male',   '27, Main Street, Horana',        '0700000000', 'ravi.t@gmail.com',        '754567818V', 'A+',  'None') ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- Additional appointments spread over the last ~3 weeks (varied statuses & treatments)
 INSERT INTO appointments (appointment_no, patient_id, dentist_id, treatment_type, appointment_date, appointment_time, status, notes, contact, created_by) VALUES
@@ -412,8 +409,7 @@ INSERT INTO appointments (appointment_no, patient_id, dentist_id, treatment_type
 ('SDC-2026-0113', 8,  1, 'CLEANING',  DATE_SUB(CURDATE(), INTERVAL 1 DAY),  '09:00:00', 'Completed', 'Cleaning',                   '0733333333', 2),
 ('SDC-2026-0114', 9,  2, 'CHKUP',     CURDATE(),                            '11:00:00', 'Scheduled', 'Checkup',                    '0744444444', 2),
 ('SDC-2026-0115', 10, 3, 'FILLING',   CURDATE(),                            '15:00:00', 'Confirmed', 'Filling (senior)',            '0755555555', 2),
-('SDC-2026-0116', 11, 1, 'WHITENING', DATE_ADD(CURDATE(), INTERVAL 1 DAY),  '10:00:00', 'Scheduled', 'Whitening',                  '0766666666', 2)
-AS new_appointment2 ON DUPLICATE KEY UPDATE status = new_appointment2.status;
+('SDC-2026-0116', 11, 1, 'WHITENING', DATE_ADD(CURDATE(), INTERVAL 1 DAY),  '10:00:00', 'Scheduled', 'Whitening',                  '0766666666', 2) ON DUPLICATE KEY UPDATE status = VALUES(status);
 
 -- Generate dummy bills (using the stored procedure) for the COMPLETED appointments.
 -- Referenced by appointment_no so the script stays idempotent regardless of auto-increment ids.
@@ -449,8 +445,7 @@ INSERT INTO notifications (appointment_id, channel, recipient, message, status) 
 ((SELECT appointment_id FROM appointments WHERE appointment_no = 'SDC-2026-0001'), 'EMAIL', 'kamal@gmail.com',     'Appointment SDC-2026-0001 confirmed', 'SENT'),
 ((SELECT appointment_id FROM appointments WHERE appointment_no = 'SDC-2026-0005'), 'SMS',   '0787654321',          'Reminder: Whitening appt SDC-2026-0005', 'SENT'),
 ((SELECT appointment_id FROM appointments WHERE appointment_no = 'SDC-2026-0102'), 'IN_APP','reception@sunrisedental.com', 'Senior discount applied to SDC-2026-0102', 'SENT'),
-((SELECT appointment_id FROM appointments WHERE appointment_no = 'SDC-2026-0105'), 'EMAIL', 'buddhika.s@yahoo.com','Root canal SDC-2026-0105 scheduled', 'SENT')
-AS new_notif ON DUPLICATE KEY UPDATE message = new_notif.message;
+((SELECT appointment_id FROM appointments WHERE appointment_no = 'SDC-2026-0105'), 'EMAIL', 'buddhika.s@yahoo.com','Root canal SDC-2026-0105 scheduled', 'SENT') ON DUPLICATE KEY UPDATE message = VALUES(message);
 
 -- ============================================================
 -- 4.3 Additional Advanced DB Objects (reporting support)

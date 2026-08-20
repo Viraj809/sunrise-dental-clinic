@@ -2,6 +2,8 @@ package com.mycompany.backend.resources;
 
 import Model.Staff;
 import DAO.StaffDAO;
+import Service.SecurityUtil;
+import Service.AuditService;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -21,6 +23,7 @@ public class StaffResource {
 
     @GET
     public Response getAll() {
+        SecurityUtil.requireAdmin();
         List<Staff> list = dao.findAll();
         return Response.ok(list).build();
     }
@@ -28,6 +31,7 @@ public class StaffResource {
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") int id) {
+        SecurityUtil.requireAdmin();
         Staff s = dao.findById(id);
         if (s == null) return Response.status(404).entity(error("Staff not found")).build();
         return Response.ok(s).build();
@@ -35,6 +39,7 @@ public class StaffResource {
 
     @POST
     public Response create(Map<String, String> body) {
+        SecurityUtil.requireAdmin();
         String name      = body.get("name");
         String email     = body.get("email");
         String contact   = body.get("contact");
@@ -65,6 +70,7 @@ public class StaffResource {
         s.setActive(true);
 
         if (dao.insert(s)) {
+            AuditService.getInstance().logCurrent("INSERT", "staff", s.getStaffId(), "Staff created: " + email);
             Map<String, Object> res = new HashMap<>();
             res.put("message", "Staff created successfully");
             res.put("email", email);
@@ -76,6 +82,7 @@ public class StaffResource {
     @PUT
     @Path("/{id}")
     public Response update(@PathParam("id") int id, Map<String, String> body) {
+        SecurityUtil.requireAdmin();
         Staff s = dao.findById(id);
         if (s == null) return Response.status(404).entity(error("Staff not found")).build();
 
@@ -97,6 +104,7 @@ public class StaffResource {
     @PUT
     @Path("/{id}/toggle")
     public Response toggleActive(@PathParam("id") int id) {
+        SecurityUtil.requireAdmin();
         Staff s = dao.findById(id);
         if (s == null) return Response.status(404).entity(error("Staff not found")).build();
         s.setActive(!s.isActive());

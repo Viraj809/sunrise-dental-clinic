@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS patients (
     NIC           VARCHAR(20)  NOT NULL UNIQUE,
     blood_group   VARCHAR(5),
     allergies     VARCHAR(255),
+    password_hash VARCHAR(255) NULL,
+    is_active     BOOLEAN DEFAULT TRUE,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -60,7 +62,8 @@ CREATE TABLE IF NOT EXISTS appointments (
     treatment_type    VARCHAR(100) NOT NULL,
     appointment_date  DATE NOT NULL,
     appointment_time  TIME NOT NULL,
-    status            ENUM('Scheduled', 'Confirmed', 'Completed', 'Cancelled') DEFAULT 'Scheduled',
+    appointment_type  VARCHAR(20) NOT NULL DEFAULT 'Consultation',
+    status            ENUM('Scheduled', 'Pending', 'Confirmed', 'Waiting', 'With Dentist', 'Treatment In Progress', 'Completed', 'Cancelled') DEFAULT 'Pending',
     notes             TEXT,
     contact           VARCHAR(15),
     created_by        INT NOT NULL,
@@ -100,25 +103,60 @@ CREATE TABLE IF NOT EXISTS bills (
 
 CREATE TABLE IF NOT EXISTS audit_log (
     log_id         INT AUTO_INCREMENT PRIMARY KEY,
-    action_type    ENUM('INSERT', 'UPDATE', 'DELETE') NOT NULL,
-    table_name     VARCHAR(50) NOT NULL,
-    record_id      INT NOT NULL,
+    action_type    ENUM('LOGIN', 'LOGOUT', 'INSERT', 'UPDATE', 'DELETE', 'CANCEL', 'PAYMENT', 'GENERATE') NOT NULL,
+    table_name     VARCHAR(50) NOT NULL DEFAULT 'system',
+    record_id      INT NOT NULL DEFAULT 0,
     performed_by   INT,
+    role           VARCHAR(20),
+    description    TEXT,
     performed_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     old_value      TEXT,
     new_value      TEXT
 );
 
 CREATE TABLE IF NOT EXISTS notifications (
-    notification_id INT AUTO_INCREMENT PRIMARY KEY,
-    appointment_id  INT,
-    channel         ENUM('EMAIL', 'SMS', 'IN_APP') NOT NULL,
-    recipient       VARCHAR(255) NOT NULL,
-    message         TEXT NOT NULL,
-    status          ENUM('PENDING', 'SENT', 'FAILED') DEFAULT 'PENDING',
-    sent_at         TIMESTAMP NULL,
-    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    notification_id   INT AUTO_INCREMENT PRIMARY KEY,
+    user_id           INT NULL,
+    appointment_id    INT NULL,
+    title             VARCHAR(255),
+    channel           ENUM('EMAIL', 'SMS', 'IN_APP') NOT NULL DEFAULT 'IN_APP',
+    recipient         VARCHAR(255),
+    notification_type VARCHAR(50)  DEFAULT 'GENERAL',
+    message           TEXT NOT NULL,
+    is_read           BOOLEAN DEFAULT FALSE,
+    status            ENUM('PENDING', 'SENT', 'FAILED', 'READ') DEFAULT 'PENDING',
+    sent_at           TIMESTAMP NULL,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_notif_appointment FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id)
+);
+
+-- Patient waiting queue (managed by receptionist)
+CREATE TABLE IF NOT EXISTS patient_queue (
+    queue_id         INT AUTO_INCREMENT PRIMARY KEY,
+    queue_number     VARCHAR(20) NOT NULL,
+    appointment_id   INT NULL,
+    patient_id       INT NOT NULL,
+    dentist_id       INT NOT NULL,
+    appointment_time TIME,
+    status           ENUM('Waiting', 'With Dentist', 'Completed') DEFAULT 'Waiting',
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_queue_appointment FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id),
+    CONSTRAINT fk_queue_patient     FOREIGN KEY (patient_id)    REFERENCES patients(patient_id),
+    CONSTRAINT fk_queue_dentist     FOREIGN KEY (dentist_id)    REFERENCES dentists(dentist_id)
+);
+
+-- Dentist weekly availability / working hours
+CREATE TABLE IF NOT EXISTS dentist_schedule (
+    schedule_id       INT AUTO_INCREMENT PRIMARY KEY,
+    dentist_id        INT NOT NULL,
+    day_of_week       VARCHAR(20) NOT NULL,
+    start_time        TIME NOT NULL,
+    end_time          TIME NOT NULL,
+    availability_status ENUM('Available', 'Unavailable') DEFAULT 'Available',
+    unavailable_date  DATE NULL,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_schedule_dentist FOREIGN KEY (dentist_id) REFERENCES dentists(dentist_id),
+    UNIQUE KEY uq_dentist_day (dentist_id, day_of_week)
 );
 
 -- ============================================================
@@ -347,6 +385,21 @@ INSERT INTO dentists (name, specialization, contact, email, available_days, is_a
 ('Dr. Silva', 'Orthodontics', '0770000004', 'silva@sunrisedental.com', 'Mon,Wed,Fri', TRUE),
 ('Dr. Fernando', 'Oral Surgery', '0770000005', 'fernando@sunrisedental.com', 'Tue,Thu,Sat', TRUE) ON DUPLICATE KEY UPDATE name = VALUES(name);
 
+-- Weekly default schedules for the seeded dentists (ids 1,2,3).
+INSERT INTO dentist_schedule (dentist_id, day_of_week, start_time, end_time, availability_status) VALUES
+(1, 'Monday',    '09:00:00', '17:00:00', 'Available'),
+(1, 'Tuesday',   '09:00:00', '17:00:00', 'Available'),
+(1, 'Wednesday', '09:00:00', '17:00:00', 'Available'),
+(1, 'Thursday',  '09:00:00', '17:00:00', 'Available'),
+(1, 'Friday',    '09:00:00', '17:00:00', 'Available'),
+(1, 'Saturday',  '09:00:00', '13:00:00', 'Available'),
+(2, 'Monday',    '09:00:00', '17:00:00', 'Available'),
+(2, 'Wednesday', '09:00:00', '17:00:00', 'Available'),
+(2, 'Friday',    '09:00:00', '17:00:00', 'Available'),
+(3, 'Tuesday',   '09:00:00', '17:00:00', 'Available'),
+(3, 'Thursday',  '09:00:00', '17:00:00', 'Available'),
+(3, 'Saturday',  '09:00:00', '13:00:00', 'Available') ON DUPLICATE KEY UPDATE availability_status = VALUES(availability_status);
+
 -- Treatments
 INSERT INTO treatments (treatment_code, treatment_name, base_price, consultation_fee, category, duration_minutes, description) VALUES
 ('CHKUP', 'Dental Checkup', 1500.00, 500.00, 'General', 30, 'Routine dental examination'),
@@ -391,6 +444,12 @@ INSERT INTO patients (name, date_of_birth, gender, address, contact, email, NIC,
 ('Pasan Weerasinghe',   '2000-11-11', 'Male',   '5, Temple Lane, Avissawella',    '0788888888', 'pasan.w@gmail.com',       '004567816V', 'AB-', 'None'),
 ('Chamari Dissanayake', '1991-02-02', 'Female', '61, Green Path, Colombo 03',     '0799999999', 'chamari.d@yahoo.com',     '914567817V', 'O+',  'None'),
 ('Ravi Thalagala',      '1975-05-05', 'Male',   '27, Main Street, Horana',        '0700000000', 'ravi.t@gmail.com',        '754567818V', 'A+',  'None') ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+-- Give every seeded patient a demo login password (patient123) so the Patient
+-- role can be exercised end-to-end. Patients register/reset their own password
+-- through the application afterwards.
+UPDATE patients SET password_hash = '$2a$10$WqywDYiP9dPSsP6W1v5PF.c3hvwCEXXx9MUlqZ/HeDDz6OSYypJo2', is_active = TRUE
+WHERE password_hash IS NULL;
 
 -- Additional appointments spread over the last ~3 weeks (varied statuses & treatments)
 INSERT INTO appointments (appointment_no, patient_id, dentist_id, treatment_type, appointment_date, appointment_time, status, notes, contact, created_by) VALUES

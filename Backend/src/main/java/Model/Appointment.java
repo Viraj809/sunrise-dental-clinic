@@ -8,6 +8,7 @@ public class Appointment {
     private String treatmentType;
     private String appointmentDate;
     private String appointmentTime;
+    private String appointmentType;
     private String status;
     private String notes;
     private String contact;
@@ -29,6 +30,8 @@ public class Appointment {
     public void setAppointmentDate(String appointmentDate) { this.appointmentDate = appointmentDate; }
     public String getAppointmentTime() { return appointmentTime; }
     public void setAppointmentTime(String appointmentTime) { this.appointmentTime = appointmentTime; }
+    public String getAppointmentType() { return appointmentType; }
+    public void setAppointmentType(String appointmentType) { this.appointmentType = appointmentType; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getNotes() { return notes; }

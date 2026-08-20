@@ -2,6 +2,7 @@ package com.mycompany.backend.resources;
 
 import Model.Treatment;
 import DAO.TreatmentDAO;
+import Service.SecurityUtil;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -33,6 +34,7 @@ public class TreatmentResource {
 
     @POST
     public Response create(Treatment treatment) {
+        SecurityUtil.requireAdmin();
         if (treatment.getTreatmentCode() == null || treatment.getTreatmentCode().isEmpty()
                 || treatment.getTreatmentName() == null || treatment.getTreatmentName().isEmpty()) {
             return Response.status(400).entity(error("treatment_code and treatment_name are required")).build();
@@ -49,6 +51,7 @@ public class TreatmentResource {
     @PUT
     @Path("/{code}")
     public Response update(@PathParam("code") String code, Treatment treatment) {
+        SecurityUtil.requireAdmin();
         treatment.setTreatmentCode(code);
         if (dao.update(treatment)) {
             return Response.ok(treatment).build();
@@ -59,6 +62,7 @@ public class TreatmentResource {
     @DELETE
     @Path("/{code}")
     public Response delete(@PathParam("code") String code) {
+        SecurityUtil.requireAdmin();
         if (dao.delete(code)) {
             return Response.ok(success("Treatment deleted")).build();
         }

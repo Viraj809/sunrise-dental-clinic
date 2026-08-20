@@ -3,166 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient History – Sunrise Dental Clinic</title>
+    <title>Patient History - Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-<div class="header">
-    <h1>Sunrise Dental Clinic</h1>
-    <div class="user-info" id="user-info"></div>
-</div>
-<nav class="nav" id="main-nav"></nav>
-
-<div class="container">
-    <div id="toast-container"></div>
-
-    <div class="page-header">
-        <div><h2>Patient History</h2><p>View complete treatment history for any patient</p></div>
+    <div class="header">
+        <h1>Patient History</h1>
     </div>
-
-    <div class="card">
-        <h2>🔍 Search Patient</h2>
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="Enter Patient ID or NIC number"
-                   onkeydown="if(event.key==='Enter') searchHistory();">
-            <button class="btn btn-primary" onclick="searchHistory()">Search</button>
-        </div>
-        <div id="searchMsg" class="alert" style="display:none;"></div>
-    </div>
-
-    <div id="historyResult" style="display:none;">
-        <!-- Patient info card -->
-        <div class="card" id="patientInfoCard">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
-                <div>
-                    <h2 id="patientName" style="border:none;padding:0;margin:0;font-size:1.3rem;"></h2>
-                    <div id="patientMeta" style="color:var(--text-secondary);font-size:0.875rem;margin-top:4px;"></div>
-                </div>
-                <div style="display:flex;gap:8px;">
-                    <span class="badge" id="visitCount" style="background:var(--primary-light);color:var(--primary);font-size:0.9rem;padding:6px 14px;"></span>
-                    <a href="#" id="bookAppt" class="btn btn-primary btn-sm">📅 New Appointment</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Stats -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:20px;">
-            <div class="card-stat"><span class="stat-icon">📅</span><div class="stat-value" id="h-total" style="color:var(--primary);">0</div><div class="stat-label">Total Visits</div></div>
-            <div class="card-stat"><span class="stat-icon">🏁</span><div class="stat-value" id="h-completed" style="color:var(--success);">0</div><div class="stat-label">Completed</div></div>
-            <div class="card-stat"><span class="stat-icon">⏳</span><div class="stat-value" id="h-upcoming" style="color:var(--info);">0</div><div class="stat-label">Upcoming</div></div>
-            <div class="card-stat"><span class="stat-icon">🧾</span><div class="stat-value" id="h-billed" style="color:var(--warning);">0</div><div class="stat-label">Bills Issued</div></div>
-        </div>
-
-        <!-- History table -->
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
+        <div id="toast-container"></div>
         <div class="card">
-            <h2>📋 Treatment History</h2>
-            <div class="table-wrapper">
-                <table class="table" id="historyTable">
-                    <thead>
-                        <tr><th>Date</th><th>Appt No</th><th>Treatment</th><th>Dentist</th><th>Time</th><th>Status</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <h2>Search Patient History</h2>
+            <div style="display:flex; gap:10px; align-items:flex-end;">
+                <div class="form-group" style="flex:1; margin-bottom:0;">
+                    <label>Patient ID or NIC</label>
+                    <input type="text" id="searchInput" placeholder="Enter Patient ID or NIC">
+                </div>
+                <button class="btn btn-primary" onclick="searchHistory()">Search</button>
             </div>
         </div>
+        <div id="historyResult" class="card" style="display:none;">
+            <h2 id="patientName"></h2>
+            <table class="table">
+                <thead><tr><th>Date</th><th>Treatment</th><th>Dentist</th><th>Status</th></tr></thead>
+                <tbody id="historyTable"></tbody>
+            </table>
+        </div>
     </div>
-</div>
-
-<script src="/Frontend/js/app.js"></script>
-<script>
-    requireAuth();
-
-    let allDentists = [];
-
-    async function init() {
-        allDentists = await apiGet('/dentists');
-
-        const params = new URLSearchParams(window.location.search);
-        const pid = params.get('patient_id');
-        if (pid) {
-            document.getElementById('searchInput').value = pid;
+    <script src="/Frontend/js/app.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const prefillId = urlParams.get('patient_id');
+        if (prefillId) {
+            document.getElementById('searchInput').value = prefillId;
             searchHistory();
         }
-    }
 
-    async function searchHistory() {
-        const input = document.getElementById('searchInput').value.trim();
-        const msgDiv = document.getElementById('searchMsg');
-        msgDiv.style.display = 'none';
-        if (!input) { showToast('Enter a Patient ID or NIC', 'error'); return; }
-
-        try {
-            let patient;
-            if (/^\d+$/.test(input)) {
-                patient = await apiGet('/patients/' + input);
-            } else {
-                patient = await apiGet('/patients/nic/' + encodeURIComponent(input));
-            }
-
-            // Patient info
-            document.getElementById('patientName').textContent = '👤 ' + patient.name;
-            document.getElementById('patientMeta').innerHTML =
-                `NIC: <strong>${patient.nic}</strong> &nbsp;|&nbsp; Contact: <strong>${patient.contact}</strong>` +
-                (patient.bloodGroup ? ` &nbsp;|&nbsp; Blood: <strong>${patient.bloodGroup}</strong>` : '') +
-                (patient.allergies  ? ` &nbsp;|&nbsp; Allergies: <strong style="color:var(--danger);">${patient.allergies}</strong>` : '');
-            document.getElementById('bookAppt').href = '/Frontend/register-appointment.html';
-
-            // Get appointments for this patient
-            const appointments = await apiGet('/appointments/patient/' + patient.patientId);
-            const today = new Date().toISOString().split('T')[0];
-
-            const completed = appointments.filter(a => a.status === 'Completed').length;
-            const upcoming  = appointments.filter(a => a.appointmentDate >= today && a.status !== 'Cancelled').length;
-
-            document.getElementById('h-total').textContent     = appointments.length;
-            document.getElementById('h-completed').textContent = completed;
-            document.getElementById('h-upcoming').textContent  = upcoming;
-            document.getElementById('visitCount').textContent  = appointments.length + ' visits';
-
-            // Get bills count
+        async function searchHistory() {
+            const input = document.getElementById('searchInput').value.trim();
+            if (!input) return;
+            let patient = null;
             try {
-                const bills = await apiGet('/bills');
-                const patientBills = bills.filter(b => {
-                    return appointments.some(a => a.appointmentId === b.appointmentId);
+                if (/^\d+$/.test(input)) {
+                    patient = await apiGet('/patients/' + input);
+                } else {
+                    patient = await apiGet('/patients/nic/' + encodeURIComponent(input));
+                }
+                document.getElementById('patientName').textContent = 'History for: ' + patient.name;
+                const appointments = await apiGet('/appointments');
+                const patientAppts = appointments.filter(a => a.patient_id == patient.patient_id);
+                const dentists = await apiGet('/dentists');
+                const tbody = document.getElementById('historyTable');
+                tbody.innerHTML = '';
+                patientAppts.forEach(a => {
+                    const dentist = dentists.find(d => d.dentist_id === a.dentist_id);
+                    const dentistName = dentist ? dentist.name : 'Dentist #' + a.dentist_id;
+                    tbody.innerHTML += '<tr><td>' + a.appointment_date + '</td><td>' + a.treatment_type + '</td><td>' + dentistName + '</td><td>' + getStatusBadge(a.status) + '</td></tr>';
                 });
-                document.getElementById('h-billed').textContent = patientBills.length;
-            } catch (e) { document.getElementById('h-billed').textContent = '–'; }
-
-            const dentistMap = {};
-            allDentists.forEach(d => dentistMap[d.dentistId] = d.name);
-
-            const tbody = document.querySelector('#historyTable tbody');
-            if (!appointments.length) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">No appointment history found</td></tr>';
-            } else {
-                tbody.innerHTML = appointments
-                    .sort((a,b) => b.appointmentDate.localeCompare(a.appointmentDate))
-                    .map(a => `
-                    <tr>
-                        <td>${a.appointmentDate}</td>
-                        <td><strong>${a.appointmentNo}</strong></td>
-                        <td>${a.treatmentType}</td>
-                        <td>${dentistMap[a.dentistId] || 'Dr. #' + a.dentistId}</td>
-                        <td>${(a.appointmentTime||'').substring(0,5)}</td>
-                        <td>${getStatusBadge(a.status)}</td>
-                        <td style="display:flex;gap:6px;">
-                            <a href="/Frontend/view-appointment.html?no=${a.appointmentNo}" class="btn btn-sm btn-ghost">View</a>
-                            <a href="/Frontend/billing.html?appt_id=${a.appointmentId}" class="btn btn-sm btn-success btn-sm">🧾 Bill</a>
-                        </td>
-                    </tr>`).join('');
-            }
-
-            document.getElementById('historyResult').style.display = 'block';
-            document.getElementById('historyResult').scrollIntoView({ behavior: 'smooth' });
-        } catch (e) {
-            msgDiv.className = 'alert alert-error';
-            msgDiv.style.display = 'flex';
-            msgDiv.textContent = '❌ Patient not found.';
-            document.getElementById('historyResult').style.display = 'none';
+                document.getElementById('historyResult').style.display = 'block';
+            } catch (e) { showToast('Patient not found', 'error'); }
         }
-    }
-
-    init();
-</script>
+    </script>
 </body>
 </html>

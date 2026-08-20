@@ -13,6 +13,7 @@ public class ApplicationConfig extends Application {
         // Global cross-cutting filters
         classes.add(CorsFilter.class);
         classes.add(TokenAuthFilter.class);
+        classes.add(PostAuthFilter.class);
         // Resources
         classes.add(AuthResource.class);
         classes.add(AppointmentResource.class);
@@ -22,6 +23,11 @@ public class ApplicationConfig extends Application {
         classes.add(BillResource.class);
         classes.add(ReportResource.class);
         classes.add(StaffResource.class);
+        classes.add(PatientAuthResource.class);
+        classes.add(QueueResource.class);
+        classes.add(ScheduleResource.class);
+        classes.add(NotificationResource.class);
+        classes.add(AuditResource.class);
         return classes;
     }
 }

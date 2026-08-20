@@ -14,6 +14,21 @@ public class PatientDAO {
         this.db = DatabaseUtil.getInstance();
     }
 
+    public Patient findByEmail(String email) {
+        String sql = "SELECT * FROM patients WHERE email = ?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapPatient(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public Patient findByNic(String nic) {
         String sql = "SELECT * FROM patients WHERE NIC = ?";
         try (Connection conn = db.getConnection();
@@ -60,7 +75,7 @@ public class PatientDAO {
     }
 
     public boolean insert(Patient patient) {
-        String sql = "INSERT INTO patients (name, date_of_birth, gender, address, contact, email, NIC, blood_group, allergies) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO patients (name, date_of_birth, gender, address, contact, email, NIC, blood_group, allergies, password_hash, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, patient.getName());
@@ -72,6 +87,8 @@ public class PatientDAO {
             ps.setString(7, patient.getNic());
             ps.setString(8, patient.getBloodGroup());
             ps.setString(9, patient.getAllergies());
+            ps.setString(10, patient.getPasswordHash());
+            ps.setBoolean(11, patient.isActive());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -99,6 +116,32 @@ public class PatientDAO {
         }
     }
 
+    public boolean updatePassword(int patientId, String passwordHash) {
+        String sql = "UPDATE patients SET password_hash = ? WHERE patient_id = ?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, passwordHash);
+            ps.setInt(2, patientId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean setActive(int patientId, boolean active) {
+        String sql = "UPDATE patients SET is_active = ? WHERE patient_id = ?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, active);
+            ps.setInt(2, patientId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private Patient mapPatient(ResultSet rs) throws SQLException {
         Patient p = new Patient();
         p.setPatientId(rs.getInt("patient_id"));
@@ -111,6 +154,8 @@ public class PatientDAO {
         p.setNic(rs.getString("NIC"));
         p.setBloodGroup(rs.getString("blood_group"));
         p.setAllergies(rs.getString("allergies"));
+        p.setPasswordHash(rs.getString("password_hash"));
+        p.setActive(rs.getBoolean("is_active"));
         p.setCreatedAt(rs.getString("created_at"));
         return p;
     }

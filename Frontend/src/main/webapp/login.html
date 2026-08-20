@@ -197,6 +197,7 @@
                 </form>
 
                 <p class="login-foot">© 2026 Sunrise Dental Clinic · Colombo 07, Sri Lanka</p>
+                <p class="login-foot" style="margin-top:8px;"><a href="/Frontend/patient-register.html" style="color:var(--primary);text-decoration:none;font-weight:600;">New patient? Register here →</a></p>
             </div>
         </main>
     </div>
@@ -210,6 +211,7 @@
                 if (role === 'ADMIN')            window.location.href = '/Frontend/admin-dashboard.html';
                 else if (role === 'RECEPTIONIST') window.location.href = '/Frontend/receptionist-dashboard.html';
                 else if (role === 'DENTIST')       window.location.href = '/Frontend/dentist-dashboard.html';
+                else if (role === 'PATIENT')       window.location.href = '/Frontend/patient-dashboard.html';
             }
         })();
 
@@ -253,11 +255,13 @@
                 localStorage.setItem('role',    data.role);
                 localStorage.setItem('name',    data.name);
                 localStorage.setItem('staffId', data.staffId);
+                localStorage.setItem('patientId', data.patientId);
                 localStorage.setItem('email',   data.email);
 
                 if (data.role === 'ADMIN')            window.location.href = '/Frontend/admin-dashboard.html';
                 else if (data.role === 'RECEPTIONIST') window.location.href = '/Frontend/receptionist-dashboard.html';
                 else if (data.role === 'DENTIST')       window.location.href = '/Frontend/dentist-dashboard.html';
+                else if (data.role === 'PATIENT')       window.location.href = '/Frontend/patient-dashboard.html';
                 else window.location.href = '/Frontend/login.html';
 
             } catch (err) {

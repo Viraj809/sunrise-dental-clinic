@@ -56,6 +56,19 @@
             </table>
         </div>
     </div>
+
+    <div class="card" id="whCard">
+        <h2>🗓️ Weekly Working Hours</h2>
+        <p style="color:var(--text-secondary);margin-bottom:16px;" id="whHint">Manage your availability (admin can manage any dentist).</p>
+        <div id="wh-error" style="display:none;background:#fee2e2;color:#991b1b;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:0.88rem;"></div>
+        <div class="table-wrapper">
+            <table class="table" id="whTable">
+                <thead><tr><th>Day</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <button class="btn btn-primary" onclick="saveWorkingHours()">Save Working Hours</button>
+    </div>
 </div>
 
 <script src="/Frontend/js/app.js"></script>
@@ -93,7 +106,76 @@
             // If dentist role, try to pre-select their dentist entry
             // (admin can select any)
             loadSchedule();
+            loadWorkingHours();
         } catch (e) { showToast('Failed to load data', 'error'); }
+    }
+
+    const WH_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+    async function loadWorkingHours() {
+        let dentistId = document.getElementById('dentistSelect').value;
+        if (!dentistId) {
+            const role = localStorage.getItem('role');
+            if (role === 'DENTIST') {
+                const email = (localStorage.getItem('email')||'').toLowerCase();
+                const me = allDentists.find(d => (d.email||'').toLowerCase() === email);
+                if (me) dentistId = me.dentistId;
+            } else if (allDentists.length) {
+                dentistId = allDentists[0].dentistId;
+            }
+        }
+        if (!dentistId) return;
+        let schedule = [];
+        try { schedule = await apiGet('/schedule/dentist/' + dentistId); } catch(e){}
+        const map = {};
+        schedule.forEach(s => map[s.dayOfWeek] = s);
+
+        const tbody = document.querySelector('#whTable tbody');
+        tbody.innerHTML = WH_DAYS.map(day => {
+            const s = map[day] || {};
+            return `<tr>
+                <td><strong>${day}</strong></td>
+                <td><input type="time" class="wh-start" data-day="${day}" value="${s.startTime ? s.startTime.substring(0,5) : '09:00'}"></td>
+                <td><input type="time" class="wh-end" data-day="${day}" value="${s.endTime ? s.endTime.substring(0,5) : '17:00'}"></td>
+                <td>
+                    <select class="wh-status" data-day="${day}">
+                        <option value="Available" ${s.availabilityStatus==='Available'?'selected':''}>Available</option>
+                        <option value="Unavailable" ${s.availabilityStatus==='Unavailable'?'selected':''}>Unavailable</option>
+                    </select>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function saveWorkingHours() {
+        const err = document.getElementById('wh-error'); err.style.display='none';
+        let dentistId = document.getElementById('dentistSelect').value;
+        if (!dentistId) {
+            const role = localStorage.getItem('role');
+            if (role === 'DENTIST') {
+                const email = (localStorage.getItem('email')||'').toLowerCase();
+                const me = allDentists.find(d => (d.email||'').toLowerCase() === email);
+                if (me) dentistId = me.dentistId;
+            } else if (allDentists.length) {
+                dentistId = allDentists[0].dentistId;
+            }
+        }
+        if (!dentistId) { err.textContent='Select a dentist first.'; err.style.display='block'; return; }
+
+        try {
+            for (const day of WH_DAYS) {
+                const start = document.querySelector(`.wh-start[data-day="${day}"]`).value;
+                const end   = document.querySelector(`.wh-end[data-day="${day}"]`).value;
+                const status= document.querySelector(`.wh-status[data-day="${day}"]`).value;
+                await apiPost('/schedule', {
+                    dentist_id: parseInt(dentistId),
+                    day_of_week: day, start_time: start + ':00', end_time: end + ':00',
+                    availability_status: status
+                });
+            }
+            showToast('Working hours saved', 'success');
+            loadWorkingHours();
+        } catch(e){ err.textContent='Failed to save working hours.'; err.style.display='block'; }
     }
 
     async function loadSchedule() {

@@ -2,6 +2,7 @@ package com.mycompany.backend.resources;
 
 import Model.Patient;
 import DAO.PatientDAO;
+import Service.SecurityUtil;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -17,6 +18,7 @@ public class PatientResource {
 
     @GET
     public Response getAll() {
+        SecurityUtil.requireStaff();
         List<Patient> list = dao.findAll();
         return Response.ok(list).build();
     }
@@ -24,6 +26,13 @@ public class PatientResource {
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") int id) {
+        if (SecurityUtil.isPatient()) {
+            if (id != SecurityUtil.currentId()) {
+                return Response.status(403).entity(error("You can only view your own record")).build();
+            }
+        } else {
+            SecurityUtil.requireStaff();
+        }
         Patient p = dao.findById(id);
         if (p == null) {
             return Response.status(404).entity(error("Patient not found")).build();
@@ -34,6 +43,7 @@ public class PatientResource {
     @GET
     @Path("/nic/{nic}")
     public Response getByNic(@PathParam("nic") String nic) {
+        SecurityUtil.requireStaff();
         Patient p = dao.findByNic(nic);
         if (p == null) {
             return Response.status(404).entity(error("Patient not found")).build();
@@ -41,8 +51,52 @@ public class PatientResource {
         return Response.ok(p).build();
     }
 
+    // ── Patient self-service ───────────────────────────────────────────────
+    @GET
+    @Path("/me")
+    public Response getMe() {
+        SecurityUtil.requirePatient();
+        Patient p = dao.findById(SecurityUtil.currentId());
+        if (p == null) return Response.status(404).entity(error("Patient not found")).build();
+        return Response.ok(p).build();
+    }
+
+    @PUT
+    @Path("/me")
+    public Response updateMe(Patient patient) {
+        SecurityUtil.requirePatient();
+        patient.setPatientId(SecurityUtil.currentId());
+        if (dao.update(patient)) {
+            return Response.ok(patient).build();
+        }
+        return Response.status(500).entity(error("Failed to update profile")).build();
+    }
+
+    @PUT
+    @Path("/me/password")
+    public Response changePassword(Map<String, String> body) {
+        SecurityUtil.requirePatient();
+        String current = body.get("currentPassword");
+        String next = body.get("newPassword");
+        if (current == null || next == null) {
+            return Response.status(400).entity(error("Both current and new password are required")).build();
+        }
+        Patient p = dao.findById(SecurityUtil.currentId());
+        if (p == null || p.getPasswordHash() == null
+                || !org.mindrot.jbcrypt.BCrypt.checkpw(current, p.getPasswordHash())) {
+            return Response.status(400).entity(error("Current password is incorrect")).build();
+        }
+        String hash = org.mindrot.jbcrypt.BCrypt.hashpw(next, org.mindrot.jbcrypt.BCrypt.gensalt());
+        if (dao.updatePassword(p.getPatientId(), hash)) {
+            return Response.ok(success("Password changed successfully")).build();
+        }
+        return Response.status(500).entity(error("Failed to change password")).build();
+    }
+
+    // ── Staff registration of a patient (receptionist / admin) ─────────────
     @POST
     public Response create(Patient patient) {
+        SecurityUtil.requireReceptionOrAdmin();
         if (patient.getNic() == null || patient.getNic().isEmpty()) {
             return Response.status(400).entity(error("NIC is required")).build();
         }
@@ -58,6 +112,13 @@ public class PatientResource {
     @PUT
     @Path("/{id}")
     public Response update(@PathParam("id") int id, Patient patient) {
+        if (SecurityUtil.isPatient()) {
+            if (id != SecurityUtil.currentId()) {
+                return Response.status(403).entity(error("You can only update your own record")).build();
+            }
+        } else {
+            SecurityUtil.requireReceptionOrAdmin();
+        }
         patient.setPatientId(id);
         if (dao.update(patient)) {
             return Response.ok(patient).build();
@@ -65,9 +126,31 @@ public class PatientResource {
         return Response.status(500).entity(error("Failed to update patient")).build();
     }
 
+    @PUT
+    @Path("/{id}/toggle")
+    public Response toggleActive(@PathParam("id") int id) {
+        SecurityUtil.requireReceptionOrAdmin();
+        Patient p = dao.findById(id);
+        if (p == null) return Response.status(404).entity(error("Patient not found")).build();
+        p.setActive(!p.isActive());
+        if (dao.setActive(id, p.isActive())) {
+            Map<String, Object> res = new HashMap<>();
+            res.put("patientId", id);
+            res.put("isActive", p.isActive());
+            return Response.ok(res).build();
+        }
+        return Response.status(500).entity(error("Failed to toggle status")).build();
+    }
+
     private Map<String, String> error(String message) {
         Map<String, String> m = new HashMap<>();
         m.put("error", message);
+        return m;
+    }
+
+    private Map<String, String> success(String message) {
+        Map<String, String> m = new HashMap<>();
+        m.put("message", message);
         return m;
     }
 }

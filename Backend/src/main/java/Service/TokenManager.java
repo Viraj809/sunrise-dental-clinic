@@ -7,17 +7,23 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * TokenManager (Singleton)
  *
- * Acts as the server-side session registry. When a staff member logs in the
- * backend issues a random bearer token which is stored here keyed by staff id.
- * Every protected REST call is validated by {@code TokenAuthFilter} against this
- * registry, giving the system real session/cookie-style authentication instead of
- * a purely decorative token.
+ * Acts as the server-side session registry. When a user (staff or patient) logs
+ * in the backend issues a random bearer token which is stored here together with
+ * the principal's type, id and role. Every protected REST call is validated by
+ * {@code TokenAuthFilter} against this registry, giving the system real
+ * role-aware session authentication (not a decorative token).
+ *
+ * The resolved {@link Session} for the current request is also exposed through a
+ * ThreadLocal so business code (resources) can enforce Role-Based Access Control
+ * via {@link SecurityUtil}.
  */
 public class TokenManager {
     private static TokenManager instance;
 
-    // token -> staffId
-    private final Map<String, Integer> tokens = new ConcurrentHashMap<>();
+    // token -> Session
+    private final Map<String, Session> tokens = new ConcurrentHashMap<>();
+    // current request session (set by the auth filter, cleared by the response filter)
+    private final ThreadLocal<Session> current = new ThreadLocal<>();
 
     private TokenManager() {}
 
@@ -28,18 +34,41 @@ public class TokenManager {
         return instance;
     }
 
-    /** Issue a new token for the given staff member. */
-    public String create(int staffId) {
+    /** Authenticated principal attached to a token. */
+    public static class Session {
+        public final String type; // "STAFF" or "PATIENT"
+        public final int id;       // staffId or patientId
+        public final String role;  // ADMIN | RECEPTIONIST | DENTIST | PATIENT
+
+        public Session(String type, int id, String role) {
+            this.type = type;
+            this.id = id;
+            this.role = role;
+        }
+
+        public boolean isPatient() {
+            return "PATIENT".equals(role);
+        }
+    }
+
+    /** Issue a token for a staff member (admin / receptionist / dentist). */
+    public String createStaff(int staffId, String role) {
         String token = UUID.randomUUID().toString();
-        tokens.put(token, staffId);
+        tokens.put(token, new Session("STAFF", staffId, role));
         return token;
     }
 
-    /** Validate a token. Returns the staff id or -1 if unknown/expired. */
-    public int validate(String token) {
-        if (token == null) return -1;
-        Integer id = tokens.get(token);
-        return id == null ? -1 : id;
+    /** Issue a token for a patient (self-service portal). */
+    public String createPatient(int patientId) {
+        String token = UUID.randomUUID().toString();
+        tokens.put(token, new Session("PATIENT", patientId, "PATIENT"));
+        return token;
+    }
+
+    /** Validate a token and return its session, or null if unknown/expired. */
+    public Session resolve(String token) {
+        if (token == null) return null;
+        return tokens.get(token);
     }
 
     /** Invalidate a token (used on logout). */
@@ -47,5 +76,18 @@ public class TokenManager {
         if (token != null) {
             tokens.remove(token);
         }
+    }
+
+    // ── ThreadLocal request session helpers (used by SecurityUtil) ──────────
+    public void attach(Session session) {
+        current.set(session);
+    }
+
+    public Session current() {
+        return current.get();
+    }
+
+    public void detach() {
+        current.remove();
     }
 }

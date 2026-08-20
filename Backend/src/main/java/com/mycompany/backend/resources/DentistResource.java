@@ -4,6 +4,8 @@ import Model.Dentist;
 import Model.Staff;
 import DAO.DentistDAO;
 import DAO.StaffDAO;
+import Service.SecurityUtil;
+import Service.AuditService;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -35,11 +37,13 @@ public class DentistResource {
 
     @POST
     public Response create(Dentist dentist) {
+        SecurityUtil.requireAdmin();
         if (dentist.getName() == null || dentist.getName().isEmpty()) {
             return Response.status(400).entity(error("Name is required")).build();
         }
         dentist.setActive(true);
         if (dao.insert(dentist)) {
+            AuditService.getInstance().logCurrent("INSERT", "dentists", dentist.getDentistId(), "Dentist added: " + dentist.getName());
             return Response.ok(dentist).build();
         }
         return Response.status(500).entity(error("Failed to add dentist")).build();
@@ -53,6 +57,7 @@ public class DentistResource {
     @POST
     @Path("/register")
     public Response register(Map<String, String> body) {
+        SecurityUtil.requireAdmin();
         String name          = body.get("name");
         String email         = body.get("email");
         String nic           = body.get("nic");
@@ -113,6 +118,7 @@ public class DentistResource {
     @PUT
     @Path("/{id}")
     public Response update(@PathParam("id") int id, Dentist dentist) {
+        SecurityUtil.requireAdmin();
         dentist.setDentistId(id);
         if (dao.update(dentist)) {
             return Response.ok(dentist).build();
@@ -123,6 +129,7 @@ public class DentistResource {
     @PUT
     @Path("/{id}/toggle")
     public Response toggleActive(@PathParam("id") int id) {
+        SecurityUtil.requireAdmin();
         Dentist d = dao.findById(id);
         if (d == null) return Response.status(404).entity(error("Dentist not found")).build();
         d.setActive(!d.isActive());

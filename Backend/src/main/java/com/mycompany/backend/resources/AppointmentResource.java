@@ -2,11 +2,14 @@ package com.mycompany.backend.resources;
 
 import Model.Appointment;
 import DAO.AppointmentDAO;
+import DAO.NotificationDAO;
+import Model.Notification;
 import Validation.*;
 import Service.AppointmentSubject;
 import Service.EmailNotificationObserver;
 import Service.SmsNotificationObserver;
 import Service.StaffNotificationObserver;
+import Service.SecurityUtil;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -19,14 +22,23 @@ import java.util.Map;
  * Design Patterns used:
  *   - Observer (AppointmentSubject + Observers) for notifications on create/update/cancel
  *   - Chain of Responsibility (Validators) for input validation
+ *
+ * Role-Based Access Control:
+ *   - Admin / Receptionist: full management.
+ *   - Dentist: only appointments assigned to them, and only status transitions.
+ *   - Patient: only their own appointments; may create for themselves and cancel.
  */
 @Path("/appointments")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AppointmentResource {
 
-    private final AppointmentDAO   dao     = new AppointmentDAO();
+    private final AppointmentDAO dao = new AppointmentDAO();
+    private final NotificationDAO notificationDao = new NotificationDAO();
     private final AppointmentSubject subject = new AppointmentSubject();
+
+    // System staff id used when a patient self-books (created_by FK -> staff).
+    private static final int SYSTEM_STAFF_ID = 1;
 
     public AppointmentResource() {
         subject.attach(new EmailNotificationObserver());
@@ -34,77 +46,99 @@ public class AppointmentResource {
         subject.attach(new StaffNotificationObserver());
     }
 
-    // ── GET /appointments  ─────────────────────────────────────────────────
     @GET
     public Response getAll() {
+        SecurityUtil.requireStaff();
         List<Appointment> list = dao.findAll();
         return Response.ok(list).build();
     }
 
-    // ── GET /appointments/{id}  (by integer PK)  ──────────────────────────
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") int id) {
         Appointment appt = dao.findById(id);
-        if (appt == null) {
-            return Response.status(404).entity(error("Appointment not found")).build();
-        }
+        if (appt == null) return Response.status(404).entity(error("Appointment not found")).build();
+        enforceViewOwnership(appt);
         return Response.ok(appt).build();
     }
 
-    // ── GET /appointments/no/{appointmentNo}  (by SDC-YYYY-NNNN) ──────────
     @GET
     @Path("/no/{appointmentNo}")
     public Response getByAppointmentNo(@PathParam("appointmentNo") String appointmentNo) {
         Appointment appt = dao.findByAppointmentNo(appointmentNo);
-        if (appt == null) {
-            return Response.status(404).entity(error("Appointment not found")).build();
-        }
+        if (appt == null) return Response.status(404).entity(error("Appointment not found")).build();
+        enforceViewOwnership(appt);
         return Response.ok(appt).build();
     }
 
-    // ── GET /appointments/patient/{patientId}  ────────────────────────────
     @GET
     @Path("/patient/{patientId}")
     public Response getByPatient(@PathParam("patientId") int patientId) {
+        if (SecurityUtil.isPatient()) {
+            if (patientId != SecurityUtil.currentId()) {
+                return Response.status(403).entity(error("You can only view your own appointments")).build();
+            }
+        } else {
+            SecurityUtil.requireStaff();
+        }
         List<Appointment> list = dao.findByPatientId(patientId);
         return Response.ok(list).build();
     }
 
-    // ── GET /appointments/dentist/{dentistId}/date/{date}  ────────────────
     @GET
     @Path("/dentist/{dentistId}/date/{date}")
     public Response getByDentistAndDate(@PathParam("dentistId") int dentistId,
                                         @PathParam("date") String date) {
+        if ("DENTIST".equals(SecurityUtil.currentRole())) {
+            if (dentistId != SecurityUtil.currentId()) {
+                return Response.status(403).entity(error("You can only view your own schedule")).build();
+            }
+        } else {
+            SecurityUtil.requireStaff();
+        }
         List<Appointment> list = dao.findByDentistIdAndDate(dentistId, date);
         return Response.ok(list).build();
     }
 
-    // ── POST /appointments  ───────────────────────────────────────────────
     @POST
     public Response create(Appointment appointment) {
-        String err = validate(appointment);
-        if (err != null) {
-            return Response.status(400).entity(error(err)).build();
+        boolean isPatient = SecurityUtil.isPatient();
+        if (isPatient) {
+            appointment.setPatientId(SecurityUtil.currentId());
+            appointment.setCreatedBy(SYSTEM_STAFF_ID);
+        } else {
+            SecurityUtil.requireReceptionOrAdmin();
+            if (appointment.getCreatedBy() <= 0) appointment.setCreatedBy(SYSTEM_STAFF_ID);
         }
+
+        String err = validate(appointment);
+        if (err != null) return Response.status(400).entity(error(err)).build();
+
         appointment.setAppointmentNo(dao.getNextAppointmentNo());
-        appointment.setStatus("Scheduled");
+        appointment.setStatus("Pending");
+        if (appointment.getAppointmentType() == null || appointment.getAppointmentType().isEmpty()) {
+            appointment.setAppointmentType("Consultation");
+        }
         if (dao.insert(appointment)) {
             notifyObservers("CREATED", appointment);
+            notifyPatient(appointment, "Appointment Booked",
+                    "Your appointment " + appointment.getAppointmentNo() + " has been booked. Status: Pending.");
             return Response.ok(appointment).build();
         }
         return Response.status(500).entity(error("Failed to create appointment")).build();
     }
 
-    // ── PUT /appointments/{id}  ───────────────────────────────────────────
     @PUT
     @Path("/{id}")
     public Response update(@PathParam("id") int id, Appointment appointment) {
+        Appointment existing = dao.findById(id);
+        if (existing == null) return Response.status(404).entity(error("Appointment not found")).build();
+        enforceViewOwnership(existing);
+
         appointment.setAppointmentId(id);
         String err = validate(appointment);
-        if (err != null) {
-            return Response.status(400).entity(error(err)).build();
-        }
+        if (err != null) return Response.status(400).entity(error(err)).build();
+
         if (dao.update(appointment)) {
             notifyObservers("UPDATED", appointment);
             return Response.ok(appointment).build();
@@ -112,22 +146,40 @@ public class AppointmentResource {
         return Response.status(500).entity(error("Failed to update appointment")).build();
     }
 
-    // ── PUT /appointments/{id}/status  ────────────────────────────────────
     @PUT
     @Path("/{id}/status")
     public Response updateStatus(@PathParam("id") int id, Map<String, String> body) {
         String newStatus = body.get("status");
-        if (newStatus == null || !newStatus.matches("Scheduled|Confirmed|Completed|Cancelled")) {
-            return Response.status(400).entity(error("Invalid status. Use: Scheduled, Confirmed, Completed, Cancelled")).build();
+        if (newStatus == null || !newStatus.matches(
+                "Pending|Confirmed|Waiting|With Dentist|Treatment In Progress|Completed|Cancelled")) {
+            return Response.status(400).entity(error(
+                    "Invalid status. Use: Pending, Confirmed, Waiting, With Dentist, Treatment In Progress, Completed, Cancelled")).build();
         }
         Appointment appt = dao.findById(id);
-        if (appt == null) {
-            return Response.status(404).entity(error("Appointment not found")).build();
+        if (appt == null) return Response.status(404).entity(error("Appointment not found")).build();
+
+        String role = SecurityUtil.currentRole();
+        if ("PATIENT".equals(role)) {
+            if (appt.getPatientId() != SecurityUtil.currentId()) {
+                return Response.status(403).entity(error("You can only manage your own appointments")).build();
+            }
+            if (!"Cancelled".equals(newStatus)) {
+                return Response.status(403).entity(error("Patients may only cancel their appointments")).build();
+            }
+        } else if ("DENTIST".equals(role)) {
+            if (appt.getDentistId() != SecurityUtil.currentId()) {
+                return Response.status(403).entity(error("You can only manage your own appointments")).build();
+            }
+        } else {
+            SecurityUtil.requireStaff();
         }
+
         appt.setStatus(newStatus);
         if (dao.update(appt)) {
             if ("Cancelled".equals(newStatus)) {
                 notifyObservers("CANCELLED", appt);
+                notifyPatient(appt, "Appointment Cancelled",
+                        "Your appointment " + appt.getAppointmentNo() + " has been cancelled.");
             }
             Map<String, Object> res = new HashMap<>();
             res.put("appointmentId", id);
@@ -138,10 +190,10 @@ public class AppointmentResource {
         return Response.status(500).entity(error("Failed to update status")).build();
     }
 
-    // ── DELETE /appointments/{id}  ────────────────────────────────────────
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") int id) {
+        SecurityUtil.requireAdmin();
         Appointment existing = dao.findById(id);
         if (dao.delete(id)) {
             if (existing != null) notifyObservers("CANCELLED", existing);
@@ -150,7 +202,32 @@ public class AppointmentResource {
         return Response.status(500).entity(error("Failed to delete appointment")).build();
     }
 
-    // ── Private helpers ────────────────────────────────────────────────────
+    // ── Private helpers ──────────────────────────────────────────────────────
+    private void enforceViewOwnership(Appointment appt) {
+        if (SecurityUtil.isPatient()) {
+            if (appt.getPatientId() != SecurityUtil.currentId()) {
+                throw new jakarta.ws.rs.ForbiddenException("You can only view your own appointments");
+            }
+        } else {
+            SecurityUtil.requireStaff();
+        }
+    }
+
+    private void notifyPatient(Appointment appointment, String title, String message) {
+        try {
+            Notification n = new Notification();
+            n.setUserId(appointment.getPatientId());
+            n.setTitle(title);
+            n.setChannel("IN_APP");
+            n.setRecipient("");
+            n.setNotificationType("APPOINTMENT");
+            n.setMessage(message);
+            n.setRead(false);
+            n.setStatus("SENT");
+            notificationDao.insert(n);
+        } catch (Exception ignored) {}
+    }
+
     private void notifyObservers(String eventType, Appointment appointment) {
         String message = "Appointment " + appointment.getAppointmentNo() + " - " + eventType;
         subject.notifyObservers(eventType, appointment.getAppointmentId(),

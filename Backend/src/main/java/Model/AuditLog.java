@@ -6,6 +6,8 @@ public class AuditLog {
     private String tableName;
     private int recordId;
     private int performedBy;
+    private String role;
+    private String description;
     private String performedAt;
     private String oldValue;
     private String newValue;
@@ -20,6 +22,10 @@ public class AuditLog {
     public void setRecordId(int recordId) { this.recordId = recordId; }
     public int getPerformedBy() { return performedBy; }
     public void setPerformedBy(int performedBy) { this.performedBy = performedBy; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
     public String getPerformedAt() { return performedAt; }
     public void setPerformedAt(String performedAt) { this.performedAt = performedAt; }
     public String getOldValue() { return oldValue; }

@@ -11,6 +11,8 @@ public class Patient {
     private String nic;
     private String bloodGroup;
     private String allergies;
+    private String passwordHash;
+    private boolean active;
     private String createdAt;
 
     public int getPatientId() { return patientId; }
@@ -33,6 +35,10 @@ public class Patient {
     public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
     public String getAllergies() { return allergies; }
     public void setAllergies(String allergies) { this.allergies = allergies; }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 }

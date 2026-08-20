@@ -3,209 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Help & User Guide – Sunrise Dental Clinic</title>
+    <title>Help - Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-<div class="header">
-    <h1>Sunrise Dental Clinic</h1>
-    <div class="user-info" id="user-info"></div>
-</div>
-<nav class="nav" id="main-nav"></nav>
-
-<div class="container" style="max-width:900px;">
-    <div id="toast-container"></div>
-
-    <div class="page-header">
-        <div><h2>Help &amp; User Guide</h2><p>Step-by-step instructions for using the system</p></div>
+    <div class="header">
+        <h1>Help & User Guide</h1>
     </div>
-
-    <!-- Tab navigation -->
-    <div style="display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" onclick="showTab('receptionist')" id="tab-receptionist">👩‍💼 Receptionist Guide</button>
-        <button class="btn btn-ghost btn-sm" onclick="showTab('dentist')" id="tab-dentist">🦷 Dentist Guide</button>
-        <button class="btn btn-ghost btn-sm" onclick="showTab('admin')" id="tab-admin">🛠️ Admin Guide</button>
-        <button class="btn btn-ghost btn-sm" onclick="showTab('faq')" id="tab-faq">❓ FAQ</button>
-    </div>
-
-    <!-- Receptionist Guide -->
-    <div id="tab-content-receptionist">
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
         <div class="card">
-            <h2>👩‍💼 Receptionist Guide</h2>
-
-            <div style="margin-bottom:20px;padding:16px;background:var(--primary-light);border-radius:var(--radius);border-left:4px solid var(--primary);">
-                <strong>Role:</strong> Receptionists manage patient registrations, appointment bookings, and billing.
-            </div>
-
-            <h3 style="margin-bottom:10px;color:var(--primary);">Step 1 – Login</h3>
-            <p>Go to the login page. Enter your email and password. After successful login you will be redirected to your <strong>Receptionist Dashboard</strong>.</p>
-            <div style="background:var(--surface-alt);border-radius:var(--radius);padding:12px 16px;margin:12px 0;font-family:monospace;font-size:0.875rem;">
-                Default test: <strong>reception@sunrisedental.com</strong> / <strong>reception123</strong>
-            </div>
-
-            <hr>
-            <h3 style="margin-bottom:10px;color:var(--primary);">Step 2 – Register a New Appointment</h3>
-            <ol style="padding-left:24px;line-height:2;">
-                <li>Click <strong>New Appointment</strong> from dashboard or top menu.</li>
-                <li><strong>Search by NIC</strong> – enter the patient's NIC and click Search.</li>
-                <li>If patient exists → their details are auto-filled. If not → fill in the new patient form below.</li>
-                <li>Select <strong>Treatment Type</strong> (price preview shown automatically).</li>
-                <li>Select <strong>Dentist</strong>, <strong>Date</strong> (future dates only), and <strong>Time</strong> (08:00–18:00).</li>
-                <li>Enter <strong>Contact Number</strong> (10 digits starting with 0).</li>
-                <li>Click <strong>Register Appointment</strong> → system validates and assigns a unique appointment number like <code>SDC-2026-0001</code>.</li>
-            </ol>
-
-            <hr>
-            <h3 style="margin-bottom:10px;color:var(--primary);">Step 3 – View &amp; Search Appointments</h3>
-            <ol style="padding-left:24px;line-height:2;">
-                <li>Go to <strong>Appointments</strong> from the nav menu.</li>
-                <li>All appointments are listed in the table. Use the <strong>Status filter</strong> or <strong>Date filter</strong> to narrow results.</li>
-                <li>Enter an appointment number (e.g. <code>SDC-2026-0001</code>) in the search box and click <strong>Search</strong> to view full details.</li>
-                <li>From the detail panel, you can <strong>Update Status</strong> or <strong>Generate Bill</strong>.</li>
-            </ol>
-
-            <hr>
-            <h3 style="margin-bottom:10px;color:var(--primary);">Step 4 – Generate a Bill</h3>
-            <ol style="padding-left:24px;line-height:2;">
-                <li>Go to <strong>Billing</strong> from the nav menu.</li>
-                <li>Enter the appointment number and click <strong>Find</strong> – appointment details are shown.</li>
-                <li>Select <strong>Payment Method</strong> (Cash / Card / Insurance).</li>
-                <li>Click <strong>Generate Bill</strong> – the system calculates fees automatically:
-                    <ul style="padding-left:20px;margin-top:4px;">
-                        <li>Consultation Fee + Treatment Fee</li>
-                        <li>Senior Citizen Discount (10% for patients 60+)</li>
-                        <li>5% Tax</li>
-                    </ul>
-                </li>
-                <li>Click <strong>Mark as PAID</strong> when payment is received.</li>
-                <li>Click <strong>Print</strong> to print the receipt.</li>
-            </ol>
-
-            <hr>
-            <h3 style="margin-bottom:10px;color:var(--primary);">Step 5 – Patient Records</h3>
-            <ol style="padding-left:24px;line-height:2;">
-                <li>Go to <strong>Patients</strong> to see all registered patients.</li>
-                <li>Use the search box to filter by name, NIC or contact.</li>
-                <li>Click <strong>Edit</strong> to update patient details.</li>
-                <li>Click <strong>History</strong> to see all appointments for that patient.</li>
-                <li>Click <strong>Add New Patient</strong> to register a new patient without an appointment.</li>
-            </ol>
-        </div>
-    </div>
-
-    <!-- Dentist Guide -->
-    <div id="tab-content-dentist" style="display:none;">
-        <div class="card">
-            <h2>🦷 Dentist Guide</h2>
-            <div style="margin-bottom:20px;padding:16px;background:var(--success-light);border-radius:var(--radius);border-left:4px solid var(--success);">
-                <strong>Role:</strong> Dentists view their schedule and can mark appointments as completed.
-            </div>
-            <div style="background:var(--surface-alt);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-family:monospace;font-size:0.875rem;">
-                Default test: <strong>perera@sunrisedental.com</strong> / <strong>dentist123</strong>
-            </div>
-
-            <h3 style="margin-bottom:10px;color:var(--success);">Dashboard</h3>
-            <p>Your dashboard shows today's patient count, completed count, and remaining patients.</p>
-
-            <h3 style="margin-bottom:10px;color:var(--success);margin-top:20px;">Today's Patients</h3>
-            <p>The bottom section shows all of today's patients sorted by time. Click <strong>Done</strong> to mark an appointment as Completed.</p>
-
-            <h3 style="margin-bottom:10px;color:var(--success);margin-top:20px;">Patient History</h3>
-            <p>Go to <strong>Patient History</strong>, search by patient ID or NIC to see all past treatments for that patient, useful for ongoing treatment plans.</p>
-
-            <h3 style="margin-bottom:10px;color:var(--success);margin-top:20px;">Schedule View</h3>
-            <p>Go to <strong>My Schedule</strong> and select a date to view appointments. You can filter by date and dentist.</p>
-        </div>
-    </div>
-
-    <!-- Admin Guide -->
-    <div id="tab-content-admin" style="display:none;">
-        <div class="card">
-            <h2>🛠️ Admin Guide</h2>
-            <div style="margin-bottom:20px;padding:16px;background:var(--warning-light);border-radius:var(--radius);border-left:4px solid var(--warning);">
-                <strong>Role:</strong> Admins have full access including staff management, dentist management, and analytics reports.
-            </div>
-            <div style="background:var(--surface-alt);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-family:monospace;font-size:0.875rem;">
-                Default test: <strong>admin@sunrisedental.com</strong> / <strong>admin123</strong>
-            </div>
-
-            <h3 style="margin-bottom:10px;color:var(--warning);">Staff Management</h3>
-            <p>Go to <strong>Staff</strong>. View all staff. Click <strong>Add Staff</strong> to create a new user. Use <strong>Deactivate</strong> to disable login without deleting.</p>
-
-            <h3 style="margin-bottom:10px;color:var(--warning);margin-top:20px;">Dentist Management</h3>
-            <p>Go to <strong>Dentists</strong>. Each dentist appears as a card. Click <strong>Edit</strong> to update details. Click <strong>Add Dentist</strong> to register a new dentist.</p>
-
-            <h3 style="margin-bottom:10px;color:var(--warning);margin-top:20px;">Reports &amp; Analytics</h3>
-            <p>Go to <strong>Reports</strong> to see:</p>
-            <ul style="padding-left:24px;line-height:2;">
-                <li>Today's appointment count and revenue</li>
-                <li>Monthly revenue total</li>
-                <li>Pending bills count</li>
-                <li>Treatment popularity chart</li>
-                <li>Dentist workload (last 30 days)</li>
-                <li>Appointment status distribution</li>
-                <li>Payment method breakdown</li>
-                <li>Printable today's report</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- FAQ -->
-    <div id="tab-content-faq" style="display:none;">
-        <div class="card">
-            <h2>❓ Frequently Asked Questions</h2>
-
-            <div style="margin-bottom:18px;">
-                <strong>Q: The login page says "Invalid credentials"?</strong>
-                <p style="color:var(--text-secondary);margin-top:4px;">Ensure the backend server is running on port 8080. Check your email and password. Contact the admin to reset your password.</p>
-            </div>
-            <hr>
-            <div style="margin-bottom:18px;">
-                <strong>Q: Can I book an appointment in the past?</strong>
-                <p style="color:var(--text-secondary);margin-top:4px;">No. The system only allows future dates for new appointments.</p>
-            </div>
-            <hr>
-            <div style="margin-bottom:18px;">
-                <strong>Q: What if a patient is a senior citizen?</strong>
-                <p style="color:var(--text-secondary);margin-top:4px;">If the patient's date of birth shows they are 60 or older, a 10% senior citizen discount is automatically applied when generating the bill.</p>
-            </div>
-            <hr>
-            <div style="margin-bottom:18px;">
-                <strong>Q: What does the appointment number look like?</strong>
-                <p style="color:var(--text-secondary);margin-top:4px;">Format: <code>SDC-YYYY-NNNN</code> e.g. <code>SDC-2026-0001</code></p>
-            </div>
-            <hr>
-            <div style="margin-bottom:18px;">
-                <strong>Q: What are the clinic operating hours?</strong>
-                <p style="color:var(--text-secondary);margin-top:4px;">Appointments can only be booked between 08:00 and 18:00. The system automatically blocks times outside clinic hours.</p>
-            </div>
-            <hr>
-            <div style="margin-bottom:18px;">
-                <strong>Q: Can the same dentist have two appointments at the same time?</strong>
-                <p style="color:var(--text-secondary);margin-top:4px;">No. The system detects and prevents double bookings for the same dentist at the same date and time.</p>
-            </div>
-            <hr>
-            <div>
-                <strong>Q: How do I exit the system safely?</strong>
-                <p style="color:var(--text-secondary);margin-top:4px;">Click <strong>Logout</strong> in the navigation bar. This clears your session. Then you may close the browser tab.</p>
+            <h2>How to Use the System</h2>
+            <div id="helpContent">
+                <h3>Step 1: Login</h3>
+                <p>Use your email and password to log in. Contact the administrator if you need credentials.</p>
+                <h3>Step 2: Dashboard</h3>
+                <p>After logging in, you will see your role-based dashboard with quick links to common tasks.</p>
+                <h3>Step 3: Register Appointment</h3>
+                <p>Go to Register Appointment, fill in patient details, select a dentist and treatment type, choose a date and time, then submit. The system validates the contact number, date, time, and prevents double bookings automatically.</p>
+                <h3>Step 4: View Appointment</h3>
+                <p>Search for an appointment by its appointment number (e.g., SDC-2026-0001) to see full details.</p>
+                <h3>Step 5: Generate Bill</h3>
+                <p>Enter the appointment ID and patient ID to generate a bill. The system calculates consultation fee, treatment fee, applicable discounts (senior citizens get 10% off), and tax.</p>
+                <h3>Step 6: Reports</h3>
+                <p>Admins can view daily appointment reports, revenue trends, treatment popularity, and dentist workload.</p>
             </div>
         </div>
     </div>
-</div>
-
-<script src="/Frontend/js/app.js"></script>
-<script>
-    requireAuth();
-
-    function showTab(tab) {
-        ['receptionist','dentist','admin','faq'].forEach(t => {
-            document.getElementById('tab-content-' + t).style.display = t === tab ? 'block' : 'none';
-            const btn = document.getElementById('tab-' + t);
-            if (btn) {
-                btn.className = t === tab ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-            }
-        });
-    }
-</script>
+    <script src="/Frontend/js/app.js"></script>
 </body>
 </html>

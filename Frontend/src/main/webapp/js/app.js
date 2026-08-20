@@ -24,6 +24,8 @@ function redirectToDashboard(role) {
         window.location.href = '/Frontend/receptionist-dashboard.html';
     } else if (role === 'DENTIST') {
         window.location.href = '/Frontend/dentist-dashboard.html';
+    } else if (role === 'PATIENT') {
+        window.location.href = '/Frontend/patient-dashboard.html';
     } else {
         window.location.href = '/Frontend/login.html';
     }
@@ -43,6 +45,7 @@ function logout() {
     localStorage.removeItem('role');
     localStorage.removeItem('name');
     localStorage.removeItem('staffId');
+    localStorage.removeItem('patientId');
     localStorage.removeItem('email');
     window.location.href = '/Frontend/login.html';
 }
@@ -106,7 +109,7 @@ function formatDate(dateStr) {
 }
 
 function getStatusBadge(status) {
-    const cls = 'status-' + status.toLowerCase();
+    const cls = 'status-' + String(status).toLowerCase().replace(/[^a-z0-9]+/g, '-');
     return '<span class="status-badge ' + cls + '">' + status + '</span>';
 }
 
@@ -126,18 +129,30 @@ function showNav() {
         html += '<a href="/Frontend/manage-dentists.html">Dentists</a>';
         html += '<a href="/Frontend/manage-patients.html">Patients</a>';
         html += '<a href="/Frontend/view-appointment.html">Appointments</a>';
+        html += '<a href="/Frontend/manage-treatments.html">Treatments</a>';
         html += '<a href="/Frontend/billing.html">Billing</a>';
         html += '<a href="/Frontend/reports.html">Reports</a>';
+        html += '<a href="/Frontend/notifications.html">Notifications</a>';
+        html += '<a href="/Frontend/audit-log.html">Audit Log</a>';
     } else if (role === 'RECEPTIONIST') {
         html += '<a href="/Frontend/receptionist-dashboard.html">Dashboard</a>';
         html += '<a href="/Frontend/register-appointment.html">New Appointment</a>';
         html += '<a href="/Frontend/view-appointment.html">Appointments</a>';
         html += '<a href="/Frontend/manage-patients.html">Patients</a>';
         html += '<a href="/Frontend/billing.html">Billing</a>';
+        html += '<a href="/Frontend/queue.html">Queue</a>';
     } else if (role === 'DENTIST') {
         html += '<a href="/Frontend/dentist-dashboard.html">Dashboard</a>';
+        html += '<a href="/Frontend/view-appointment.html">Appointments</a>';
         html += '<a href="/Frontend/dentist-schedule.html">My Schedule</a>';
         html += '<a href="/Frontend/patient-history.html">Patient History</a>';
+    } else if (role === 'PATIENT') {
+        html += '<a href="/Frontend/patient-dashboard.html">Dashboard</a>';
+        html += '<a href="/Frontend/patient-appointments.html">Appointments</a>';
+        html += '<a href="/Frontend/patient-history.html">Treatment History</a>';
+        html += '<a href="/Frontend/patient-billing.html">Billing</a>';
+        html += '<a href="/Frontend/patient-notifications.html">Notifications</a>';
+        html += '<a href="/Frontend/patient-profile.html">Profile</a>';
     }
     html += '<a href="/Frontend/help.html">Help</a>';
     html += '<a href="#" onclick="logout(); return false;" style="color:#f87171;">Logout</a>';

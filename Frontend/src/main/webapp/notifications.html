@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications – Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+    <div id="toast-container"></div>
+    <div class="page-header">
+        <div><h2>🔔 System Notifications</h2><p>All clinic notifications and alerts</p></div>
+    </div>
+
+    <div class="card">
+        <h2>Recent Notifications</h2>
+        <div class="table-wrapper">
+            <table class="table" id="notifTable">
+                <thead><tr><th>Title</th><th>Message</th><th>Type</th><th>Date</th><th>Status</th></tr></thead>
+                <tbody><tr><td colspan="5" class="empty-state" style="padding:30px;text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['ADMIN']);
+    async function load() {
+        const list = await apiGet('/notifications');
+        const tbody = document.querySelector('#notifTable tbody');
+        if (!list || list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted);">No notifications</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(n => `<tr>
+            <td><strong>${n.title||'Notification'}</strong></td>
+            <td>${n.message}</td>
+            <td>${n.notificationType||'-'}</td>
+            <td>${n.createdAt ? n.createdAt.split('T')[0] : '-'}</td>
+            <td>${getStatusBadge(n.status)}</td>
+        </tr>`).join('');
+    }
+    load();
+</script>
+</body>
+</html>

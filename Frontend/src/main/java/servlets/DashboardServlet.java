@@ -20,6 +20,8 @@ public class DashboardServlet extends BaseServlet {
             forward(req, resp, "/receptionist-dashboard.html");
         } else if ("DENTIST".equals(role)) {
             forward(req, resp, "/dentist-dashboard.html");
+        } else if ("PATIENT".equals(role)) {
+            forward(req, resp, "/patient-dashboard.html");
         } else {
             resp.sendRedirect(req.getContextPath() + "/login.html");
         }

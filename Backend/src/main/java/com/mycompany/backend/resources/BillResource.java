@@ -12,6 +12,7 @@ import DAO.TreatmentDAO;
 import DAO.DentistDAO;
 import Service.BillFactory;
 import Service.BillCalculationStrategy;
+import Service.SecurityUtil;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -22,21 +23,27 @@ import java.util.*;
  * Design Patterns used:
  *   - Factory (BillFactory) to select billing strategy
  *   - Strategy (BillCalculationStrategy) for senior/standard pricing
+ *
+ * RBAC:
+ *   - Listing / receipt viewing: admin, receptionist, dentist (patient views own only).
+ *   - Generating a bill: admin, receptionist, dentist (dentist generates after treatment).
+ *   - Recording payment: admin / receptionist ONLY (dentists do not collect payment).
  */
 @Path("/bills")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class BillResource {
 
-    private final BillDAO       billDao       = new BillDAO();
+    private final BillDAO        billDao        = new BillDAO();
     private final AppointmentDAO appointmentDao = new AppointmentDAO();
-    private final PatientDAO    patientDao    = new PatientDAO();
-    private final TreatmentDAO  treatmentDao  = new TreatmentDAO();
-    private final DentistDAO    dentistDao    = new DentistDAO();
+    private final PatientDAO     patientDao     = new PatientDAO();
+    private final TreatmentDAO   treatmentDao   = new TreatmentDAO();
+    private final DentistDAO     dentistDao     = new DentistDAO();
 
     // ── GET /bills  ────────────────────────────────────────────────────────
     @GET
     public Response getAll() {
+        SecurityUtil.requireReceptionOrAdmin();
         List<Bill> bills = billDao.findAll();
         return Response.ok(bills).build();
     }
@@ -45,6 +52,7 @@ public class BillResource {
     @GET
     @Path("/appointment/{appointmentId}")
     public Response getByAppointmentId(@PathParam("appointmentId") int appointmentId) {
+        enforceBillAccess(appointmentId);
         Bill bill = billDao.findByAppointmentId(appointmentId);
         if (bill == null) {
             return Response.status(404).entity(error("Bill not found for appointment " + appointmentId)).build();
@@ -56,6 +64,7 @@ public class BillResource {
     @GET
     @Path("/{billId}")
     public Response getByBillId(@PathParam("billId") int billId) {
+        SecurityUtil.requireReceptionOrAdmin();
         Bill bill = billDao.findAll().stream()
                 .filter(b -> b.getBillId() == billId)
                 .findFirst().orElse(null);
@@ -66,17 +75,16 @@ public class BillResource {
     }
 
     // ── GET /bills/{billId}/receipt  ──────────────────────────────────────
-    // Full enriched receipt including patient, dentist, appointment, treatment
     @GET
     @Path("/{billId}/receipt")
     public Response getReceipt(@PathParam("billId") int billId) {
+        SecurityUtil.requireReceptionOrAdmin();
         Bill bill = billDao.findAll().stream()
                 .filter(b -> b.getBillId() == billId)
                 .findFirst().orElse(null);
         if (bill == null) {
             return Response.status(404).entity(error("Bill not found")).build();
         }
-
         Map<String, Object> receipt = buildReceipt(bill);
         return Response.ok(receipt).build();
     }
@@ -85,6 +93,7 @@ public class BillResource {
     @GET
     @Path("/appointment/{appointmentId}/receipt")
     public Response getReceiptByAppointment(@PathParam("appointmentId") int appointmentId) {
+        enforceBillAccess(appointmentId);
         Bill bill = billDao.findByAppointmentId(appointmentId);
         if (bill == null) {
             return Response.status(404).entity(error("Bill not found for this appointment")).build();
@@ -96,6 +105,7 @@ public class BillResource {
     @POST
     @Path("/generate")
     public Response generateBill(Map<String, Integer> request) {
+        SecurityUtil.requireReceptionOrAdmin();
         Integer appointmentId = request.get("appointment_id");
         if (appointmentId == null) {
             return Response.status(400).entity(error("appointment_id is required")).build();
@@ -154,7 +164,6 @@ public class BillResource {
         bill.setIssuedBy(Integer.parseInt(issuedByStr));
 
         if (billDao.insert(bill)) {
-            // Reload to get generated bill_id and issued_at
             Bill saved = billDao.findByAppointmentId(appointmentId);
             return Response.ok(buildReceipt(saved != null ? saved : bill)).build();
         }
@@ -165,6 +174,8 @@ public class BillResource {
     @PUT
     @Path("/{billId}/payment")
     public Response updatePayment(@PathParam("billId") int billId, Map<String, String> body) {
+        // Only receptionist / admin collect payments (dentist does NOT).
+        SecurityUtil.requireReceptionOrAdmin();
         String paymentMethod = body.getOrDefault("payment_method", "CASH");
         String paymentStatus = body.getOrDefault("payment_status", "PAID");
 
@@ -178,6 +189,18 @@ public class BillResource {
             return Response.ok(res).build();
         }
         return Response.status(500).entity(error("Failed to update payment")).build();
+    }
+
+    // ── RBAC helper: patients may only access bills for their own appointments ─
+    private void enforceBillAccess(int appointmentId) {
+        if (!SecurityUtil.isPatient()) {
+            SecurityUtil.requireReceptionOrAdmin();
+            return;
+        }
+        Appointment appt = appointmentDao.findById(appointmentId);
+        if (appt == null || appt.getPatientId() != SecurityUtil.currentId()) {
+            throw new jakarta.ws.rs.ForbiddenException("You can only view your own bills");
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
@@ -195,7 +218,6 @@ public class BillResource {
         receipt.put("issuedAt",        bill.getIssuedAt());
         receipt.put("issuedBy",        bill.getIssuedBy());
 
-        // Enrich with appointment info
         Appointment appt = appointmentDao.findById(bill.getAppointmentId());
         if (appt != null) {
             receipt.put("appointmentNo",   appt.getAppointmentNo());

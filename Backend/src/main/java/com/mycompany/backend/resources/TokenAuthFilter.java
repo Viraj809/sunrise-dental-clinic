@@ -11,11 +11,13 @@ import jakarta.ws.rs.ext.Provider;
  *
  * Enforces authentication on every protected JAX-RS endpoint. It validates the
  * {@code Authorization: Bearer <token>} header against the server-side
- * {@link TokenManager} registry. The public login endpoint (/auth/login) and
- * CORS preflight (OPTIONS) requests are exempt.
+ * {@link TokenManager} registry, attaches the resolved {@link TokenManager.Session}
+ * to the request thread (for {@link Service.SecurityUtil} RBAC checks), and
+ * applies a small set of coarse path-based guards as defence-in-depth. Fine
+ * grained, resource-level authorization is still performed inside each resource.
  *
- * On success the resolved staff id is attached to the request properties so
- * downstream resources could use it if needed.
+ * The public login endpoint (/auth/login) and CORS preflight (OPTIONS) requests
+ * are exempt from authentication.
  */
 @Provider
 public class TokenAuthFilter implements ContainerRequestFilter {
@@ -28,7 +30,8 @@ public class TokenAuthFilter implements ContainerRequestFilter {
 
         // Allow login and CORS preflight without a token.
         if ("OPTIONS".equalsIgnoreCase(requestContext.getMethod())
-                || path.contains("auth/login")) {
+                || path.contains("auth/login")
+                || path.contains("auth/patient/register")) {
             return;
         }
 
@@ -39,13 +42,43 @@ public class TokenAuthFilter implements ContainerRequestFilter {
         }
 
         String token = authHeader.substring(AUTH_PREFIX.length()).trim();
-        int staffId = TokenManager.getInstance().validate(token);
-        if (staffId < 0) {
+        TokenManager.Session session = TokenManager.getInstance().resolve(token);
+        if (session == null) {
             abort(requestContext, "Invalid or expired session. Please log in again.");
             return;
         }
 
-        requestContext.setProperty("staffId", staffId);
+        TokenManager.getInstance().attach(session);
+
+        // Coarse, path-based defence-in-depth (resources also enforce precisely).
+        if (!coarseAllowed(path, requestContext.getMethod(), session.role)) {
+            requestContext.abortWith(
+                    Response.status(Response.Status.FORBIDDEN)
+                            .entity("{\"error\":\"You are not authorized to access this resource\"}")
+                            .build());
+        }
+    }
+
+    private boolean coarseAllowed(String path, String method, String role) {
+        // Patient self-service endpoints – only the patient themselves.
+        if (path.startsWith("patients/me") && !"PATIENT".equals(role)) return false;
+        if (path.startsWith("patient/") && !"PATIENT".equals(role)) return false;
+
+        // Admin-only management surfaces.
+        if (path.startsWith("staff") && !"ADMIN".equals(role)) return false;
+        if (path.startsWith("audit") && !"ADMIN".equals(role)) return false;
+        if (path.startsWith("settings") && !"ADMIN".equals(role)) return false;
+
+        // Receptionist / admin only operational surfaces.
+        if (path.startsWith("queue") && !("ADMIN".equals(role) || "RECEPTIONIST".equals(role))) return false;
+
+        // Treatment catalogue writes are admin-only (reads are allowed to all).
+        if (path.startsWith("treatments") && !"GET".equalsIgnoreCase(method) && !"ADMIN".equals(role)) {
+            return false;
+        }
+
+        // Dentist data is only reachable by staff/patient; admins/receptionists may view.
+        return true;
     }
 
     private void abort(ContainerRequestContext requestContext, String message) {

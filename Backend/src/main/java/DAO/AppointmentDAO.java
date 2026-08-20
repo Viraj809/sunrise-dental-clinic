@@ -94,7 +94,7 @@ public class AppointmentDAO {
     }
 
     public boolean insert(Appointment appointment) {
-        String sql = "INSERT INTO appointments (appointment_no, patient_id, dentist_id, treatment_type, appointment_date, appointment_time, status, notes, contact, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO appointments (appointment_no, patient_id, dentist_id, treatment_type, appointment_date, appointment_time, appointment_type, status, notes, contact, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, appointment.getAppointmentNo());
@@ -103,10 +103,11 @@ public class AppointmentDAO {
             ps.setString(4, appointment.getTreatmentType());
             ps.setString(5, appointment.getAppointmentDate());
             ps.setString(6, appointment.getAppointmentTime());
-            ps.setString(7, appointment.getStatus());
-            ps.setString(8, appointment.getNotes());
-            ps.setString(9, appointment.getContact());
-            ps.setInt(10, appointment.getCreatedBy());
+            ps.setString(7, appointment.getAppointmentType() != null ? appointment.getAppointmentType() : "Consultation");
+            ps.setString(8, appointment.getStatus());
+            ps.setString(9, appointment.getNotes());
+            ps.setString(10, appointment.getContact());
+            ps.setInt(11, appointment.getCreatedBy());
             int affected = ps.executeUpdate();
             if (affected > 0) {
                 try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -124,7 +125,7 @@ public class AppointmentDAO {
     }
 
     public boolean update(Appointment appointment) {
-        String sql = "UPDATE appointments SET patient_id=?, dentist_id=?, treatment_type=?, appointment_date=?, appointment_time=?, status=?, notes=?, contact=?, updated_at=NOW() WHERE appointment_id=?";
+        String sql = "UPDATE appointments SET patient_id=?, dentist_id=?, treatment_type=?, appointment_date=?, appointment_time=?, appointment_type=?, status=?, notes=?, contact=?, updated_at=NOW() WHERE appointment_id=?";
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, appointment.getPatientId());
@@ -132,10 +133,11 @@ public class AppointmentDAO {
             ps.setString(3, appointment.getTreatmentType());
             ps.setString(4, appointment.getAppointmentDate());
             ps.setString(5, appointment.getAppointmentTime());
-            ps.setString(6, appointment.getStatus());
-            ps.setString(7, appointment.getNotes());
-            ps.setString(8, appointment.getContact());
-            ps.setInt(9, appointment.getAppointmentId());
+            ps.setString(6, appointment.getAppointmentType() != null ? appointment.getAppointmentType() : "Consultation");
+            ps.setString(7, appointment.getStatus());
+            ps.setString(8, appointment.getNotes());
+            ps.setString(9, appointment.getContact());
+            ps.setInt(10, appointment.getAppointmentId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -179,6 +181,7 @@ public class AppointmentDAO {
         a.setTreatmentType(rs.getString("treatment_type"));
         a.setAppointmentDate(rs.getString("appointment_date"));
         a.setAppointmentTime(rs.getString("appointment_time"));
+        a.setAppointmentType(rs.getString("appointment_type"));
         a.setStatus(rs.getString("status"));
         a.setNotes(rs.getString("notes"));
         a.setContact(rs.getString("contact"));

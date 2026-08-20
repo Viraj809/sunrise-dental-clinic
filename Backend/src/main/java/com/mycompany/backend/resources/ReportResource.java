@@ -1,6 +1,7 @@
 package com.mycompany.backend.resources;
 
 import Service.ReportFacade;
+import Service.SecurityUtil;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -15,6 +16,7 @@ public class ReportResource {
     @GET
     @Path("/daily/{date}")
     public Response getDaily(@PathParam("date") String date) {
+        SecurityUtil.requireAdmin();
         Map<String, Object> report = facade.getDailyAppointmentReport(date);
         return Response.ok(report).build();
     }
@@ -22,6 +24,7 @@ public class ReportResource {
     @GET
     @Path("/revenue/{period}")
     public Response getRevenue(@PathParam("period") String period) {
+        SecurityUtil.requireAdmin();
         Map<String, Object> report = facade.getRevenueReport(period);
         return Response.ok(report).build();
     }
@@ -29,6 +32,7 @@ public class ReportResource {
     @GET
     @Path("/treatment-popularity")
     public Response getTreatmentPopularity() {
+        SecurityUtil.requireAdmin();
         Map<String, Object> report = facade.getTreatmentPopularityReport();
         return Response.ok(report).build();
     }
@@ -36,6 +40,7 @@ public class ReportResource {
     @GET
     @Path("/dentist-workload")
     public Response getDentistWorkload() {
+        SecurityUtil.requireAdmin();
         Map<String, Object> report = facade.getDentistWorkloadReport();
         return Response.ok(report).build();
     }

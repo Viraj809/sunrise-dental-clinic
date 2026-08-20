@@ -3,151 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dentist Dashboard – Sunrise Dental Clinic</title>
+    <title>Dentist Dashboard - Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-<div class="header">
-    <h1>Sunrise Dental Clinic</h1>
-    <div class="user-info" id="user-info"></div>
-</div>
-<nav class="nav" id="main-nav"></nav>
-
-<div class="container">
+    <div class="header">
+        <h1>Sunrise Dental Clinic - Dentist Dashboard</h1>
+        <div class="user-info" id="user-info"></div>
+    </div>
+    <nav class="nav" id="main-nav"></nav>
+    <div class="container">
+        <div class="card">
+            <h2>Welcome, Doctor</h2>
+            <p>View your daily schedule and patient information. Administrative functions are restricted.</p>
+        </div>
+        <a href="/Frontend/api/appointments" class="card" style="display:block; text-decoration:none; color:inherit;">
+            <h3>My Schedule</h3>
+            <p>View today's appointments</p>
+        </a>
+    </div>
     <div id="toast-container"></div>
-
-    <div class="page-header">
-        <div>
-            <h2>Dentist Dashboard</h2>
-            <p id="greeting">Welcome, Doctor! Here's your schedule for today.</p>
-        </div>
-        <span id="current-date" style="color:var(--text-muted);font-size:0.875rem;"></span>
-    </div>
-
-    <!-- Stats -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-bottom:28px;">
-        <div class="card-stat">
-            <span class="stat-icon">📅</span>
-            <div class="stat-value" id="stat-today" style="color:var(--primary);">–</div>
-            <div class="stat-label">Today's Patients</div>
-        </div>
-        <div class="card-stat">
-            <span class="stat-icon">✅</span>
-            <div class="stat-value" id="stat-done" style="color:var(--success);">–</div>
-            <div class="stat-label">Completed</div>
-        </div>
-        <div class="card-stat">
-            <span class="stat-icon">⏳</span>
-            <div class="stat-value" id="stat-pending" style="color:var(--warning);">–</div>
-            <div class="stat-label">Remaining</div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="action-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:24px;">
-        <a href="/Frontend/dentist-schedule.html" class="action-card">
-            <div class="ac-icon">📋</div>
-            <div><div class="ac-label">My Schedule</div><div class="ac-sub">View any date</div></div>
-        </a>
-        <a href="/Frontend/patient-history.html" class="action-card">
-            <div class="ac-icon">📁</div>
-            <div><div class="ac-label">Patient History</div><div class="ac-sub">Search records</div></div>
-        </a>
-        <a href="/Frontend/help.html" class="action-card">
-            <div class="ac-icon">❓</div>
-            <div><div class="ac-label">Help</div><div class="ac-sub">User guide</div></div>
-        </a>
-    </div>
-
-    <!-- Today's Schedule -->
-    <div class="card">
-        <h2>📋 Today's Patients</h2>
-        <div id="scheduleDate" style="margin-bottom:12px;">
-            <span style="font-size:0.875rem;color:var(--text-muted);">Date: </span>
-            <strong id="todayStr"></strong>
-        </div>
-        <div class="table-wrapper">
-            <table class="table" id="scheduleTable">
-                <thead><tr><th>Time</th><th>Appt No</th><th>Patient ID</th><th>Treatment</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">Loading schedule...</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script src="/Frontend/js/app.js"></script>
-<script>
-    requireAuth(['DENTIST', 'ADMIN']);
-
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('todayStr').textContent =
-        new Date().toLocaleDateString('en-LK', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
-    document.getElementById('current-date').textContent = document.getElementById('todayStr').textContent;
-
-    const name = localStorage.getItem('name') || 'Doctor';
-    document.getElementById('greeting').textContent = `Welcome, ${name}! Here's your schedule for today.`;
-
-    async function loadSchedule() {
-        try {
-            const role = localStorage.getItem('role');
-            const [appointments, dentists] = await Promise.all([
-                apiGet('/appointments'),
-                apiGet('/dentists')
-            ]);
-
-            // For a DENTIST, scope the view to their own appointments by matching
-            // the logged-in staff email against the dentists table.
-            let myDentistId = null;
-            if (role === 'DENTIST') {
-                const email = (localStorage.getItem('email') || '').toLowerCase();
-                const me = dentists.find(d => (d.email || '').toLowerCase() === email);
-                if (me) myDentistId = me.dentistId;
-            }
-
-            let todayAppts = appointments.filter(a => a.appointmentDate === today);
-            if (myDentistId != null) {
-                todayAppts = todayAppts.filter(a => a.dentistId === myDentistId);
-            }
-
-            const done    = todayAppts.filter(a => a.status === 'Completed').length;
-            const pending = todayAppts.filter(a => a.status !== 'Completed' && a.status !== 'Cancelled').length;
-
-            document.getElementById('stat-today').textContent   = todayAppts.length;
-            document.getElementById('stat-done').textContent    = done;
-            document.getElementById('stat-pending').textContent = pending;
-
-            const tbody = document.querySelector('#scheduleTable tbody');
-            if (todayAppts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No appointments scheduled for today 🎉</td></tr>';
-            } else {
-                tbody.innerHTML = todayAppts
-                    .sort((a,b) => a.appointmentTime.localeCompare(b.appointmentTime))
-                    .map(a => `
-                    <tr>
-                        <td><strong>${a.appointmentTime}</strong></td>
-                        <td>${a.appointmentNo}</td>
-                        <td>${a.patientId}</td>
-                        <td>${a.treatmentType}</td>
-                        <td>${getStatusBadge(a.status)}</td>
-                        <td style="display:flex;gap:6px;">
-                            <a href="/Frontend/patient-history.html?patient_id=${a.patientId}" class="btn btn-sm btn-ghost">History</a>
-                            ${a.status !== 'Completed' && a.status !== 'Cancelled' ?
-                              `<button class="btn btn-sm btn-success" onclick="markDone(${a.appointmentId})">Done</button>` : ''}
-                        </td>
-                    </tr>`).join('');
-            }
-        } catch (e) { showToast('Failed to load schedule', 'error'); }
-    }
-
-    async function markDone(appointmentId) {
-        try {
-            await apiPut('/appointments/' + appointmentId + '/status', { status: 'Completed' });
-            showToast('Appointment marked as completed ✅');
-            loadSchedule();
-        } catch (e) { showToast('Failed to update status', 'error'); }
-    }
-
-    loadSchedule();
-</script>
+    <script src="/Frontend/js/app.js"></script>
 </body>
 </html>

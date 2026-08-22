@@ -78,6 +78,22 @@ public class AppointmentDAO {
         return list;
     }
 
+    public List<Appointment> findByDentistId(int dentistId) {
+        List<Appointment> list = new ArrayList<>();
+        String sql = "SELECT * FROM appointments WHERE dentist_id = ? ORDER BY appointment_date DESC, appointment_time DESC";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, dentistId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapAppointment(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public List<Appointment> findAll() {
         List<Appointment> list = new ArrayList<>();
         String sql = "SELECT * FROM appointments ORDER BY appointment_date DESC, appointment_time DESC";

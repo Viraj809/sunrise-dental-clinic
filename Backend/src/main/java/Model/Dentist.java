@@ -6,6 +6,7 @@ public class Dentist {
     private String specialization;
     private String contact;
     private String email;
+    private String nic;
     private String availableDays;
     private boolean isActive;
     private String createdAt;
@@ -20,6 +21,8 @@ public class Dentist {
     public void setContact(String contact) { this.contact = contact; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    public String getNic() { return nic; }
+    public void setNic(String nic) { this.nic = nic; }
     public String getAvailableDays() { return availableDays; }
     public void setAvailableDays(String availableDays) { this.availableDays = availableDays; }
     public boolean isActive() { return isActive; }

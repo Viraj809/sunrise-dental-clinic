@@ -3,54 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Patients - Sunrise Dental Clinic</title>
+    <title>Manage Patients – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Manage Patients</h1>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div><h2>Patient Management</h2><p>Search, view and manage patient records</p></div>
+        <a href="/Frontend/add-patient.html" class="btn btn-primary">➕ Add New Patient</a>
     </div>
-    <nav class="nav" id="main-nav"></nav>
-    <div class="container">
-        <div id="toast-container"></div>
-        <div class="card">
-            <h2>Patient List</h2>
-            <div style="margin-bottom:16px;">
-                <input type="text" id="searchNic" placeholder="Search by NIC" style="padding:8px; width:300px; border:1px solid var(--gray-300); border-radius:var(--radius);">
-                <button class="btn btn-primary" onclick="searchPatient()">Search</button>
-                <a href="/Frontend/api/patients?action=add" class="btn btn-success">Add Patient</a>
-            </div>
+
+    <div class="card">
+        <div class="search-bar" style="margin-bottom:8px;">
+            <input type="text" id="searchInput" placeholder="Search by name, NIC or contact..."
+                   oninput="filterPatients()" style="flex:1;">
+            <button class="btn btn-ghost" onclick="clearSearch()">Clear</button>
+        </div>
+        <p id="resultCount" style="font-size:0.875rem;color:var(--text-muted);margin-bottom:16px;"></p>
+
+        <div class="table-wrapper">
             <table class="table" id="patientTable">
-                <thead><tr><th>ID</th><th>Name</th><th>Contact</th><th>NIC</th><th>Actions</th></tr></thead>
-                <tbody></tbody>
+                <thead>
+                    <tr><th>ID</th><th>Name</th><th>NIC</th><th>Contact</th><th>Email</th><th>Blood</th><th>Actions</th></tr>
+                </thead>
+                <tbody><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
-    <script src="/Frontend/js/app.js"></script>
-    <script>
-        async function loadPatients() {
-            try {
-                const patients = await apiGet('/patients');
-                const tbody = document.querySelector('#patientTable tbody');
-                tbody.innerHTML = '';
-                patients.forEach(p => {
-                    tbody.innerHTML += '<tr><td>' + p.patient_id + '</td><td>' + p.name + '</td><td>' + p.contact + '</td><td>' + p.nic + '</td>' +
-                        '<td><a href="/Frontend/api/patients?action=edit&patient_id=' + p.patient_id + '" class="btn btn-warning" style="padding:6px 12px; font-size:0.8rem;">Edit</a></td></tr>';
-                });
-            } catch (e) { showToast('Failed to load patients', 'error'); }
-        }
-        loadPatients();
+</div>
 
-        async function searchPatient() {
-            const nic = document.getElementById('searchNic').value.trim();
-            if (!nic) return;
-            try {
-                const p = await apiGet('/patients/nic/' + encodeURIComponent(nic));
-                const tbody = document.querySelector('#patientTable tbody');
-                tbody.innerHTML = '<tr><td>' + p.patient_id + '</td><td>' + p.name + '</td><td>' + p.contact + '</td><td>' + p.nic + '</td>' +
-                    '<td><a href="/Frontend/api/patients?action=edit&patient_id=' + p.patient_id + '" class="btn btn-warning" style="padding:6px 12px; font-size:0.8rem;">Edit</a></td></tr>';
-            } catch (e) { showToast('Patient not found', 'error'); }
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth();
+
+    let allPatients = [];
+    const role = localStorage.getItem('role');
+
+    async function loadPatients() {
+        try {
+            allPatients = await apiGet('/patients');
+            renderTable(allPatients);
+        } catch (e) { showToast('Failed to load patients', 'error'); }
+    }
+
+    async function deletePatient(id, name) {
+        if (!confirm('Are you sure you want to delete patient "' + name + '"?\n\nThis action cannot be undone.')) return;
+        try {
+            const res = await apiDelete('/patients/' + id);
+            if (res.error) { showToast(res.error, 'error'); return; }
+            showToast('Patient deleted ✅');
+            loadPatients();
+        } catch (e) { showToast('Failed to delete patient', 'error'); }
+    }
+
+    function renderTable(patients) {
+        document.getElementById('resultCount').textContent =
+            patients.length + ' patient' + (patients.length !== 1 ? 's' : '') + ' found';
+
+        const tbody = document.querySelector('#patientTable tbody');
+        if (!patients.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No patients found</td></tr>';
+            return;
         }
-    </script>
+        tbody.innerHTML = patients.map(p => `
+            <tr>
+                <td><strong>${p.patientId}</strong></td>
+                <td>${p.name}</td>
+                <td>${p.nic}</td>
+                <td>${p.contact}</td>
+                <td>${p.email || '–'}</td>
+                <td>${p.bloodGroup || '–'}</td>
+                <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <a href="/Frontend/edit-patient.html?patient_id=${p.patientId}" class="btn btn-sm btn-warning">✏️ Edit</a>
+                    <a href="/Frontend/patient-history.html?patient_id=${p.patientId}" class="btn btn-sm btn-ghost">📁 History</a>
+                    <a href="/Frontend/register-appointment.html" class="btn btn-sm btn-primary" 
+                       onclick="localStorage.setItem('quickNic','${p.nic}')">📅 Book</a>
+                    ${(role === 'ADMIN') ? `<button class="btn btn-sm btn-danger" onclick="deletePatient(${p.patientId}, '${p.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>` : ''}
+                </td>
+            </tr>`).join('');
+    }
+
+    function filterPatients() {
+        const q = document.getElementById('searchInput').value.toLowerCase().trim();
+        if (!q) { renderTable(allPatients); return; }
+        const filtered = allPatients.filter(p =>
+            p.name.toLowerCase().includes(q) ||
+            (p.nic && p.nic.toLowerCase().includes(q)) ||
+            (p.contact && p.contact.includes(q)) ||
+            (p.email && p.email.toLowerCase().includes(q))
+        );
+        renderTable(filtered);
+    }
+
+    function clearSearch() {
+        document.getElementById('searchInput').value = '';
+        renderTable(allPatients);
+    }
+
+    loadPatients();
+</script>
 </body>
 </html>

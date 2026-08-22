@@ -1,18 +1,24 @@
 package com.mycompany.backend.resources;
 
 import Model.Appointment;
-import DAO.AppointmentDAO;
-import DAO.NotificationDAO;
+import Model.Dentist;
 import Model.Notification;
+import Model.Staff;
+import DAO.AppointmentDAO;
+import DAO.DentistDAO;
+import DAO.NotificationDAO;
+import DAO.StaffDAO;
 import Validation.*;
 import Service.AppointmentSubject;
 import Service.EmailNotificationObserver;
 import Service.SmsNotificationObserver;
 import Service.StaffNotificationObserver;
 import Service.SecurityUtil;
+import Service.TokenManager;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +96,8 @@ public class AppointmentResource {
     public Response getByDentistAndDate(@PathParam("dentistId") int dentistId,
                                         @PathParam("date") String date) {
         if ("DENTIST".equals(SecurityUtil.currentRole())) {
-            if (dentistId != SecurityUtil.currentId()) {
+            int myDentistId = resolveDentistId(SecurityUtil.session());
+            if (myDentistId > 0 && dentistId != myDentistId) {
                 return Response.status(403).entity(error("You can only view your own schedule")).build();
             }
         } else {
@@ -98,6 +105,32 @@ public class AppointmentResource {
         }
         List<Appointment> list = dao.findByDentistIdAndDate(dentistId, date);
         return Response.ok(list).build();
+    }
+
+    @GET
+    @Path("/mine")
+    public Response getMine() {
+        SecurityUtil.requireStaff();
+        TokenManager.Session session = SecurityUtil.session();
+        int dentistId = resolveDentistId(session);
+        if (dentistId <= 0) {
+            return Response.status(403).entity(error("No dentist profile linked to this account")).build();
+        }
+        List<Appointment> list = dao.findByDentistId(dentistId);
+        return Response.ok(list).build();
+    }
+
+    private int resolveDentistId(TokenManager.Session session) {
+        if (!"DENTIST".equals(session.role)) return session.id;
+        try {
+            StaffDAO staffDao = new StaffDAO();
+            Model.Staff staff = staffDao.findById(session.id);
+            if (staff == null || staff.getEmail() == null) return -1;
+            DentistDAO dentistDao = new DentistDAO();
+            Model.Dentist d = dentistDao.findByEmail(staff.getEmail());
+            if (d != null) return d.getDentistId();
+        } catch (Exception e) { e.printStackTrace(); }
+        return -1;
     }
 
     @POST

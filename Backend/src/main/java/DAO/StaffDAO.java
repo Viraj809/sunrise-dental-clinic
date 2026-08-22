@@ -40,6 +40,36 @@ public class StaffDAO {
         return null;
     }
 
+    public Staff findByNic(String nic) {
+        String sql = "SELECT * FROM staff WHERE NIC = ? AND is_active = TRUE";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nic);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapStaff(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Staff findByContact(String contact) {
+        String sql = "SELECT * FROM staff WHERE contact = ? AND is_active = TRUE";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, contact);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapStaff(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public List<Staff> findAll() {
         List<Staff> list = new ArrayList<>();
         String sql = "SELECT * FROM staff ORDER BY role, name";

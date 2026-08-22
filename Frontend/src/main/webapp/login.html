@@ -166,13 +166,6 @@
                 <h2>Smile brighter, every day.</h2>
                 <p>Our computerized appointment &amp; patient management system keeps your visits smooth — from booking to billing, all in one secure place.</p>
             </div>
-
-            <div class="brand-demo">
-                <strong>Demo Accounts</strong>
-                <div><span>Admin</span><span>admin@sunrisedental.com / admin123</span></div>
-                <div><span>Receptionist</span><span>reception@sunrisedental.com / reception123</span></div>
-                <div><span>Dentist</span><span>perera@sunrisedental.com / dentist123</span></div>
-            </div>
         </aside>
 
         <!-- Form panel -->
@@ -189,15 +182,15 @@
                         <label>Email Address</label>
                         <input type="email" id="email" name="email" required placeholder="you@sunrisedental.com" autocomplete="email">
                     </div>
-                    <div class="form-group" style="margin-bottom:8px;">
+                    <div class="form-group" style="margin-bottom:8px;position:relative;">
                         <label>Password</label>
-                        <input type="password" id="password" name="password" required placeholder="Enter your password" autocomplete="current-password">
+                        <input type="password" id="password" name="password" required placeholder="Enter your password" autocomplete="current-password" style="padding-right:44px;">
+                        <button type="button" onclick="togglePassword()" style="position:absolute;right:12px;top:32px;background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--text-muted);">👁️</button>
                     </div>
                     <button type="submit" class="btn-login">Sign In</button>
                 </form>
 
                 <p class="login-foot">© 2026 Sunrise Dental Clinic · Colombo 07, Sri Lanka</p>
-                <p class="login-foot" style="margin-top:8px;"><a href="/Frontend/patient-register.html" style="color:var(--primary);text-decoration:none;font-weight:600;">New patient? Register here →</a></p>
             </div>
         </main>
     </div>
@@ -271,6 +264,11 @@
                 btn.disabled = false;
             }
         });
+
+        function togglePassword() {
+            const input = document.getElementById('password');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
 
         // Show URL-param errors (legacy fallback)
         const urlParams = new URLSearchParams(window.location.search);

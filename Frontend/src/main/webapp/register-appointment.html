@@ -24,14 +24,18 @@
     <!-- Step 1: Patient -->
     <div class="card">
         <h2>👤 Step 1: Patient</h2>
-        <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;">
-            <div class="form-group" style="flex:1;margin-bottom:0;">
-                <label>Search by NIC</label>
-                <input type="text" id="searchNic" placeholder="e.g. 901234567V" onkeydown="if(event.key==='Enter'){searchPatient();}">
-            </div>
-            <button class="btn btn-primary" onclick="searchPatient()">🔍 Search</button>
+        <div class="form-group" style="margin-bottom:16px;">
+            <label>Search Patient by Name</label>
+            <input type="text" id="patientSearch" placeholder="Type patient name..." autocomplete="off" style="width:100%;">
+            <div id="patientAutocomplete" style="display:none;position:absolute;z-index:50;background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);max-height:220px;overflow-y:auto;width:calc(100% - 32px);box-shadow:var(--shadow);"></div>
         </div>
         <div id="patientResult" class="alert" style="display:none;"></div>
+
+        <div id="selectedPatientCard" style="display:none;margin-bottom:16px;" class="alert alert-success">
+            <strong>Selected Patient:</strong> <span id="selectedPatientName"></span><br>
+            <span style="font-size:0.8rem;">NIC: <span id="selectedPatientNic"></span> | Contact: <span id="selectedPatientContact"></span></span>
+            <button class="btn btn-sm btn-ghost" onclick="clearPatientSelection()" style="margin-left:8px;">Clear</button>
+        </div>
 
         <div id="newPatientFields" style="display:none;">
             <div style="background:var(--info-light);border-left:4px solid var(--info);padding:12px 16px;border-radius:var(--radius);margin-bottom:16px;font-size:0.875rem;color:#164e63;">
@@ -177,6 +181,55 @@
             res.innerHTML = '⚠️ Patient not found. Please enter new patient details below.';
             document.getElementById('newPatientFields').style.display = 'block';
         }
+    }
+
+    let autocompleteTimer = null;
+    document.getElementById('patientSearch').addEventListener('input', function() {
+        const q = this.value.trim();
+        const box = document.getElementById('patientAutocomplete');
+        if (q.length < 2) { box.style.display = 'none'; return; }
+        clearTimeout(autocompleteTimer);
+        autocompleteTimer = setTimeout(async () => {
+            try {
+                const list = await apiGet('/patients/search/' + encodeURIComponent(q));
+                if (!list.length) { box.style.display = 'none'; return; }
+                box.innerHTML = list.map(p => `
+                    <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);"
+                         onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='#fff'"
+                         onclick="selectPatient(${p.patientId}, '${p.name.replace(/'/g,"\\'")}', '${(p.nic || '').replace(/'/g,"\\'")}', '${(p.contact || '').replace(/'/g,"\\'")}')">
+                        <div style="font-weight:600;font-size:0.9rem;">${p.name}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">NIC: ${p.nic || '–'} | Contact: ${p.contact || '–'}</div>
+                    </div>
+                `).join('');
+                box.style.display = 'block';
+            } catch (e) { box.style.display = 'none'; }
+        }, 200);
+    });
+
+    document.addEventListener('click', function(e) {
+        const box = document.getElementById('patientAutocomplete');
+        const input = document.getElementById('patientSearch');
+        if (box && !box.contains(e.target) && e.target !== input) box.style.display = 'none';
+    });
+
+    function selectPatient(id, name, nic, contact) {
+        selectedPatientId = id;
+        document.getElementById('patientSearch').value = name;
+        document.getElementById('patientAutocomplete').style.display = 'none';
+        document.getElementById('newPatientFields').style.display = 'none';
+        document.getElementById('patientResult').style.display = 'none';
+        document.getElementById('selectedPatientCard').style.display = 'flex';
+        document.getElementById('selectedPatientName').textContent = name;
+        document.getElementById('selectedPatientNic').textContent = nic || '–';
+        document.getElementById('selectedPatientContact').textContent = contact || '–';
+        document.getElementById('contact').value = contact || '';
+    }
+
+    function clearPatientSelection() {
+        selectedPatientId = null;
+        document.getElementById('patientSearch').value = '';
+        document.getElementById('selectedPatientCard').style.display = 'none';
+        document.getElementById('newPatientFields').style.display = 'none';
     }
 
     document.getElementById('appointmentForm').addEventListener('submit', async function(e) {

@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Dentists – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
+    <style>
+        .day-btn {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            border: 2px solid var(--border, #e2e8f0);
+            background: #fff;
+            color: var(--text-primary, #0f172a);
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .day-btn.active {
+            background: var(--primary, #2563eb);
+            color: #fff;
+            border-color: var(--primary, #2563eb);
+        }
+    </style>
 </head>
 <body>
 <div class="header">
@@ -38,15 +56,43 @@
                 <div class="form-group"><label>NIC *</label><input type="text" id="m-nic" placeholder="e.g. 904567891V"></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>Specialization</label><input type="text" id="m-spec" placeholder="e.g. Orthodontics"></div>
-                <div class="form-group"><label>Contact</label><input type="text" id="m-contact" placeholder="07XXXXXXXX"></div>
+                <div class="form-group"><label>Specialization *</label>
+                    <select id="m-spec">
+                        <option value="">Select Specialization</option>
+                        <option value="General Dentistry">General Dentistry</option>
+                        <option value="Orthodontics">Orthodontics</option>
+                        <option value="Endodontics">Endodontics</option>
+                        <option value="Periodontics">Periodontics</option>
+                        <option value="Prosthodontics">Prosthodontics</option>
+                        <option value="Oral Surgery">Oral Surgery</option>
+                        <option value="Pediatric Dentistry">Pediatric Dentistry</option>
+                        <option value="Cosmetic Dentistry">Cosmetic Dentistry</option>
+                        <option value="Implant Dentistry">Implant Dentistry</option>
+                        <option value="Oral & Maxillofacial Surgery">Oral & Maxillofacial Surgery</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Contact</label><input type="text" id="m-contact" placeholder="07XXXXXXXX" maxlength="10"></div>
             </div>
             <div class="form-row">
                 <div class="form-group"><label>Email * (login)</label><input type="email" id="m-email" placeholder="dr@clinic.com"></div>
                 <div class="form-group"><label>Password (login)</label><input type="text" id="m-password" placeholder="dentist123"></div>
             </div>
             <div class="form-group"><label>Available Days</label>
-                <input type="text" id="m-days" placeholder="e.g. Mon,Tue,Wed,Thu,Fri">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.875rem;cursor:pointer;">
+                        <input type="checkbox" id="m-allDays" checked onchange="toggleAllDays()"> All Days
+                    </label>
+                </div>
+                <div id="m-daySelector" style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button type="button" class="day-btn active" data-day="Monday"    onclick="toggleDay(this)">Mon</button>
+                    <button type="button" class="day-btn active" data-day="Tuesday"   onclick="toggleDay(this)">Tue</button>
+                    <button type="button" class="day-btn active" data-day="Wednesday" onclick="toggleDay(this)">Wed</button>
+                    <button type="button" class="day-btn active" data-day="Thursday"  onclick="toggleDay(this)">Thu</button>
+                    <button type="button" class="day-btn active" data-day="Friday"    onclick="toggleDay(this)">Fri</button>
+                    <button type="button" class="day-btn active" data-day="Saturday"  onclick="toggleDay(this)">Sat</button>
+                    <button type="button" class="day-btn active" data-day="Sunday"    onclick="toggleDay(this)">Sun</button>
+                </div>
+                <input type="hidden" id="m-days">
             </div>
             <p style="font-size:0.8rem;color:var(--text-muted);margin:-6px 0 14px;">
                 A staff login is created so this dentist can sign in. Leave password blank to use the default <strong>dentist123</strong>.
@@ -65,6 +111,25 @@
     requireAuth(['ADMIN']);
 
     let editingId = null;
+
+    function toggleDay(btn) {
+        btn.classList.toggle('active');
+        syncDays();
+    }
+
+    function toggleAllDays() {
+        const checked = document.getElementById('m-allDays').checked;
+        document.querySelectorAll('#m-daySelector .day-btn').forEach(b => {
+            if (checked) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+        syncDays();
+    }
+
+    function syncDays() {
+        const checked = document.querySelectorAll('#m-daySelector .day-btn.active');
+        document.getElementById('m-days').value = Array.from(checked).map(b => b.dataset.day).join(',');
+    }
 
     async function loadDentists() {
         try {
@@ -86,37 +151,39 @@
                     <div style="font-size:0.875rem;color:var(--text-secondary);display:flex;flex-direction:column;gap:4px;">
                         <span>📞 ${d.contact || '–'}</span>
                         <span>✉️ ${d.email || '–'}</span>
-                        <span>📅 ${d.availableDays || '–'}</span>
+                        <span>📅 ${(d.availableDays || '').split(',').filter(Boolean).join(', ') || '–'}</span>
                     </div>
                     <div style="display:flex;gap:8px;margin-top:14px;">
                         <button class="btn btn-sm btn-warning" onclick="openEditModal(${d.dentistId})">✏️ Edit</button>
-                        <button class="btn btn-sm ${d.active ? 'btn-danger' : 'btn-success'}"
-                                onclick="toggleDentist(${d.dentistId}, ${d.active})">
-                            ${d.active ? '🔒 Deactivate' : '🔓 Activate'}
-                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="confirmDeleteDentist(${d.dentistId}, '${d.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>
                     </div>
                 </div>`).join('');
         } catch (e) { showToast('Failed to load dentists', 'error'); }
     }
 
-    async function toggleDentist(id, isActive) {
+    async function confirmDeleteDentist(id, name) {
+        if (!confirm('Are you sure you want to delete dentist "' + name + '"?\n\nThis action cannot be undone. Existing appointments must be cancelled or reassigned first.')) return;
         try {
-            await apiPut('/dentists/' + id + '/toggle', {});
-            showToast((isActive ? 'Dentist deactivated' : 'Dentist activated') + ' ✅');
+            const res = await apiDelete('/dentists/' + id);
+            if (res.error) { showToast(res.error, 'error'); return; }
+            showToast('Dentist deleted ✅');
             loadDentists();
-        } catch (e) { showToast('Failed to update status', 'error'); }
+        } catch (e) { showToast('Failed to delete dentist', 'error'); }
     }
 
     function openModal() {
         editingId = null;
         document.getElementById('modalTitle').textContent = '➕ Add Dentist';
         document.getElementById('m-dentistId').value = '';
-        ['m-name','m-nic','m-spec','m-contact','m-email','m-password','m-days'].forEach(id => document.getElementById(id).value = '');
+        ['m-name','m-nic','m-contact','m-email','m-password'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('m-spec').value = '';
         document.getElementById('modalError').style.display = 'none';
         document.getElementById('regResult').style.display = 'none';
         document.getElementById('dentistFormFields').style.display = 'block';
         document.getElementById('dentistModalActions').style.display = 'flex';
         document.getElementById('dentistModal').style.display = 'flex';
+        document.getElementById('m-allDays').checked = true;
+        toggleAllDays();
     }
 
     async function openEditModal(dentistId) {
@@ -127,10 +194,23 @@
             document.getElementById('m-dentistId').value      = d.dentistId;
             document.getElementById('m-name').value           = d.name || '';
             document.getElementById('m-spec').value           = d.specialization || '';
+            document.getElementById('m-nic').value            = d.nic || '';
             document.getElementById('m-contact').value        = d.contact || '';
             document.getElementById('m-email').value          = d.email || '';
-            document.getElementById('m-days').value           = d.availableDays || '';
             document.getElementById('modalError').style.display = 'none';
+            const days = (d.availableDays || '').split(',').map(s => s.trim()).filter(Boolean);
+            const allDays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+            if (days.length === 7 && allDays.every(day => days.includes(day))) {
+                document.getElementById('m-allDays').checked = true;
+            } else {
+                document.getElementById('m-allDays').checked = false;
+            }
+            document.querySelectorAll('#m-daySelector .day-btn').forEach(b => {
+                const day = b.dataset.day;
+                if (days.includes(day)) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+            syncDays();
             document.getElementById('dentistModal').style.display = 'flex';
         } catch (e) { showToast('Failed to load dentist', 'error'); }
     }
@@ -144,6 +224,10 @@
         errDiv.style.display = 'none';
         const name = document.getElementById('m-name').value.trim();
         if (!name) { errDiv.textContent = 'Dentist name is required.'; errDiv.style.display = 'flex'; return; }
+        const spec = document.getElementById('m-spec').value;
+        if (!spec) { errDiv.textContent = 'Please select a specialization.'; errDiv.style.display = 'flex'; return; }
+        const nic = document.getElementById('m-nic').value.trim();
+        if (!nic) { errDiv.textContent = 'NIC is required.'; errDiv.style.display = 'flex'; return; }
 
         const btn = document.getElementById('saveDentistBtn');
         btn.disabled = true; btn.textContent = 'Saving...';
@@ -151,10 +235,10 @@
         try {
             let res;
             if (editingId) {
-                // Edit: update the dentist profile only (login managed separately).
                 const data = {
                     name,
-                    specialization: document.getElementById('m-spec').value,
+                    specialization: spec,
+                    nic,
                     contact:        document.getElementById('m-contact').value,
                     email:          document.getElementById('m-email').value,
                     availableDays:  document.getElementById('m-days').value,
@@ -162,13 +246,12 @@
                 };
                 res = await apiPut('/dentists/' + editingId, data);
             } else {
-                // New dentist: also create a staff login so they can sign in.
                 const data = {
                     name,
-                    specialization: document.getElementById('m-spec').value,
+                    specialization: spec,
+                    nic,
                     contact:        document.getElementById('m-contact').value,
                     email:          document.getElementById('m-email').value,
-                    nic:            document.getElementById('m-nic').value.trim(),
                     password:       document.getElementById('m-password').value,
                     available_days: document.getElementById('m-days').value,
                     active:         true
@@ -179,7 +262,6 @@
             if (res.error) {
                 errDiv.textContent = res.error; errDiv.style.display = 'flex';
             } else if (!editingId && res.password) {
-                // Show the generated login credentials to the admin.
                 document.getElementById('dentistFormFields').style.display = 'none';
                 document.getElementById('dentistModalActions').style.display = 'none';
                 const rr = document.getElementById('regResult');

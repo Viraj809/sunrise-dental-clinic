@@ -3,12 +3,14 @@ package com.mycompany.backend.resources;
 import Model.Patient;
 import DAO.PatientDAO;
 import Service.SecurityUtil;
+import Service.AuditService;
+import Validation.NICValidator;
+import Validation.ContactNumberValidator;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Path("/patients")
 @Produces(MediaType.APPLICATION_JSON)
@@ -20,6 +22,17 @@ public class PatientResource {
     public Response getAll() {
         SecurityUtil.requireStaff();
         List<Patient> list = dao.findAll();
+        return Response.ok(list).build();
+    }
+
+    @GET
+    @Path("/search/{query}")
+    public Response search(@PathParam("query") String query) {
+        SecurityUtil.requireStaff();
+        if (query == null || query.trim().isEmpty()) {
+            return Response.ok(Collections.emptyList()).build();
+        }
+        List<Patient> list = dao.searchByName(query.trim());
         return Response.ok(list).build();
     }
 
@@ -51,7 +64,19 @@ public class PatientResource {
         return Response.ok(p).build();
     }
 
-    // ── Patient self-service ───────────────────────────────────────────────
+    @DELETE
+    @Path("/{id}")
+    public Response delete(@PathParam("id") int id) {
+        SecurityUtil.requireAdmin();
+        Patient p = dao.findById(id);
+        if (p == null) return Response.status(404).entity(error("Patient not found")).build();
+        if (dao.delete(id)) {
+            AuditService.getInstance().logCurrent("DELETE", "patients", id, "Patient deleted: " + p.getName());
+            return Response.ok(success("Patient deleted successfully")).build();
+        }
+        return Response.status(500).entity(error("Failed to delete patient")).build();
+    }
+
     @GET
     @Path("/me")
     public Response getMe() {
@@ -93,15 +118,27 @@ public class PatientResource {
         return Response.status(500).entity(error("Failed to change password")).build();
     }
 
-    // ── Staff registration of a patient (receptionist / admin) ─────────────
     @POST
     public Response create(Patient patient) {
         SecurityUtil.requireReceptionOrAdmin();
-        if (patient.getNic() == null || patient.getNic().isEmpty()) {
+        if (patient.getNic() == null || patient.getNic().trim().isEmpty()) {
             return Response.status(400).entity(error("NIC is required")).build();
         }
-        if (patient.getContact() == null || !patient.getContact().matches("^0\\d{9}$")) {
-            return Response.status(400).entity(error("Contact number must be 10 digits and start with 0")).build();
+        String nicErr = NICValidator.validate(patient.getNic());
+        if (nicErr != null) return Response.status(400).entity(error(nicErr)).build();
+        if (dao.findByNic(patient.getNic()) != null) {
+            return Response.status(400).entity(error("This NIC number is already registered")).build();
+        }
+        if (patient.getContact() == null || patient.getContact().trim().isEmpty()) {
+            return Response.status(400).entity(error("Contact number is required")).build();
+        }
+        String contactErr = ContactNumberValidator.validate(patient.getContact());
+        if (contactErr != null) return Response.status(400).entity(error(contactErr)).build();
+        if (dao.findByContact(patient.getContact()) != null) {
+            return Response.status(400).entity(error("This contact number is already registered")).build();
+        }
+        if (patient.getEmail() != null && !patient.getEmail().trim().isEmpty() && dao.findByEmail(patient.getEmail()) != null) {
+            return Response.status(400).entity(error("This email is already registered")).build();
         }
         if (dao.insert(patient)) {
             return Response.ok(patient).build();
@@ -120,6 +157,14 @@ public class PatientResource {
             SecurityUtil.requireReceptionOrAdmin();
         }
         patient.setPatientId(id);
+        if (patient.getNic() != null && !patient.getNic().trim().isEmpty()) {
+            String nicErr = NICValidator.validate(patient.getNic());
+            if (nicErr != null) return Response.status(400).entity(error(nicErr)).build();
+        }
+        if (patient.getContact() != null && !patient.getContact().trim().isEmpty()) {
+            String contactErr = ContactNumberValidator.validate(patient.getContact());
+            if (contactErr != null) return Response.status(400).entity(error(contactErr)).build();
+        }
         if (dao.update(patient)) {
             return Response.ok(patient).build();
         }
@@ -154,3 +199,4 @@ public class PatientResource {
         return m;
     }
 }
+

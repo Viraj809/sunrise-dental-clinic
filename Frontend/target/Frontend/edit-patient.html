@@ -3,76 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Patient - Sunrise Dental Clinic</title>
+    <title>Edit Patient – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Edit Patient</h1>
-    </div>
-    <nav class="nav" id="main-nav"></nav>
-    <div class="container" style="max-width:600px;">
-        <div id="toast-container"></div>
-        <div class="card">
-            <form id="patientForm">
-                <input type="hidden" id="patientId">
-                <div class="form-group"><label>Name *</label><input type="text" id="name" required></div>
-                <div class="form-group"><label>Date of Birth</label><input type="date" id="dob"></div>
-                <div class="form-group"><label>Gender</label><select id="gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
-                <div class="form-group"><label>Address</label><input type="text" id="address"></div>
-                <div class="form-group"><label>Contact (10 digits, starts with 0) *</label><input type="text" id="contact" required></div>
-                <div class="form-group"><label>Email</label><input type="email" id="email"></div>
-                <div class="form-group"><label>Blood Group</label><input type="text" id="bloodGroup"></div>
-                <div class="form-group"><label>Allergies</label><textarea id="allergies" rows="2"></textarea></div>
-                <button type="submit" class="btn btn-primary">Update Patient</button>
-                <a href="/Frontend/api/patients" class="btn" style="background:var(--gray-200); margin-left:10px;">Cancel</a>
-            </form>
-        </div>
-    </div>
-    <script src="/Frontend/js/app.js"></script>
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const patientId = urlParams.get('patient_id');
-        async function loadPatient() {
-            if (!patientId) return;
-            try {
-                const p = await apiGet('/patients/' + patientId);
-                document.getElementById('patientId').value = p.patient_id;
-                document.getElementById('name').value = p.name;
-                document.getElementById('dob').value = p.date_of_birth;
-                document.getElementById('gender').value = p.gender;
-                document.getElementById('address').value = p.address;
-                document.getElementById('contact').value = p.contact;
-                document.getElementById('email').value = p.email;
-                document.getElementById('bloodGroup').value = p.blood_group;
-                document.getElementById('allergies').value = p.allergies;
-            } catch (e) { showToast('Failed to load patient', 'error'); }
-        }
-        loadPatient();
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
 
-        document.getElementById('patientForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const id = document.getElementById('patientId').value;
-            const data = {
-                name: document.getElementById('name').value,
-                date_of_birth: document.getElementById('dob').value,
-                gender: document.getElementById('gender').value,
-                address: document.getElementById('address').value,
-                contact: document.getElementById('contact').value,
-                email: document.getElementById('email').value,
-                blood_group: document.getElementById('bloodGroup').value,
-                allergies: document.getElementById('allergies').value
-            };
-            try {
-                const res = await apiPost('/patients/' + id, data);
-                if (!res.error) {
-                    showToast('Patient updated successfully');
-                    setTimeout(() => window.location.href = '/Frontend/api/patients', 1000);
-                } else {
-                    showToast(res.error, 'error');
-                }
-            } catch (e) { showToast('Failed to update patient', 'error'); }
-        });
-    </script>
+<div class="container" style="max-width:720px;">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div><h2>Edit Patient</h2><p id="patientSubtitle">Loading patient details...</p></div>
+        <a href="/Frontend/manage-patients.html" class="btn btn-ghost btn-sm">← Back to Patients</a>
+    </div>
+
+    <div id="loadError" class="alert alert-error" style="display:none;"></div>
+
+    <div class="card" id="editCard" style="display:none;">
+        <h2>✏️ Patient Information</h2>
+        <div id="errorMsg" class="alert alert-error"   style="display:none;"></div>
+        <div id="successMsg" class="alert alert-success" style="display:none;"></div>
+
+        <form id="editForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label>NIC (read-only)</label>
+                    <input type="text" id="nic" readonly style="background:var(--surface-alt);color:var(--text-muted);">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" id="dob">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="gender">
+                        <option>Male</option><option>Female</option><option>Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Contact Number *</label>
+                    <input type="text" id="contact" maxlength="10" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Home Address</label>
+                <input type="text" id="address">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Blood Group</label>
+                    <select id="bloodGroup">
+                        <option value="">Unknown</option>
+                        <option>A+</option><option>A-</option>
+                        <option>B+</option><option>B-</option>
+                        <option>AB+</option><option>AB-</option>
+                        <option>O+</option><option>O-</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Known Allergies</label>
+                    <input type="text" id="allergies">
+                </div>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:8px;">
+                <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">💾 Save Changes</button>
+                <a href="/Frontend/manage-patients.html" class="btn btn-ghost btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['RECEPTIONIST', 'ADMIN']);
+
+    const params    = new URLSearchParams(window.location.search);
+    const patientId = params.get('patient_id');
+
+    async function loadPatient() {
+        if (!patientId) {
+            document.getElementById('loadError').textContent = 'No patient_id specified in URL.';
+            document.getElementById('loadError').style.display = 'flex';
+            return;
+        }
+        try {
+            const p = await apiGet('/patients/' + patientId);
+            document.getElementById('patientSubtitle').textContent = 'Editing: ' + p.name;
+            document.getElementById('name').value         = p.name    || '';
+            document.getElementById('nic').value          = p.nic     || '';
+            document.getElementById('contact').value      = p.contact || '';
+            document.getElementById('email').value        = p.email   || '';
+            document.getElementById('address').value      = p.address || '';
+            document.getElementById('allergies').value    = p.allergies || '';
+            if (p.dateOfBirth) document.getElementById('dob').value = p.dateOfBirth;
+            if (p.gender)      document.getElementById('gender').value = p.gender;
+            if (p.bloodGroup)  document.getElementById('bloodGroup').value = p.bloodGroup;
+            document.getElementById('editCard').style.display = 'block';
+        } catch (e) {
+            document.getElementById('loadError').textContent = 'Patient not found (ID: ' + patientId + ')';
+            document.getElementById('loadError').style.display = 'flex';
+        }
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const errDiv = document.getElementById('errorMsg');
+        const okDiv  = document.getElementById('successMsg');
+        errDiv.style.display = 'none';
+        okDiv.style.display  = 'none';
+
+        const contact = document.getElementById('contact').value.trim();
+        if (!/^0\d{9}$/.test(contact)) {
+            errDiv.textContent = 'Contact must be 10 digits starting with 0.';
+            errDiv.style.display = 'flex'; return;
+        }
+
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true; btn.textContent = 'Saving...';
+
+        const data = {
+            name:        document.getElementById('name').value.trim(),
+            contact,
+            email:       document.getElementById('email').value,
+            address:     document.getElementById('address').value,
+            dateOfBirth: document.getElementById('dob').value || null,
+            gender:      document.getElementById('gender').value,
+            bloodGroup:  document.getElementById('bloodGroup').value || null,
+            allergies:   document.getElementById('allergies').value
+        };
+
+        try {
+            const res = await apiPut('/patients/' + patientId, data);
+            if (res.error) {
+                errDiv.textContent = res.error;
+                errDiv.style.display = 'flex';
+            } else {
+                okDiv.innerHTML = '✅ Patient updated successfully!';
+                okDiv.style.display = 'flex';
+                showToast('Patient saved ✅');
+            }
+        } catch (e) {
+            errDiv.textContent = 'Failed to update patient.';
+            errDiv.style.display = 'flex';
+        }
+        btn.disabled = false; btn.textContent = '💾 Save Changes';
+    });
+
+    loadPatient();
+</script>
 </body>
 </html>

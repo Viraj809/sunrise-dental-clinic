@@ -3,33 +3,438 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Help - Sunrise Dental Clinic</title>
+    <title>Help & User Guide – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Help & User Guide</h1>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container" style="max-width:900px;">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div><h2 id="guide-title">Help &amp; User Guide</h2><p id="guide-subtitle">Step-by-step instructions for using the system</p></div>
     </div>
-    <nav class="nav" id="main-nav"></nav>
-    <div class="container">
+
+    <div id="role-guide-container">
+        <!-- Role-specific guide will be injected here by JavaScript -->
         <div class="card">
-            <h2>How to Use the System</h2>
-            <div id="helpContent">
-                <h3>Step 1: Login</h3>
-                <p>Use your email and password to log in. Contact the administrator if you need credentials.</p>
-                <h3>Step 2: Dashboard</h3>
-                <p>After logging in, you will see your role-based dashboard with quick links to common tasks.</p>
-                <h3>Step 3: Register Appointment</h3>
-                <p>Go to Register Appointment, fill in patient details, select a dentist and treatment type, choose a date and time, then submit. The system validates the contact number, date, time, and prevents double bookings automatically.</p>
-                <h3>Step 4: View Appointment</h3>
-                <p>Search for an appointment by its appointment number (e.g., SDC-2026-0001) to see full details.</p>
-                <h3>Step 5: Generate Bill</h3>
-                <p>Enter the appointment ID and patient ID to generate a bill. The system calculates consultation fee, treatment fee, applicable discounts (senior citizens get 10% off), and tax.</p>
-                <h3>Step 6: Reports</h3>
-                <p>Admins can view daily appointment reports, revenue trends, treatment popularity, and dentist workload.</p>
-            </div>
+            <p style="text-align:center;padding:40px;color:var(--text-muted);">Loading guide...</p>
         </div>
     </div>
-    <script src="/Frontend/js/app.js"></script>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth();
+
+    (function() {
+        const role = localStorage.getItem('role');
+        const name = localStorage.getItem('name') || '';
+        const container = document.getElementById('role-guide-container');
+        const title = document.getElementById('guide-title');
+        const subtitle = document.getElementById('guide-subtitle');
+
+        if (!role) {
+            window.location.href = '/Frontend/login.html';
+            return;
+        }
+
+        let html = '';
+
+        if (role === 'ADMIN') {
+            title.textContent = '🛠️ Admin Guide';
+            subtitle.textContent = 'Full system administration and management';
+            html = `
+            <div class="card">
+                <div style="margin-bottom:20px;padding:16px;background:var(--warning-light);border-radius:var(--radius);border-left:4px solid var(--warning);">
+                    <strong>Role:</strong> Admins have full system access including patient management, dentist management, treatment management, appointment management, billing, staff management, and analytics reports.
+                </div>
+
+                <h3 style="margin-bottom:10px;color:var(--warning);">Dashboard Overview</h3>
+                <p>The Admin Dashboard shows system-wide statistics including:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Total Patients</li>
+                    <li>Total Dentists</li>
+                    <li>Today's Appointments</li>
+                    <li>Pending Appointments</li>
+                    <li>Completed Appointments</li>
+                    <li>Cancelled Appointments</li>
+                    <li>Today's Revenue</li>
+                </ul>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--warning);margin-top:20px;">Patient Management</h3>
+                <p>Go to <strong>Patients</strong> to:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>View all registered patients</li>
+                    <li>Search patients by name, NIC, or contact number</li>
+                    <li>Add new patients</li>
+                    <li>Edit patient details</li>
+                    <li>View patient appointment history</li>
+                    <li>View patient treatment history</li>
+                    <li><strong>Delete patients</strong> – Admin only</li>
+                </ul>
+                <div style="background:var(--surface-alt);border-radius:var(--radius);padding:12px 16px;margin-top:10px;font-size:0.875rem;color:var(--text-secondary);">
+                    <strong>Important:</strong> Patient deletion should be used carefully because it may affect related records.
+                </div>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--warning);margin-top:20px;">Dentist Management</h3>
+                <p>Go to <strong>Dentists</strong> to:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>View all registered dentists</li>
+                    <li>View dentist specialization</li>
+                    <li>View dentist contact information</li>
+                    <li>Add new dentists</li>
+                    <li>Edit dentist details</li>
+                    <li>Select dentist specialization from the dropdown</li>
+                    <li>Set available days using the Monday–Sunday day selector</li>
+                    <li>Use the <strong>All Days</strong> option to select all working days</li>
+                    <li>View dentist appointment information</li>
+                    <li><strong>Delete dentists</strong> – Admin only</li>
+                </ul>
+                <div style="background:var(--surface-alt);border-radius:var(--radius);padding:12px 16px;margin-top:10px;font-size:0.875rem;color:var(--text-secondary);">
+                    <strong>Important:</strong> Dentist deletion should only be allowed when there are no existing appointments or related records that would cause database conflicts.
+                </div>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--warning);margin-top:20px;">Treatment Management</h3>
+                <p>Go to <strong>Treatments</strong> to:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>View all treatments</li>
+                    <li>View treatment prices</li>
+                    <li>View treatment categories</li>
+                    <li>View treatment duration</li>
+                    <li>Add new treatments</li>
+                    <li>Select treatment category from the dropdown</li>
+                    <li>Edit existing treatments</li>
+                    <li>Delete treatments</li>
+                </ul>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--warning);margin-top:20px;">Appointment Management</h3>
+                <p>Go to <strong>Appointments</strong> to:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>View all appointments across the clinic</li>
+                    <li>Search appointments by appointment number</li>
+                    <li>Filter appointments by date</li>
+                    <li>Filter appointments by status</li>
+                    <li>View complete appointment details</li>
+                    <li>Update appointment status</li>
+                    <li>Generate bills</li>
+                    <li><strong>Delete appointments</strong> – Admin only</li>
+                </ul>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--warning);margin-top:20px;">Billing &amp; Payments</h3>
+                <p>Go to <strong>Billing</strong> to:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Search bills using appointment number</li>
+                    <li>Generate bills for completed appointments</li>
+                    <li>View treatment charges</li>
+                    <li>Apply senior citizen discounts when applicable</li>
+                    <li>Calculate applicable tax automatically</li>
+                    <li>Select payment method</li>
+                    <li>Mark bills as <strong>PAID</strong></li>
+                    <li>Print receipts</li>
+                </ul>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--warning);margin-top:20px;">Reports &amp; Analytics</h3>
+                <p>Go to <strong>Reports</strong> to view:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Today's appointment count</li>
+                    <li>Today's revenue</li>
+                    <li>Monthly revenue</li>
+                    <li>Pending bills</li>
+                    <li>Treatment popularity</li>
+                    <li>Dentist workload</li>
+                    <li>Appointment status distribution</li>
+                    <li>Payment method breakdown</li>
+                    <li>Printable daily reports</li>
+                </ul>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--warning);margin-top:20px;">Staff Management</h3>
+                <p>Go to <strong>Staff</strong> to manage system users.</p>
+                <p>Admins can:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Add staff members</li>
+                    <li>Edit staff details</li>
+                    <li>View staff accounts</li>
+                    <li>Manage Admin accounts</li>
+                    <li>Manage Receptionist accounts</li>
+                    <li>Manage Dentist accounts</li>
+                    <li>Activate accounts</li>
+                    <li>Deactivate accounts</li>
+                    <li>Manage user roles</li>
+                </ul>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--warning);margin-top:20px;">Admin Permissions</h3>
+                <p>Admin has the highest level of access.</p>
+                <p>Admin can:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Manage patients</li>
+                    <li>Delete patients</li>
+                    <li>Manage dentists</li>
+                    <li>Delete dentists</li>
+                    <li>Manage treatments</li>
+                    <li>Manage appointments</li>
+                    <li>Delete appointments</li>
+                    <li>Manage staff/users</li>
+                    <li>Manage billing</li>
+                    <li>View reports and analytics</li>
+                </ul>
+            </div>`;
+
+        } else if (role === 'RECEPTIONIST') {
+            title.textContent = '👩‍💼 Receptionist Guide';
+            subtitle.textContent = 'Patient registration, appointment bookings, and billing';
+            html = `
+            <div class="card">
+                <div style="margin-bottom:20px;padding:16px;background:var(--primary-light);border-radius:var(--radius);border-left:4px solid var(--primary);">
+                    <strong>Role:</strong> Receptionists manage patient registration, appointment bookings, appointment information, and billing-related front-desk activities.
+                </div>
+
+                <h3 style="margin-bottom:10px;color:var(--primary);">Step 1 – Login</h3>
+                <p>Go to the login page.</p>
+                <p>Enter your:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Email / Username</li>
+                    <li>Password</li>
+                </ul>
+                <p>After successful login, you will be redirected to the <strong>Receptionist Dashboard</strong>.</p>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--primary);margin-top:20px;">Dashboard Overview</h3>
+                <p>The Receptionist Dashboard provides quick access to:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Today's Appointments</li>
+                    <li>Pending Appointments</li>
+                    <li>Completed Appointments</li>
+                    <li>Patient Registration</li>
+                    <li>New Appointment Registration</li>
+                    <li>Appointment Management</li>
+                    <li>Billing</li>
+                </ul>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--primary);margin-top:20px;">Step 2 – Register a New Appointment</h3>
+                <ol style="padding-left:24px;line-height:2;">
+                    <li>Click <strong>New Appointment</strong> from the dashboard or navigation menu.</li>
+                    <li>Use <strong>Search by Patient Name</strong>.</li>
+                    <li>Type the patient's name in the search field.</li>
+                    <li>Matching patients will appear automatically.</li>
+                    <li>Select the correct patient.</li>
+                    <li>If the patient does not exist, register the patient first.</li>
+                    <li>Select the <strong>Treatment Type</strong>.</li>
+                    <li>Select the <strong>Dentist</strong>.</li>
+                    <li>Select the <strong>Appointment Date</strong>.</li>
+                    <li>Select the available <strong>Appointment Time</strong>.</li>
+                    <li>Enter or verify the patient's contact number.</li>
+                    <li>Click <strong>Register Appointment</strong>.</li>
+                    <li>The system will validate the information and generate a unique appointment number.</li>
+                </ol>
+                <div style="background:var(--surface-alt);border-radius:var(--radius);padding:12px 16px;margin-top:10px;font-family:monospace;font-size:0.875rem;">
+                    Example: <strong>SDC-2026-0001</strong>
+                </div>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--primary);margin-top:20px;">Step 3 – View &amp; Search Appointments</h3>
+                <ol style="padding-left:24px;line-height:2;">
+                    <li>Go to <strong>Appointments</strong>.</li>
+                    <li>View the appointment list.</li>
+                    <li>Use the <strong>Status Filter</strong> to filter appointments.</li>
+                    <li>Use the <strong>Date Filter</strong> to search appointments by date.</li>
+                    <li>Click <strong>View</strong> to see complete appointment details.</li>
+                    <li>Update appointment information when permitted.</li>
+                    <li>Generate a bill when required.</li>
+                </ol>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--primary);margin-top:20px;">Step 4 – Generate a Bill</h3>
+                <ol style="padding-left:24px;line-height:2;">
+                    <li>Go to <strong>Billing</strong>.</li>
+                    <li>Enter the appointment number.</li>
+                    <li>Click <strong>Find</strong>.</li>
+                    <li>Check the appointment and treatment information.</li>
+                    <li>Select the payment method:
+                        <ul style="padding-left:20px;margin-top:4px;">
+                            <li>Cash</li>
+                            <li>Card</li>
+                            <li>Insurance</li>
+                        </ul>
+                    </li>
+                    <li>Click <strong>Generate Bill</strong>.</li>
+                    <li>Check the calculated amount.</li>
+                    <li>Click <strong>Mark as PAID</strong> after receiving payment.</li>
+                    <li>Click <strong>Print</strong> to print the receipt.</li>
+                </ol>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--primary);margin-top:20px;">Step 5 – Patient Records</h3>
+                <p>Go to <strong>Patients</strong> to:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>View registered patients</li>
+                    <li>Search by patient name</li>
+                    <li>Search by NIC</li>
+                    <li>Search by contact number</li>
+                    <li>View patient details</li>
+                    <li>Edit patient information</li>
+                    <li>View appointment history</li>
+                    <li>View treatment history</li>
+                    <li>Register a new patient</li>
+                </ul>
+                <div style="background:var(--surface-alt);border-radius:var(--radius);padding:12px 16px;margin-top:10px;font-size:0.875rem;color:var(--text-secondary);">
+                    <strong>Important:</strong> Receptionists should <strong>not</strong> have Admin-only delete permissions. Patient deletion and appointment deletion are restricted to Admin users.
+                </div>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--primary);margin-top:20px;">Receptionist Permissions</h3>
+                <p>Receptionists can:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Register patients</li>
+                    <li>Search patients</li>
+                    <li>Edit patient details</li>
+                    <li>Register appointments</li>
+                    <li>Search appointments</li>
+                    <li>View appointment details</li>
+                    <li>Update permitted appointment information</li>
+                    <li>Generate bills</li>
+                    <li>Process payments</li>
+                </ul>
+                <p>Receptionists cannot:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Delete patients</li>
+                    <li>Delete appointments</li>
+                    <li>Delete dentists</li>
+                    <li>Manage system users</li>
+                    <li>Access Admin-only reports and settings</li>
+                </ul>
+            </div>`;
+
+        } else if (role === 'DENTIST') {
+            title.textContent = '🦷 Dentist Guide';
+            subtitle.textContent = 'Your appointments, schedule, and patient information';
+            html = `
+            <div class="card">
+                <div style="margin-bottom:20px;padding:16px;background:var(--success-light);border-radius:var(--radius);border-left:4px solid var(--success);">
+                    <strong>Role:</strong> Dentists can view and manage their own assigned appointments and access relevant patient and treatment information.
+                </div>
+
+                <h3 style="margin-bottom:10px;color:var(--success);">Step 1 – Login</h3>
+                <p>Go to the login page.</p>
+                <p>Enter your:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Email / Username</li>
+                    <li>Password</li>
+                </ul>
+                <p>After successful login, you will be redirected to the <strong>Dentist Dashboard</strong>.</p>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--success);margin-top:20px;">Dashboard Overview</h3>
+                <p>The Dentist Dashboard shows information related <strong>only to the logged-in dentist</strong>.</p>
+                <p>It includes:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Today's Patients</li>
+                    <li>Today's Appointments</li>
+                    <li>Completed Appointments</li>
+                    <li>Remaining Appointments</li>
+                    <li>Upcoming Appointments</li>
+                </ul>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--success);margin-top:20px;">Today's Patients</h3>
+                <p>The <strong>Today's Patients</strong> section displays the appointments scheduled for the logged-in dentist.</p>
+                <p>Appointments should be sorted by appointment time.</p>
+                <p>The dentist can:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>View patient details</li>
+                    <li>View appointment details</li>
+                    <li>View treatment information</li>
+                    <li>Update permitted appointment status</li>
+                    <li>Mark an appointment as completed</li>
+                </ul>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--success);margin-top:20px;">My Schedule</h3>
+                <p>Go to <strong>My Schedule</strong> to view your appointments.</p>
+                <p>Select a date to see the appointments scheduled for that day.</p>
+                <div style="background:var(--surface-alt);border-radius:var(--radius);padding:12px 16px;margin-top:10px;font-size:0.875rem;color:var(--text-secondary);">
+                    <strong>Important:</strong> Dentists can see <strong>only their own appointments</strong>.
+                </div>
+                <div style="background:var(--surface-alt);border-radius:var(--radius);padding:12px 16px;margin-top:10px;font-size:0.875rem;color:var(--text-secondary);">
+                    <strong>Example:</strong> If Dr. Perera logs in, the system must display only Dr. Perera's appointments. Dr. Perera must not be able to view Dr. Fernando's appointments.
+                </div>
+                <div style="background:var(--surface-alt);border-radius:var(--radius);padding:12px 16px;margin-top:10px;font-size:0.875rem;color:var(--text-secondary);">
+                    This restriction must be implemented at the backend/API level, not only by hiding records in the frontend.
+                </div>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--success);margin-top:20px;">Patient History</h3>
+                <p>Go to <strong>Patient History</strong> to search for a patient using:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Patient ID</li>
+                    <li>NIC</li>
+                    <li>Patient Name</li>
+                </ul>
+                <p>View relevant:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Previous appointments</li>
+                    <li>Previous treatments</li>
+                    <li>Treatment history</li>
+                    <li>Treatment notes</li>
+                    <li>Appointment status</li>
+                </ul>
+                <p>This information can be used to support ongoing patient treatment.</p>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--success);margin-top:20px;">Treatment Information</h3>
+                <p>For an assigned appointment, dentists can view:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>Treatment name</li>
+                    <li>Treatment category</li>
+                    <li>Treatment status</li>
+                    <li>Appointment date</li>
+                    <li>Appointment time</li>
+                    <li>Treatment notes</li>
+                    <li>Relevant patient information</li>
+                </ul>
+                <p>Use the <strong>History</strong> option to view the patient's available treatment history.</p>
+
+                <hr>
+                <h3 style="margin-bottom:10px;color:var(--success);margin-top:20px;">Dentist Permissions</h3>
+                <p>Dentists can:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>View their own appointments</li>
+                    <li>View assigned patient information</li>
+                    <li>View treatment information</li>
+                    <li>View patient history</li>
+                    <li>Update permitted appointment/treatment information</li>
+                    <li>Mark appointments as completed</li>
+                </ul>
+                <p>Dentists cannot:</p>
+                <ul style="padding-left:24px;line-height:2;">
+                    <li>View other dentists' appointments</li>
+                    <li>Delete patients</li>
+                    <li>Delete appointments</li>
+                    <li>Delete dentists</li>
+                    <li>Manage staff</li>
+                    <li>Manage system users</li>
+                    <li>Access Admin-only reports</li>
+                    <li>Access Admin-only settings</li>
+                </ul>
+            </div>`;
+        }
+
+        container.innerHTML = html;
+    })();
+</script>
 </body>
 </html>

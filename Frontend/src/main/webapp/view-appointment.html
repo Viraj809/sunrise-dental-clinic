@@ -135,6 +135,7 @@
                       `<button class="btn btn-sm btn-warning" onclick="openStatusModal(${a.appointmentId}, '${a.status}')">Status</button>` : ''}
                     ${(role === 'ADMIN' || role === 'RECEPTIONIST') ?
                       `<a class="btn btn-sm btn-success" href="/Frontend/billing.html?appt_id=${a.appointmentId}">Bill</a>` : ''}
+                    ${(role === 'ADMIN') ? `<button class="btn btn-sm btn-danger" onclick="deleteAppointment(${a.appointmentId}, '${a.appointmentNo}')">🗑️ Delete</button>` : ''}
                 </td>
             </tr>`).join('');
     }
@@ -205,6 +206,9 @@
                     btns.innerHTML += `<a class="btn btn-ghost btn-sm" href="/Frontend/patient-history.html?patient_id=${a.patientId}">📁 Patient History</a>`;
                 }
             }
+            if (role === 'ADMIN') {
+                btns.innerHTML += `<button class="btn btn-danger btn-sm" onclick="deleteAppointment(${a.appointmentId}, '${a.appointmentNo}')">🗑️ Delete</button>`;
+            }
 
             currentApptId = a.appointmentId;
             document.getElementById('detailCard').style.display = 'block';
@@ -234,6 +238,17 @@
                 showDetail(currentApptId);
             }
         } catch (e) { showToast('Failed to update status', 'error'); }
+    }
+
+    async function deleteAppointment(id, appointmentNo) {
+        if (!confirm('Are you sure you want to delete appointment "' + appointmentNo + '"?\n\nThis action cannot be undone.')) return;
+        try {
+            const res = await apiDelete('/appointments/' + id);
+            if (res.error) { showToast(res.error, 'error'); return; }
+            showToast('Appointment deleted ✅');
+            loadAll();
+            document.getElementById('detailCard').style.display = 'none';
+        } catch (e) { showToast('Failed to delete appointment', 'error'); }
     }
 
     // Auto-search from URL param

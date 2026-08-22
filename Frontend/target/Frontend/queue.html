@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Queue – Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+    <div id="toast-container"></div>
+    <div class="page-header">
+        <div><h2>🧑‍⚕️ Patient Queue</h2><p>Manage the waiting room</p></div>
+    </div>
+
+    <div class="card">
+        <h2>➕ Add Patient to Queue</h2>
+        <div id="q-error" style="display:none;background:#fee2e2;color:#991b1b;padding:12px 16px;border-radius:10px;margin-bottom:18px;font-size:0.88rem;"></div>
+        <form id="queueForm">
+            <div class="form-row">
+                <div class="form-group"><label>Patient</label><select id="patientId" required></select></div>
+                <div class="form-group"><label>Dentist</label><select id="dentistId" required></select></div>
+            </div>
+            <div class="form-group"><label>Appointment Time (optional)</label><input type="time" id="appointmentTime"></div>
+            <button type="submit" class="btn btn-primary">Add to Queue</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>📋 Waiting Patients</h2>
+        <div class="table-wrapper">
+            <table class="table" id="queueTable">
+                <thead><tr><th>Queue #</th><th>Patient</th><th>Dentist</th><th>Time</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody><tr><td colspan="6" class="empty-state" style="padding:30px;text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['RECEPTIONIST','ADMIN']);
+
+    async function loadSelectors() {
+        const [patients, dentists] = await Promise.all([apiGet('/patients'), apiGet('/dentists')]);
+        document.getElementById('patientId').innerHTML = '<option value="">Select patient</option>' + patients.map(p => `<option value="${p.patientId}">${p.name}</option>`).join('');
+        document.getElementById('dentistId').innerHTML = '<option value="">Select dentist</option>' + dentists.map(d => `<option value="${d.dentistId}">${d.name}</option>`).join('');
+    }
+
+    async function loadQueue() {
+        const queue = await apiGet('/queue');
+        const tbody = document.querySelector('#queueTable tbody');
+        if (queue.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">Queue is empty</td></tr>';
+            return;
+        }
+        tbody.innerHTML = queue.map(q => `
+            <tr>
+                <td><strong>${q.queueNumber}</strong></td>
+                <td>${q.patientName||''}</td>
+                <td>${q.dentistName||''}</td>
+                <td>${q.appointmentTime||'-'}</td>
+                <td>${getStatusBadge(q.status)}</td>
+                <td>
+                    ${q.status==='Waiting' ? `<button class="btn btn-info btn-sm" onclick="setStatus(${q.queueId},'With Dentist')">Call</button>` : ''}
+                    ${q.status==='With Dentist' ? `<button class="btn btn-success btn-sm" onclick="setStatus(${q.queueId},'Completed')">Complete</button>` : ''}
+                    <button class="btn btn-danger btn-sm" onclick="remove(${q.queueId})">Remove</button>
+                </td>
+            </tr>`).join('');
+    }
+
+    async function setStatus(id, status) {
+        await apiPut('/queue/' + id + '/status', { status });
+        showToast('Queue updated', 'success');
+        loadQueue();
+    }
+    async function remove(id) {
+        if (!confirm('Remove from queue?')) return;
+        await apiDelete('/queue/' + id);
+        showToast('Removed', 'success');
+        loadQueue();
+    }
+
+    document.getElementById('queueForm').addEventListener('submit', async function(e){
+        e.preventDefault();
+        const err = document.getElementById('q-error'); err.style.display='none';
+        const payload = {
+            patient_id: parseInt(document.getElementById('patientId').value),
+            dentist_id: parseInt(document.getElementById('dentistId').value),
+            appointment_time: document.getElementById('appointmentTime').value || null
+        };
+        if (!payload.patient_id || !payload.dentist_id) { err.textContent='Select patient and dentist.'; err.style.display='block'; return; }
+        try {
+            await apiPost('/queue', payload);
+            showToast('Added to queue', 'success');
+            this.reset();
+            loadQueue();
+        } catch(e){ err.textContent='Failed to add to queue.'; err.style.display='block'; }
+    });
+
+    (async function(){ await loadSelectors(); await loadQueue(); })();
+</script>
+</body>
+</html>

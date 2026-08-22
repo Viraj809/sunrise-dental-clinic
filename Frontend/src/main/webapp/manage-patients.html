@@ -45,12 +45,23 @@
     requireAuth();
 
     let allPatients = [];
+    const role = localStorage.getItem('role');
 
     async function loadPatients() {
         try {
             allPatients = await apiGet('/patients');
             renderTable(allPatients);
         } catch (e) { showToast('Failed to load patients', 'error'); }
+    }
+
+    async function deletePatient(id, name) {
+        if (!confirm('Are you sure you want to delete patient "' + name + '"?\n\nThis action cannot be undone.')) return;
+        try {
+            const res = await apiDelete('/patients/' + id);
+            if (res.error) { showToast(res.error, 'error'); return; }
+            showToast('Patient deleted ✅');
+            loadPatients();
+        } catch (e) { showToast('Failed to delete patient', 'error'); }
     }
 
     function renderTable(patients) {
@@ -75,6 +86,7 @@
                     <a href="/Frontend/patient-history.html?patient_id=${p.patientId}" class="btn btn-sm btn-ghost">📁 History</a>
                     <a href="/Frontend/register-appointment.html" class="btn btn-sm btn-primary" 
                        onclick="localStorage.setItem('quickNic','${p.nic}')">📅 Book</a>
+                    ${(role === 'ADMIN') ? `<button class="btn btn-sm btn-danger" onclick="deletePatient(${p.patientId}, '${p.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>` : ''}
                 </td>
             </tr>`).join('');
     }

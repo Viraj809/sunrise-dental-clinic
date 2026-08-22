@@ -90,25 +90,23 @@
     async function loadSchedule() {
         try {
             const role = localStorage.getItem('role');
-            const [appointments, dentists] = await Promise.all([
-                apiGet('/appointments'),
-                apiGet('/dentists')
-            ]);
-
-            // For a DENTIST, scope the view to their own appointments by matching
-            // the logged-in staff email against the dentists table.
-            let myDentistId = null;
+            let myAppointments = [];
             if (role === 'DENTIST') {
+                myAppointments = await apiGet('/appointments/mine');
+            } else {
+                const all = await apiGet('/appointments');
+                const dentists = await apiGet('/dentists');
                 const email = (localStorage.getItem('email') || '').toLowerCase();
                 const me = dentists.find(d => (d.email || '').toLowerCase() === email);
-                if (me) myDentistId = me.dentistId;
+                const myDentistId = me ? me.dentistId : null;
+                if (myDentistId) {
+                    myAppointments = all.filter(a => a.dentistId === myDentistId);
+                } else {
+                    myAppointments = all;
+                }
             }
 
-            let todayAppts = appointments.filter(a => a.appointmentDate === today);
-            if (myDentistId != null) {
-                todayAppts = todayAppts.filter(a => a.dentistId === myDentistId);
-            }
-
+            let todayAppts = myAppointments.filter(a => a.appointmentDate === today);
             const done    = todayAppts.filter(a => a.status === 'Completed').length;
             const pending = todayAppts.filter(a => a.status !== 'Completed' && a.status !== 'Cancelled').length;
 

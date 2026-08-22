@@ -3,67 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient History - Sunrise Dental Clinic</title>
+    <title>My History – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Patient History</h1>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+    <div id="toast-container"></div>
+    <div class="page-header">
+        <div><h2>My Treatment History</h2><p>Appointments, treatments and billing records</p></div>
     </div>
-    <nav class="nav" id="main-nav"></nav>
-    <div class="container">
-        <div id="toast-container"></div>
-        <div class="card">
-            <h2>Search Patient History</h2>
-            <div style="display:flex; gap:10px; align-items:flex-end;">
-                <div class="form-group" style="flex:1; margin-bottom:0;">
-                    <label>Patient ID or NIC</label>
-                    <input type="text" id="searchInput" placeholder="Enter Patient ID or NIC">
-                </div>
-                <button class="btn btn-primary" onclick="searchHistory()">Search</button>
-            </div>
-        </div>
-        <div id="historyResult" class="card" style="display:none;">
-            <h2 id="patientName"></h2>
-            <table class="table">
-                <thead><tr><th>Date</th><th>Treatment</th><th>Dentist</th><th>Status</th></tr></thead>
-                <tbody id="historyTable"></tbody>
+
+    <div class="card">
+        <h2>📋 Appointment History</h2>
+        <div class="table-wrapper">
+            <table class="table" id="apptTable">
+                <thead><tr><th>No</th><th>Treatment</th><th>Date</th><th>Time</th><th>Notes</th><th>Status</th></tr></thead>
+                <tbody><tr><td colspan="6" class="empty-state" style="padding:30px;text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
-    <script src="/Frontend/js/app.js"></script>
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const prefillId = urlParams.get('patient_id');
-        if (prefillId) {
-            document.getElementById('searchInput').value = prefillId;
-            searchHistory();
-        }
 
-        async function searchHistory() {
-            const input = document.getElementById('searchInput').value.trim();
-            if (!input) return;
-            let patient = null;
+    <div class="card">
+        <h2>🧾 Billing History</h2>
+        <div class="table-wrapper">
+            <table class="table" id="billTable">
+                <thead><tr><th>Bill #</th><th>Appointment</th><th>Total (LKR)</th><th>Payment</th><th>Date</th><th>Action</th></tr></thead>
+                <tbody><tr><td colspan="6" class="empty-state" style="padding:30px;text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['PATIENT']);
+    const patientId = localStorage.getItem('patientId');
+
+    async function load() {
+        const appts = await apiGet('/appointments/patient/' + patientId);
+        document.querySelector('#apptTable tbody').innerHTML = appts.length
+            ? appts.map(a => `<tr>
+                <td><strong>${a.appointmentNo}</strong></td>
+                <td>${a.treatmentType}</td>
+                <td>${a.appointmentDate}</td>
+                <td>${a.appointmentTime}</td>
+                <td>${a.notes || '-'}</td>
+                <td>${getStatusBadge(a.status)}</td></tr>`).join('')
+            : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No appointments</td></tr>';
+
+        const billRows = await Promise.all(appts.map(async a => {
             try {
-                if (/^\d+$/.test(input)) {
-                    patient = await apiGet('/patients/' + input);
-                } else {
-                    patient = await apiGet('/patients/nic/' + encodeURIComponent(input));
-                }
-                document.getElementById('patientName').textContent = 'History for: ' + patient.name;
-                const appointments = await apiGet('/appointments');
-                const patientAppts = appointments.filter(a => a.patient_id == patient.patient_id);
-                const dentists = await apiGet('/dentists');
-                const tbody = document.getElementById('historyTable');
-                tbody.innerHTML = '';
-                patientAppts.forEach(a => {
-                    const dentist = dentists.find(d => d.dentist_id === a.dentist_id);
-                    const dentistName = dentist ? dentist.name : 'Dentist #' + a.dentist_id;
-                    tbody.innerHTML += '<tr><td>' + a.appointment_date + '</td><td>' + a.treatment_type + '</td><td>' + dentistName + '</td><td>' + getStatusBadge(a.status) + '</td></tr>';
-                });
-                document.getElementById('historyResult').style.display = 'block';
-            } catch (e) { showToast('Patient not found', 'error'); }
-        }
-    </script>
+                const b = await apiGet('/bills/appointment/' + a.appointmentId);
+                return `<tr>
+                    <td>#${b.billId}</td>
+                    <td>${a.appointmentNo}</td>
+                    <td>${(b.totalAmount||0).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
+                    <td>${getStatusBadge(b.paymentStatus)}</td>
+                    <td>${b.issuedAt ? b.issuedAt.split('T')[0] : '-'}</td>
+                    <td><a class="btn btn-ghost btn-sm" href="/Frontend/patient-billing.html?appointment=${a.appointmentId}">View</a></td>
+                </tr>`;
+            } catch (e) { return ''; }
+        }));
+        const filtered = billRows.filter(r => r);
+        document.querySelector('#billTable tbody').innerHTML = filtered.length
+            ? filtered.join('')
+            : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No bills yet</td></tr>';
+    }
+    load();
+</script>
 </body>
 </html>

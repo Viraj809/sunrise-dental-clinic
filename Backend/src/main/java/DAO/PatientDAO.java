@@ -44,6 +44,37 @@ public class PatientDAO {
         return null;
     }
 
+    public Patient findByContact(String contact) {
+        String sql = "SELECT * FROM patients WHERE contact = ?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, contact);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapPatient(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public List<Patient> searchByName(String query) {
+        List<Patient> list = new ArrayList<>();
+        String sql = "SELECT * FROM patients WHERE name LIKE ? ORDER BY name LIMIT 20";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, "%" + query + "%");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapPatient(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public Patient findById(int id) {
         String sql = "SELECT * FROM patients WHERE patient_id = ?";
         try (Connection conn = db.getConnection();
@@ -109,6 +140,18 @@ public class PatientDAO {
             ps.setString(7, patient.getBloodGroup());
             ps.setString(8, patient.getAllergies());
             ps.setInt(9, patient.getPatientId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean delete(int patientId) {
+        String sql = "DELETE FROM patients WHERE patient_id = ?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, patientId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();

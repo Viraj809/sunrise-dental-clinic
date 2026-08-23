@@ -200,7 +200,9 @@ public class AppointmentResource {
                 return Response.status(403).entity(error("Patients may only cancel their appointments")).build();
             }
         } else if ("DENTIST".equals(role)) {
-            if (appt.getDentistId() != SecurityUtil.currentId()) {
+            // මෙන්න මෙතන තමයි වැරැද්ද තිබුණේ. දැන් ඒක resolveDentistId() හරහා නිවැරදි කරලා තියෙන්නේ.
+            int myDentistId = resolveDentistId(SecurityUtil.session());
+            if (appt.getDentistId() != myDentistId) {
                 return Response.status(403).entity(error("You can only manage your own appointments")).build();
             }
         } else {

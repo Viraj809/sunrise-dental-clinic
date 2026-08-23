@@ -40,7 +40,7 @@
 
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['ADMIN']);
+    requireAuth(['ADMIN', 'SYSTEM_ADMIN']);
     const staffId = localStorage.getItem('staffId');
 
     document.getElementById('pwForm').addEventListener('submit', async function(e){

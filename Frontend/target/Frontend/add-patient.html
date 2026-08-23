@@ -82,7 +82,22 @@
                 </div>
             </div>
 
-            <div style="display:flex;gap:12px;margin-top:8px;">
+            <div id="successCard" style="display:none;" class="alert alert-success">
+                <h3 style="margin:0 0 8px;color:var(--success);">✅ Patient Registered Successfully!</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.875rem;margin-bottom:14px;">
+                    <div><strong>Patient Name:</strong> <span id="okName"></span></div>
+                    <div><strong>Patient ID:</strong> <span id="okId"></span></div>
+                    <div><strong>NIC:</strong> <span id="okNic"></span></div>
+                    <div><strong>Contact:</strong> <span id="okContact"></span></div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <a id="okViewLink" href="/Frontend/manage-patients.html" class="btn btn-sm btn-primary">View Patient</a>
+                    <button class="btn btn-sm btn-ghost" onclick="resetForm()">Add Another Patient</button>
+                    <button class="btn btn-sm btn-ghost" onclick="document.getElementById('successCard').style.display='none'">Close</button>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:8px;" id="formActions">
                 <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">💾 Save Patient</button>
                 <a href="/Frontend/manage-patients.html" class="btn btn-ghost btn-lg">Cancel</a>
             </div>
@@ -92,12 +107,12 @@
 
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['RECEPTIONIST', 'ADMIN']);
+    requireAuth(['RECEPTIONIST', 'ADMIN', 'SYSTEM_ADMIN']);
 
     document.getElementById('patientForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const errDiv = document.getElementById('errorMsg');
-        const okDiv  = document.getElementById('successMsg');
+        const okDiv  = document.getElementById('successCard');
         errDiv.style.display = 'none';
         okDiv.style.display  = 'none';
 
@@ -133,10 +148,13 @@
                 errDiv.textContent = res.error;
                 errDiv.style.display = 'flex';
             } else {
-                okDiv.innerHTML = `✅ Patient <strong>${name}</strong> registered successfully! (ID: ${res.patientId})
-                    <a href="/Frontend/manage-patients.html" style="margin-left:10px;">← Back to Patients</a>`;
+                document.getElementById('okName').textContent = name;
+                document.getElementById('okId').textContent = res.patientId;
+                document.getElementById('okNic').textContent = nic;
+                document.getElementById('okContact').textContent = contact;
+                document.getElementById('okViewLink').href = '/Frontend/manage-patients.html';
                 okDiv.style.display = 'flex';
-                document.getElementById('patientForm').reset();
+                document.getElementById('formActions').style.display = 'none';
             }
         } catch (e) {
             errDiv.textContent = 'Failed to save patient. Check backend is running.';
@@ -145,6 +163,13 @@
 
         btn.disabled = false; btn.textContent = '💾 Save Patient';
     });
+
+    function resetForm() {
+        document.getElementById('patientForm').reset();
+        document.getElementById('successCard').style.display = 'none';
+        document.getElementById('errorMsg').style.display = 'none';
+        document.getElementById('formActions').style.display = 'flex';
+    }
 </script>
 </body>
 </html>

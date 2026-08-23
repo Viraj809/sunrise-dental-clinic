@@ -92,7 +92,7 @@
 
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['RECEPTIONIST', 'ADMIN']);
+    requireAuth(['RECEPTIONIST', 'ADMIN', 'SYSTEM_ADMIN']);
 
     const params    = new URLSearchParams(window.location.search);
     const patientId = params.get('patient_id');

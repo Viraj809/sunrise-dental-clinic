@@ -108,7 +108,7 @@
 
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['ADMIN']);
+    requireAuth(['ADMIN', 'SYSTEM_ADMIN']);
 
     let editingId = null;
 
@@ -139,25 +139,31 @@
                 grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);grid-column:1/-1;">No dentists found</div>';
                 return;
             }
-            grid.innerHTML = dentists.map(d => `
-                <div class="card" style="margin-bottom:0;">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
-                        <div>
-                            <div style="font-size:1.1rem;font-weight:700;">🦷 ${d.name}</div>
-                            <div style="font-size:0.875rem;color:var(--primary);font-weight:500;">${d.specialization || 'General Dentistry'}</div>
+            grid.innerHTML = dentists.map(d => {
+                const days = (d.availableDays || '').split(',').map(s => s.trim()).filter(Boolean).join(', ') || '–';
+                return `<div class="card" style="margin-bottom:0;">
+                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                        <div style="width:48px;height:48px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;flex-shrink:0;">
+                            ${(d.name || 'D').charAt(0)}
                         </div>
-                        <span class="badge ${d.active ? 'badge-paid' : 'badge-cancelled'}">${d.active ? 'Active' : 'Inactive'}</span>
+                        <div style="min-width:0;">
+                            <div style="font-size:1.05rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🦷 ${d.name}</div>
+                            <div style="font-size:0.8rem;color:var(--primary);font-weight:500;">${d.specialization || 'General Dentistry'}</div>
+                        </div>
+                        <span class="badge ${d.active ? 'badge-paid' : 'badge-cancelled'}" style="flex-shrink:0;">${d.active ? 'Active' : 'Inactive'}</span>
                     </div>
-                    <div style="font-size:0.875rem;color:var(--text-secondary);display:flex;flex-direction:column;gap:4px;">
-                        <span>📞 ${d.contact || '–'}</span>
-                        <span>✉️ ${d.email || '–'}</span>
-                        <span>📅 ${(d.availableDays || '').split(',').filter(Boolean).join(', ') || '–'}</span>
+                    <div style="font-size:0.85rem;color:var(--text-secondary);display:flex;flex-direction:column;gap:5px;padding:10px 12px;background:var(--surface-alt);border-radius:var(--radius);">
+                        <div style="display:flex;justify-content:space-between;"><span>🆔 ID</span><strong>${d.dentistId}</strong></div>
+                        <div style="display:flex;justify-content:space-between;"><span>📞 Contact</span><strong>${d.contact || '–'}</strong></div>
+                        <div style="display:flex;justify-content:space-between;"><span>✉️ Email</span><strong style="font-size:0.8rem;">${d.email || '–'}</strong></div>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;"><span>📅 Available</span><strong style="text-align:right;max-width:60%;">${days}</strong></div>
                     </div>
                     <div style="display:flex;gap:8px;margin-top:14px;">
                         <button class="btn btn-sm btn-warning" onclick="openEditModal(${d.dentistId})">✏️ Edit</button>
                         <button class="btn btn-sm btn-danger" onclick="confirmDeleteDentist(${d.dentistId}, '${d.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>
                     </div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
         } catch (e) { showToast('Failed to load dentists', 'error'); }
     }
 
@@ -222,6 +228,10 @@
     async function saveDentist() {
         const errDiv = document.getElementById('modalError');
         errDiv.style.display = 'none';
+        document.getElementById('regResult').style.display = 'none';
+        document.getElementById('dentistModalActions').style.display = 'flex';
+        document.getElementById('dentistFormFields').style.display = 'block';
+
         const name = document.getElementById('m-name').value.trim();
         if (!name) { errDiv.textContent = 'Dentist name is required.'; errDiv.style.display = 'flex'; return; }
         const spec = document.getElementById('m-spec').value;
@@ -245,6 +255,12 @@
                     active:         true
                 };
                 res = await apiPut('/dentists/' + editingId, data);
+                if (res.error) {
+                    errDiv.textContent = res.error; errDiv.style.display = 'flex';
+                } else {
+                    showToast('Dentist updated successfully ✅');
+                    closeModal(); loadDentists();
+                }
             } else {
                 const data = {
                     name,
@@ -257,25 +273,28 @@
                     active:         true
                 };
                 res = await apiPost('/dentists/register', data);
-            }
-
-            if (res.error) {
-                errDiv.textContent = res.error; errDiv.style.display = 'flex';
-            } else if (!editingId && res.password) {
-                document.getElementById('dentistFormFields').style.display = 'none';
-                document.getElementById('dentistModalActions').style.display = 'none';
-                const rr = document.getElementById('regResult');
-                rr.innerHTML = '✅ Dentist <strong>' + (res.email || '') + '</strong> added with a login account.<br>' +
-                    'Login Email: <strong>' + (res.email || '') + '</strong><br>' +
-                    'Password: <strong>' + res.password + '</strong><br>' +
-                    '<span style="font-size:0.8rem;">Share these details with the dentist so they can sign in.</span>';
-                rr.style.display = 'flex';
-                showToast('Dentist added with login ✅');
-                loadDentists();
-                return;
-            } else {
-                showToast((editingId ? 'Dentist updated' : 'Dentist added') + ' ✅');
-                closeModal(); loadDentists();
+                if (res.error) {
+                    errDiv.textContent = res.error; errDiv.style.display = 'flex';
+                } else if (res.password) {
+                    document.getElementById('dentistFormFields').style.display = 'none';
+                    document.getElementById('dentistModalActions').style.display = 'none';
+                    const rr = document.getElementById('regResult');
+                    rr.innerHTML = `<h3 style="margin:0 0 8px;color:var(--success);">✅ Dentist Added Successfully!</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.875rem;margin-bottom:10px;">
+                            <div><strong>Name:</strong> ${name}</div>
+                            <div><strong>ID:</strong> ${res.dentistId || '–'}</div>
+                            <div><strong>Specialization:</strong> ${spec}</div>
+                        </div>
+                        <div style="font-size:0.85rem;background:var(--surface-alt);padding:10px;border-radius:var(--radius);">
+                            <strong>Login Email:</strong> ${res.email || ''}<br>
+                            <strong>Password:</strong> ${res.password}<br>
+                            <span style="font-size:0.78rem;color:var(--text-muted);">Share these details with the dentist so they can sign in.</span>
+                        </div>
+                        <button class="btn btn-sm btn-ghost" onclick="closeModal();loadDentists();" style="margin-top:10px;">Close</button>`;
+                    rr.style.display = 'flex';
+                    showToast('Dentist added with login ✅');
+                    loadDentists();
+                }
             }
         } catch (e) { errDiv.textContent = 'Failed to save dentist.'; errDiv.style.display = 'flex'; }
         btn.disabled = false; btn.textContent = '💾 Save Dentist';

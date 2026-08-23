@@ -201,7 +201,7 @@
             const token = localStorage.getItem('token');
             const role  = localStorage.getItem('role');
             if (token && role) {
-                if (role === 'ADMIN')            window.location.href = '/Frontend/admin-dashboard.html';
+                if (role === 'SYSTEM_ADMIN' || role === 'ADMIN')            window.location.href = '/Frontend/admin-dashboard.html';
                 else if (role === 'RECEPTIONIST') window.location.href = '/Frontend/receptionist-dashboard.html';
                 else if (role === 'DENTIST')       window.location.href = '/Frontend/dentist-dashboard.html';
                 else if (role === 'PATIENT')       window.location.href = '/Frontend/patient-dashboard.html';
@@ -251,7 +251,7 @@
                 localStorage.setItem('patientId', data.patientId);
                 localStorage.setItem('email',   data.email);
 
-                if (data.role === 'ADMIN')            window.location.href = '/Frontend/admin-dashboard.html';
+                if (data.role === 'SYSTEM_ADMIN' || data.role === 'ADMIN')            window.location.href = '/Frontend/admin-dashboard.html';
                 else if (data.role === 'RECEPTIONIST') window.location.href = '/Frontend/receptionist-dashboard.html';
                 else if (data.role === 'DENTIST')       window.location.href = '/Frontend/dentist-dashboard.html';
                 else if (data.role === 'PATIENT')       window.location.href = '/Frontend/patient-dashboard.html';

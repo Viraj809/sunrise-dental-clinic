@@ -107,8 +107,12 @@ public class PatientResource {
             return Response.status(400).entity(error("Both current and new password are required")).build();
         }
         Patient p = dao.findById(SecurityUtil.currentId());
-        if (p == null || p.getPasswordHash() == null
-                || !org.mindrot.jbcrypt.BCrypt.checkpw(current, p.getPasswordHash())) {
+        String currentHash = p.getPasswordHash();
+        if (currentHash != null && currentHash.startsWith("$2b$")) {
+            currentHash = "$2a$" + currentHash.substring(4);
+        }
+        if (p == null || currentHash == null
+                || !org.mindrot.jbcrypt.BCrypt.checkpw(current, currentHash)) {
             return Response.status(400).entity(error("Current password is incorrect")).build();
         }
         String hash = org.mindrot.jbcrypt.BCrypt.hashpw(next, org.mindrot.jbcrypt.BCrypt.gensalt());

@@ -1,1 +1,0 @@
-# Sunrise Dental Clinic — Patient & Appointment Management System

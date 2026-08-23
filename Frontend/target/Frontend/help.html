@@ -46,7 +46,7 @@
 
         let html = '';
 
-        if (role === 'ADMIN') {
+        if (role === 'ADMIN' || role === 'SYSTEM_ADMIN') {
             title.textContent = '🛠️ Admin Guide';
             subtitle.textContent = 'Full system administration and management';
             html = `

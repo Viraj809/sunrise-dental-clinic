@@ -5,13 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Staff – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
+    <style>
+        /* මේ Page එකේ Table එකට ඉඩ මදි නිසා Container එකේ පළල වැඩි කිරීම */
+        .container {
+            max-width: 1550px !important; 
+            width: 98% !important;
+        }
+    </style>
 </head>
 <body>
 <div class="header">
     <h1>Sunrise Dental Clinic</h1>
     <div class="user-info" id="user-info"></div>
 </div>
-<nav class="nav" id="main-nav"></nav>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
 
 <div class="container">
     <div id="toast-container"></div>
@@ -19,6 +28,14 @@
     <div class="page-header">
         <div><h2>Staff Management</h2><p>View, add and manage staff accounts</p></div>
         <button class="btn btn-primary" onclick="openModal()">➕ Add Staff</button>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+        <div class="search-bar">
+            <input type="text" id="staffSearch" placeholder="Search by name, email, NIC or contact..."
+                   oninput="filterStaff()" style="flex:1;">
+            <button class="btn btn-ghost" onclick="clearSearch()">Clear</button>
+        </div>
     </div>
 
     <div class="card">
@@ -38,6 +55,7 @@
     <div class="modal">
         <h3>➕ Add New Staff</h3>
         <div id="modalError" class="alert alert-error" style="display:none;"></div>
+        <div id="regResult" class="alert alert-success" style="display:none;"></div>
         <div class="form-row">
             <div class="form-group"><label>Full Name *</label><input type="text" id="m-name" placeholder="Full name"></div>
             <div class="form-group"><label>NIC *</label><input type="text" id="m-nic" placeholder="NIC number"></div>
@@ -50,49 +68,236 @@
             <div class="form-group"><label>Contact</label><input type="text" id="m-contact" placeholder="07XXXXXXXX"></div>
             <div class="form-group"><label>Role *</label>
                 <select id="m-role">
-                    <option value="RECEPTIONIST">Receptionist</option>
-                    <option value="DENTIST">Dentist</option>
+                    <option value="">Select Role</option>
                     <option value="ADMIN">Admin</option>
+                    <option value="RECEPTIONIST">Receptionist</option>
                 </select>
             </div>
         </div>
         <div class="form-group"><label>Shift Hours</label><input type="text" id="m-shift" placeholder="e.g. 08:00–16:00"></div>
-        <div class="modal-actions">
+        <p style="font-size:0.8rem;color:var(--text-muted);margin:-6px 0 14px;">
+            Note: Dentists must be created through the <strong>Dentists</strong> page.
+        </p>
+        <div class="modal-actions" id="addModalActions">
             <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
             <button class="btn btn-primary" onclick="saveStaff()" id="saveStaffBtn">💾 Save Staff</button>
         </div>
     </div>
 </div>
 
+<!-- Edit Staff Modal -->
+<div id="editModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <h3>✏️ Edit Staff Details</h3>
+        <div id="editModalError" class="alert alert-error" style="display:none;"></div>
+        <input type="hidden" id="e-id">
+        <div class="form-row">
+            <div class="form-group"><label>Full Name *</label><input type="text" id="e-name"></div>
+            <div class="form-group"><label>NIC</label><input type="text" id="e-nic" readonly style="background:#f1f5f9; color:#64748b; cursor:not-allowed;"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Email *</label><input type="email" id="e-email"></div>
+            <div class="form-group"><label>Contact</label><input type="text" id="e-contact"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Role *</label>
+                <select id="e-role">
+                    <option value="ADMIN">Admin</option>
+                    <option value="RECEPTIONIST">Receptionist</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Shift Hours</label><input type="text" id="e-shift"></div>
+        </div>
+        <div class="form-group">
+            <label>Password (Optional)</label>
+            <input type="password" id="e-password" placeholder="Leave blank to keep current password">
+        </div>
+        <div class="modal-actions" id="editModalActions">
+            <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+            <button class="btn btn-warning" onclick="updateStaff()" id="updateStaffBtn" style="color:white;">💾 Update Staff</button>
+        </div>
+    </div>
+</div>
+
+<!-- Detect Modal -->
+<div id="detectModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <h3>🔍 Staff Details</h3>
+        <div id="detectResult"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="document.getElementById('detectModal').style.display='none'">Close</button>
+        </div>
+    </div>
+</div>
+
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['ADMIN']);
+    requireAuth(['ADMIN', 'SYSTEM_ADMIN']);
+
+    let allStaff = [];
 
     async function loadStaff() {
         try {
-            const staff = await apiGet('/staff');
-            const tbody = document.querySelector('#staffTable tbody');
-            if (!staff.length) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No staff found</td></tr>';
-                return;
-            }
-            tbody.innerHTML = staff.map(s => `
-                <tr>
-                    <td><strong>${s.staffId}</strong></td>
-                    <td>${s.name}</td>
-                    <td>${s.email}</td>
-                    <td>${s.contact || '–'}</td>
-                    <td><span class="badge badge-${s.role.toLowerCase()}">${s.role}</span></td>
-                    <td><span class="badge ${s.active ? 'badge-paid' : 'badge-cancelled'}">${s.active ? 'Active' : 'Inactive'}</span></td>
-                    <td style="display:flex;gap:6px;">
-                        <button class="btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}"
-                                onclick="toggleStatus(${s.staffId}, ${s.active})">
-                            ${s.active ? '🔒 Deactivate' : '🔓 Activate'}
-                        </button>
-                    </td>
-                </tr>`).join('');
+            allStaff = await apiGet('/staff');
+            renderTable(allStaff);
         } catch (e) { showToast('Failed to load staff', 'error'); }
     }
+
+    function renderTable(staff) {
+        const tbody = document.querySelector('#staffTable tbody');
+        if (!staff.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No staff found</td></tr>';
+            return;
+        }
+        tbody.innerHTML = staff.map(s => {
+            const isSystemAdmin = s.role === 'SYSTEM_ADMIN';
+            const actions = [];
+            
+            // Detect Button
+            actions.push(`<button class="btn btn-sm btn-ghost" onclick="detectStaff(${s.staffId})">🔍 Detect</button>`);
+            
+            if (!isSystemAdmin) {
+                // Edit Button
+                actions.push(`<button class="btn btn-sm btn-warning" onclick="openEditModal(${s.staffId})" style="color:white;">✏️ Edit</button>`);
+                // Activate/Deactivate Button
+                actions.push(`<button class="btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}" onclick="toggleStatus(${s.staffId}, ${s.active})">${s.active ? '🔒 Deactivate' : '🔓 Activate'}</button>`);
+                // Delete Button
+                actions.push(`<button class="btn btn-sm btn-danger" onclick="deleteStaff(${s.staffId}, '${(s.name || '').replace(/'/g,"\\'")}')">🗑️ Delete</button>`);
+            } else {
+                actions.push(`<span style="font-size:0.75rem;color:var(--text-muted);padding:4px 8px;">🔒 Protected Account</span>`);
+            }
+            
+            return `<tr>
+                <td><strong>${s.staffId}</strong></td>
+                <td>${s.name}</td>
+                <td>${s.email}</td>
+                <td>${s.contact || '–'}</td>
+                <td><span class="badge badge-${s.role.toLowerCase()}">${s.role}</span></td>
+                <td><span class="badge ${s.active ? 'badge-paid' : 'badge-cancelled'}">${s.active ? 'Active' : 'Inactive'}</span></td>
+                <td style="display:flex; gap:6px; flex-wrap:nowrap; align-items:center; white-space:nowrap;">${actions.join('')}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function filterStaff() {
+        const q = document.getElementById('staffSearch').value.toLowerCase().trim();
+        if (!q) { renderTable(allStaff); return; }
+        const filtered = allStaff.filter(s =>
+            (s.name && s.name.toLowerCase().includes(q)) ||
+            (s.email && s.email.toLowerCase().includes(q)) ||
+            (s.nic && s.nic.toLowerCase().includes(q)) ||
+            (s.contact && s.contact.includes(q)) ||
+            (s.role && s.role.toLowerCase().includes(q))
+        );
+        renderTable(filtered);
+    }
+
+    function clearSearch() {
+        document.getElementById('staffSearch').value = '';
+        renderTable(allStaff);
+    }
+
+    async function detectStaff(id) {
+        try {
+            const s = await apiGet('/staff/detect/' + id);
+            const container = document.getElementById('detectResult');
+            container.innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.9rem;">
+                    <div><strong>Staff ID:</strong> ${s.staffId}</div>
+                    <div><strong>Name:</strong> ${s.name}</div>
+                    <div><strong>Email:</strong> ${s.email}</div>
+                    <div><strong>Role:</strong> <span class="badge badge-${s.role.toLowerCase()}">${s.role}</span></div>
+                    <div><strong>Contact:</strong> ${s.contact || '–'}</div>
+                    <div><strong>NIC:</strong> ${s.nic || '–'}</div>
+                    <div><strong>Status:</strong> <span class="badge ${s.isActive ? 'badge-paid' : 'badge-cancelled'}">${s.isActive ? 'Active' : 'Inactive'}</span></div>
+                    <div><strong>Shift Hours:</strong> ${s.shiftHours || '–'}</div>
+                    <div style="grid-column:1/-1;"><strong>Address:</strong> ${s.address || '–'}</div>
+                </div>`;
+            document.getElementById('detectModal').style.display = 'flex';
+        } catch (e) { showToast('Failed to load staff details', 'error'); }
+    }
+
+    // ── Edit Staff Logic ──
+    function openEditModal(id) {
+        const s = allStaff.find(staff => staff.staffId === id);
+        if (!s) return;
+        
+        document.getElementById('editModalError').style.display = 'none';
+        
+        document.getElementById('e-id').value = s.staffId;
+        document.getElementById('e-name').value = s.name;
+        document.getElementById('e-nic').value = s.nic;
+        document.getElementById('e-email').value = s.email;
+        document.getElementById('e-contact').value = s.contact || '';
+        document.getElementById('e-role').value = s.role;
+        document.getElementById('e-shift').value = s.shiftHours || '';
+        document.getElementById('e-password').value = ''; 
+        
+        document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function updateStaff() {
+        const errDiv = document.getElementById('editModalError');
+        errDiv.style.display = 'none';
+
+        const id = document.getElementById('e-id').value;
+        const name = document.getElementById('e-name').value.trim();
+        const email = document.getElementById('e-email').value.trim();
+        const contact = document.getElementById('e-contact').value.trim();
+        const role = document.getElementById('e-role').value;
+        const shiftHours = document.getElementById('e-shift').value.trim();
+        const password = document.getElementById('e-password').value; 
+
+        if (!name || !email || !role) {
+            errDiv.textContent = 'Name, email and role are required.';
+            errDiv.style.display = 'flex'; return;
+        }
+
+        const btn = document.getElementById('updateStaffBtn');
+        btn.disabled = true; btn.textContent = 'Updating...';
+
+        try {
+            const original = allStaff.find(s => s.staffId == id);
+            
+            const payload = {
+                staffId: id,
+                name: name,
+                email: email,
+                contact: contact,
+                role: role,
+                shiftHours: shiftHours,
+                nic: original.nic, 
+                address: original.address || '',
+                active: original.active
+            };
+            
+            if (password) {
+                payload.password = password;
+            } else {
+                payload.password = original.passwordHash;
+            }
+
+            const res = await apiPut('/staff/' + id, payload);
+            
+            if (res.error) {
+                errDiv.textContent = res.error;
+                errDiv.style.display = 'flex';
+            } else {
+                showToast('Staff updated successfully ✅');
+                closeEditModal();
+                loadStaff();
+            }
+        } catch (e) {
+            errDiv.textContent = 'Failed to update staff.';
+            errDiv.style.display = 'flex';
+        }
+        btn.disabled = false; btn.textContent = '💾 Update Staff';
+    }
+    // ───────────────────────
 
     async function toggleStatus(staffId, isActive) {
         try {
@@ -102,19 +307,34 @@
         } catch (e) { showToast('Failed to update status', 'error'); }
     }
 
+    async function deleteStaff(id, name) {
+        if (!confirm('Are you sure you want to delete staff member "' + name + '"?\n\nThis action cannot be undone.')) return;
+        try {
+            const res = await apiDelete('/staff/' + id);
+            if (res.error) { showToast(res.error, 'error'); return; }
+            showToast('Staff deleted ✅');
+            loadStaff();
+        } catch (e) { showToast('Failed to delete staff', 'error'); }
+    }
+
     function openModal() {
         document.getElementById('addModal').style.display = 'flex';
         document.getElementById('modalError').style.display = 'none';
+        document.getElementById('regResult').style.display = 'none';
+        document.getElementById('addModalActions').style.display = 'flex';
+        ['m-name','m-nic','m-email','m-password','m-contact','m-shift'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('m-role').value = '';
     }
 
     function closeModal() {
         document.getElementById('addModal').style.display = 'none';
-        ['m-name','m-nic','m-email','m-password','m-contact','m-shift'].forEach(id => document.getElementById(id).value = '');
     }
 
     async function saveStaff() {
         const errDiv = document.getElementById('modalError');
         errDiv.style.display = 'none';
+        document.getElementById('regResult').style.display = 'none';
+        document.getElementById('addModalActions').style.display = 'flex';
 
         const name     = document.getElementById('m-name').value.trim();
         const nic      = document.getElementById('m-nic').value.trim();
@@ -124,6 +344,10 @@
 
         if (!name || !nic || !email || !password || !role) {
             errDiv.textContent = 'Name, NIC, email, password and role are required.';
+            errDiv.style.display = 'flex'; return;
+        }
+        if (role === 'DENTIST') {
+            errDiv.textContent = 'Dentists must be created through the Dentists page.';
             errDiv.style.display = 'flex'; return;
         }
         if (password.length < 8) {

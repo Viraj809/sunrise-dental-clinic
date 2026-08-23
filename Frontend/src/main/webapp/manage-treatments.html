@@ -21,6 +21,14 @@
         <button class="btn btn-primary" onclick="openModal()">➕ Add Treatment</button>
     </div>
 
+    <div class="card" style="margin-bottom:20px;">
+        <div class="search-bar">
+            <input type="text" id="treatmentSearch" placeholder="Search by treatment name or code..."
+                   oninput="filterTreatments()" style="flex:1;">
+            <button class="btn btn-ghost" onclick="clearSearch()">Clear</button>
+        </div>
+    </div>
+
     <div class="card">
         <h2>🦷 Treatment Types</h2>
         <div class="table-wrapper">
@@ -76,32 +84,53 @@
 
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['ADMIN']);
+    requireAuth(['ADMIN', 'SYSTEM_ADMIN']);
 
     let editingCode = null;
 
+    let allTreatments = [];
+
     async function loadTreatments() {
         try {
-            const treatments = await apiGet('/treatments');
-            const tbody = document.querySelector('#treatmentTable tbody');
-            if (!treatments.length) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">No treatments found</td></tr>';
-                return;
-            }
-            tbody.innerHTML = treatments.map(t => `
-                <tr>
-                    <td><strong>${t.treatmentCode}</strong></td>
-                    <td>${t.treatmentName}</td>
-                    <td>${t.category || '–'}</td>
-                    <td>LKR ${Number(t.consultationFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
-                    <td>LKR ${Number(t.basePrice).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
-                    <td>${t.durationMinutes ? t.durationMinutes + ' min' : '–'}</td>
-                    <td style="display:flex;gap:6px;">
-                        <button class="btn btn-sm btn-warning" onclick="openEditModal('${t.treatmentCode}')">✏️ Edit</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteTreatment('${t.treatmentCode}')">🗑️ Delete</button>
-                    </td>
-                </tr>`).join('');
+            allTreatments = await apiGet('/treatments');
+            renderTable(allTreatments);
         } catch (e) { showToast('Failed to load treatments', 'error'); }
+    }
+
+    function renderTable(treatments) {
+        const tbody = document.querySelector('#treatmentTable tbody');
+        if (!treatments.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">No treatments found</td></tr>';
+            return;
+        }
+        tbody.innerHTML = treatments.map(t => `
+            <tr>
+                <td><strong>${t.treatmentCode}</strong></td>
+                <td>${t.treatmentName}</td>
+                <td>${t.category || '–'}</td>
+                <td>LKR ${Number(t.consultationFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
+                <td>LKR ${Number(t.basePrice).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
+                <td>${t.durationMinutes ? t.durationMinutes + ' min' : '–'}</td>
+                <td style="display:flex;gap:6px;">
+                    <button class="btn btn-sm btn-warning" onclick="openEditModal('${t.treatmentCode}')">✏️ Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteTreatment('${t.treatmentCode}')">🗑️ Delete</button>
+                </td>
+            </tr>`).join('');
+    }
+
+    function filterTreatments() {
+        const q = document.getElementById('treatmentSearch').value.toLowerCase().trim();
+        if (!q) { renderTable(allTreatments); return; }
+        const filtered = allTreatments.filter(t =>
+            (t.treatmentName && t.treatmentName.toLowerCase().includes(q)) ||
+            (t.treatmentCode && t.treatmentCode.toLowerCase().includes(q))
+        );
+        renderTable(filtered);
+    }
+
+    function clearSearch() {
+        document.getElementById('treatmentSearch').value = '';
+        renderTable(allTreatments);
     }
 
     function openModal() {

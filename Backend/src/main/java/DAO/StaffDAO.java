@@ -85,6 +85,26 @@ public class StaffDAO {
         return list;
     }
 
+    public List<Staff> search(String query) {
+        List<Staff> list = new ArrayList<>();
+        String sql = "SELECT * FROM staff WHERE name LIKE ? OR email LIKE ? OR NIC LIKE ? OR contact LIKE ? ORDER BY role, name LIMIT 50";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            String like = "%" + query + "%";
+            ps.setString(1, like);
+            ps.setString(2, like);
+            ps.setString(3, like);
+            ps.setString(4, like);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapStaff(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public boolean insert(Staff staff) {
         String sql = "INSERT INTO staff (name, email, contact, address, NIC, password_hash, role, shift_hours, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = db.getConnection();
@@ -134,6 +154,18 @@ public class StaffDAO {
             ps.setString(7, staff.getShiftHours());
             ps.setBoolean(8, staff.isActive());
             ps.setInt(9, staff.getStaffId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean delete(int staffId) {
+        String sql = "DELETE FROM staff WHERE staff_id = ?";
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, staffId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();

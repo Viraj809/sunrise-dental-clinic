@@ -9,11 +9,15 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+
 <div class="header">
     <h1>Sunrise Dental Clinic</h1>
     <div class="user-info" id="user-info"></div>
 </div>
-<nav class="nav" id="main-nav"></nav>
+
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
 
 <div class="container">
     <div id="toast-container"></div>
@@ -106,7 +110,7 @@
 
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['ADMIN']);
+    requireAuth(['ADMIN', 'SYSTEM_ADMIN']);
 
     document.getElementById('current-date').textContent =
         new Date().toLocaleDateString('en-LK', {weekday:'long',year:'numeric',month:'long',day:'numeric'});

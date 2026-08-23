@@ -86,7 +86,7 @@
                     <a href="/Frontend/patient-history.html?patient_id=${p.patientId}" class="btn btn-sm btn-ghost">📁 History</a>
                     <a href="/Frontend/register-appointment.html" class="btn btn-sm btn-primary" 
                        onclick="localStorage.setItem('quickNic','${p.nic}')">📅 Book</a>
-                    ${(role === 'ADMIN') ? `<button class="btn btn-sm btn-danger" onclick="deletePatient(${p.patientId}, '${p.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>` : ''}
+                    ${(role === 'ADMIN' || role === 'SYSTEM_ADMIN') ? `<button class="btn btn-sm btn-danger" onclick="deletePatient(${p.patientId}, '${p.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>` : ''}
                 </td>
             </tr>`).join('');
     }

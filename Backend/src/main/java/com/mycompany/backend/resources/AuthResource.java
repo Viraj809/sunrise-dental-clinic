@@ -45,6 +45,9 @@ public class AuthResource {
         Staff staff = staffDao.findByEmail(email);
         if (staff != null) {
             String hash = staff.getPasswordHash();
+            if (hash != null && hash.startsWith("$2b$")) {
+                hash = "$2a$" + hash.substring(4);
+            }
             if (hash == null || !org.mindrot.jbcrypt.BCrypt.checkpw(password, hash)) {
                 return Response.status(401)
                         .header("Access-Control-Allow-Origin", "*")
@@ -66,6 +69,9 @@ public class AuthResource {
                         .entity(error("Your account is deactivated. Please contact the clinic.")).build();
             }
             String hash = patient.getPasswordHash();
+            if (hash != null && hash.startsWith("$2b$")) {
+                hash = "$2a$" + hash.substring(4);
+            }
             if (hash == null || !org.mindrot.jbcrypt.BCrypt.checkpw(password, hash)) {
                 return Response.status(401)
                         .header("Access-Control-Allow-Origin", "*")

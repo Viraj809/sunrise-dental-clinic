@@ -18,7 +18,7 @@ function requireAuth(allowedRoles) {
 }
 
 function redirectToDashboard(role) {
-    if (role === 'ADMIN') {
+    if (role === 'ADMIN' || role === 'SYSTEM_ADMIN') {
         window.location.href = '/Frontend/admin-dashboard.html';
     } else if (role === 'RECEPTIONIST') {
         window.location.href = '/Frontend/receptionist-dashboard.html';
@@ -122,40 +122,41 @@ function showNav() {
     const nav  = document.getElementById('main-nav');
     if (!nav) return;
 
+    const current = window.location.pathname;
     let html = '';
-    if (role === 'ADMIN') {
-        html += '<a href="/Frontend/admin-dashboard.html">Dashboard</a>';
-        html += '<a href="/Frontend/manage-staff.html">Manage Staff</a>';
-        html += '<a href="/Frontend/manage-dentists.html">Dentists</a>';
-        html += '<a href="/Frontend/manage-patients.html">Patients</a>';
-        html += '<a href="/Frontend/view-appointment.html">Appointments</a>';
-        html += '<a href="/Frontend/manage-treatments.html">Treatments</a>';
-        html += '<a href="/Frontend/billing.html">Billing</a>';
-        html += '<a href="/Frontend/reports.html">Reports</a>';
-        html += '<a href="/Frontend/notifications.html">Notifications</a>';
-        html += '<a href="/Frontend/audit-log.html">Audit Log</a>';
+    if (role === 'ADMIN' || role === 'SYSTEM_ADMIN') {
+        html += '<a href="/Frontend/admin-dashboard.html" class="' + (current.includes('admin-dashboard') ? 'active' : '') + '">Dashboard</a>';
+        html += '<a href="/Frontend/manage-staff.html" class="' + (current.includes('manage-staff') ? 'active' : '') + '">Manage Staff</a>';
+        html += '<a href="/Frontend/manage-dentists.html" class="' + (current.includes('manage-dentists') ? 'active' : '') + '">Dentists</a>';
+        html += '<a href="/Frontend/manage-patients.html" class="' + (current.includes('manage-patients') ? 'active' : '') + '">Patients</a>';
+        html += '<a href="/Frontend/view-appointment.html" class="' + (current.includes('view-appointment') ? 'active' : '') + '">Appointments</a>';
+        html += '<a href="/Frontend/manage-treatments.html" class="' + (current.includes('manage-treatments') ? 'active' : '') + '">Treatments</a>';
+        html += '<a href="/Frontend/billing.html" class="' + (current.includes('billing') ? 'active' : '') + '">Billing</a>';
+        html += '<a href="/Frontend/reports.html" class="' + (current.includes('reports') ? 'active' : '') + '">Reports</a>';
+        html += '<a href="/Frontend/notifications.html" class="' + (current.includes('notifications') ? 'active' : '') + '">Notifications</a>';
+        html += '<a href="/Frontend/audit-log.html" class="' + (current.includes('audit-log') ? 'active' : '') + '">Audit Log</a>';
     } else if (role === 'RECEPTIONIST') {
-        html += '<a href="/Frontend/receptionist-dashboard.html">Dashboard</a>';
-        html += '<a href="/Frontend/register-appointment.html">New Appointment</a>';
-        html += '<a href="/Frontend/view-appointment.html">Appointments</a>';
-        html += '<a href="/Frontend/manage-patients.html">Patients</a>';
-        html += '<a href="/Frontend/billing.html">Billing</a>';
-        html += '<a href="/Frontend/queue.html">Queue</a>';
+        html += '<a href="/Frontend/receptionist-dashboard.html" class="' + (current.includes('receptionist-dashboard') ? 'active' : '') + '">Dashboard</a>';
+        html += '<a href="/Frontend/register-appointment.html" class="' + (current.includes('register-appointment') ? 'active' : '') + '">New Appointment</a>';
+        html += '<a href="/Frontend/view-appointment.html" class="' + (current.includes('view-appointment') ? 'active' : '') + '">Appointments</a>';
+        html += '<a href="/Frontend/manage-patients.html" class="' + (current.includes('manage-patients') ? 'active' : '') + '">Patients</a>';
+        html += '<a href="/Frontend/billing.html" class="' + (current.includes('billing') ? 'active' : '') + '">Billing</a>';
+        html += '<a href="/Frontend/queue.html" class="' + (current.includes('queue') ? 'active' : '') + '">Queue</a>';
     } else if (role === 'DENTIST') {
-        html += '<a href="/Frontend/dentist-dashboard.html">Dashboard</a>';
-        html += '<a href="/Frontend/view-appointment.html">Appointments</a>';
-        html += '<a href="/Frontend/dentist-schedule.html">My Schedule</a>';
-        html += '<a href="/Frontend/patient-history.html">Patient History</a>';
+        html += '<a href="/Frontend/dentist-dashboard.html" class="' + (current.includes('dentist-dashboard') ? 'active' : '') + '">Dashboard</a>';
+        html += '<a href="/Frontend/view-appointment.html" class="' + (current.includes('view-appointment') ? 'active' : '') + '">Appointments</a>';
+        html += '<a href="/Frontend/dentist-schedule.html" class="' + (current.includes('dentist-schedule') ? 'active' : '') + '">My Schedule</a>';
+        html += '<a href="/Frontend/patient-history.html" class="' + (current.includes('patient-history') ? 'active' : '') + '">Patient History</a>';
     } else if (role === 'PATIENT') {
-        html += '<a href="/Frontend/patient-dashboard.html">Dashboard</a>';
-        html += '<a href="/Frontend/patient-appointments.html">Appointments</a>';
-        html += '<a href="/Frontend/patient-history.html">Treatment History</a>';
-        html += '<a href="/Frontend/patient-billing.html">Billing</a>';
-        html += '<a href="/Frontend/patient-notifications.html">Notifications</a>';
-        html += '<a href="/Frontend/patient-profile.html">Profile</a>';
+        html += '<a href="/Frontend/patient-dashboard.html" class="' + (current.includes('patient-dashboard') ? 'active' : '') + '">Dashboard</a>';
+        html += '<a href="/Frontend/patient-appointments.html" class="' + (current.includes('patient-appointments') ? 'active' : '') + '">Appointments</a>';
+        html += '<a href="/Frontend/patient-history.html" class="' + (current.includes('patient-history') ? 'active' : '') + '">Treatment History</a>';
+        html += '<a href="/Frontend/patient-billing.html" class="' + (current.includes('patient-billing') ? 'active' : '') + '">Billing</a>';
+        html += '<a href="/Frontend/patient-notifications.html" class="' + (current.includes('patient-notifications') ? 'active' : '') + '">Notifications</a>';
+        html += '<a href="/Frontend/patient-profile.html" class="' + (current.includes('patient-profile') ? 'active' : '') + '">Profile</a>';
     }
-    html += '<a href="/Frontend/help.html">Help</a>';
-    html += '<a href="#" onclick="logout(); return false;" style="color:#f87171;">Logout</a>';
+    html += '<a href="/Frontend/help.html" class="' + (current.includes('help') ? 'active' : '') + '">Help</a>';
+    html += '<a href="#" onclick="logout(); return false;" class="logout-link">Logout</a>';
     nav.innerHTML = html;
 }
 

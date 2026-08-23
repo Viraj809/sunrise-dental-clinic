@@ -5,13 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receptionist Dashboard – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
+    <style>
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #5f98F3;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .sticky-nav .nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            padding: 10px 16px;
+            justify-content: center;
+        }
+        .sticky-nav .nav a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .sticky-nav .nav a:hover,
+        .sticky-nav .nav a.active {
+            background: rgba(255,255,255,0.25);
+        }
+        .sticky-nav .nav a.logout-link {
+            color: #ffe6e6;
+            font-weight: 600;
+        }
+        @media (max-width: 768px) {
+            .sticky-nav .nav a {
+                padding: 6px 10px;
+                font-size: 0.78rem;
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="header">
     <h1>Sunrise Dental Clinic</h1>
     <div class="user-info" id="user-info"></div>
 </div>
-<nav class="nav" id="main-nav"></nav>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
 
 <div class="container">
     <div id="toast-container"></div>
@@ -82,7 +124,7 @@
 
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['RECEPTIONIST', 'ADMIN']);
+    requireAuth(['RECEPTIONIST', 'ADMIN', 'SYSTEM_ADMIN']);
 
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('current-date').textContent =

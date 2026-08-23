@@ -101,37 +101,68 @@ body {
 }
 
 /* ── Navigation ────────────────────────────────────────────── */
+
+/* Wrapper div එකක් තිබුණොත් ඒකටත් අදාළ වෙන්න */
+.sticky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #5f98F3 !important;
+    width: 100%;
+}
+
+/* ප්‍රධාන Navigation Bar එක */
 .nav {
-    background: var(--nav-bg);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #5f98F3 !important;
     display: flex;
-    align-items: center;
-    gap: 4px;
-    overflow-x: auto;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 24px;
+    justify-content: center;
+    margin: 0;
+    border-bottom: none !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
 }
+
+/* Wrapper එක ඇතුලේ nav එකක් තිබ්බොත් double shadow වෙන එක නවත්තන්න */
+.sticky-nav .nav {
+    box-shadow: none;
+    position: relative;
+}
+
+/* Links වල Design එක */
 .nav a {
-    color: var(--text-secondary);
+    color: #ffffff !important;
     text-decoration: none;
-    padding: 14px 14px;
-    font-weight: 500;
-    font-size: 0.875rem;
+    padding: 8px 16px !important;
+    border-radius: 8px !important; 
+    font-size: 0.9rem;
+    font-weight: 600 !important; 
+    transition: background 0.2s ease;
     white-space: nowrap;
-    border-bottom: 3px solid transparent;
-    transition: color var(--transition), border-color var(--transition);
+    border: none !important; 
     display: flex;
     align-items: center;
-    gap: 6px;
 }
-.nav a:hover {
-    color: var(--primary);
-    border-bottom-color: var(--primary-light);
-}
+
+/* Hover කරනකොට සහ Click කරලා ඉන්න page එකේ (Active) Design එක */
+.nav a:hover,
 .nav a.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
-    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.35) !important; 
+    color: #ffffff !important;
+}
+
+/* Logout button එක වෙනම අඳුරගන්න */
+.nav a.logout-link {
+    color: #ffcccc !important;
+    font-weight: 700 !important;
+    margin-left: 12px;
+}
+.nav a.logout-link:hover {
+    background-color: rgba(220, 38, 38, 0.6) !important;
 }
 
 /* ── Cards ─────────────────────────────────────────────────── */
@@ -578,7 +609,16 @@ hr { border: none; border-top: 1.5px solid var(--border); margin: 24px 0; }
 @media (max-width: 768px) {
     .container { padding: 16px; }
     .header    { padding: 0 16px; }
-    .nav       { padding: 0 12px; }
+    
+    .nav { 
+        padding: 10px; 
+        gap: 4px; 
+    }
+    .nav a {
+        padding: 6px 12px !important;
+        font-size: 0.8rem;
+    }
+
     .card      { padding: 20px; }
     .table th,
     .table td  { padding: 10px 12px; }
@@ -591,7 +631,7 @@ hr { border: none; border-top: 1.5px solid var(--border); margin: 24px 0; }
 
 /* ── Print Styles ──────────────────────────────────────────── */
 @media print {
-    .no-print, .header, .nav, #toast-container, .modal-overlay { display: none !important; }
+    .no-print, .header, .nav, .sticky-nav, #toast-container, .modal-overlay { display: none !important; }
     body { background: white; font-size: 12px; }
     .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
     .container { padding: 0; }

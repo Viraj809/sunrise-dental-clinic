@@ -64,16 +64,18 @@ public class TokenAuthFilter implements ContainerRequestFilter {
         if (path.startsWith("patients/me") && !"PATIENT".equals(role)) return false;
         if (path.startsWith("patient/") && !"PATIENT".equals(role)) return false;
 
+        boolean isAdmin = "ADMIN".equals(role) || "SYSTEM_ADMIN".equals(role);
+
         // Admin-only management surfaces.
-        if (path.startsWith("staff") && !"ADMIN".equals(role)) return false;
-        if (path.startsWith("audit") && !"ADMIN".equals(role)) return false;
-        if (path.startsWith("settings") && !"ADMIN".equals(role)) return false;
+        if (path.startsWith("staff") && !isAdmin) return false;
+        if (path.startsWith("audit") && !isAdmin) return false;
+        if (path.startsWith("settings") && !isAdmin) return false;
 
         // Receptionist / admin only operational surfaces.
-        if (path.startsWith("queue") && !("ADMIN".equals(role) || "RECEPTIONIST".equals(role))) return false;
+        if (path.startsWith("queue") && !(isAdmin || "RECEPTIONIST".equals(role))) return false;
 
         // Treatment catalogue writes are admin-only (reads are allowed to all).
-        if (path.startsWith("treatments") && !"GET".equalsIgnoreCase(method) && !"ADMIN".equals(role)) {
+        if (path.startsWith("treatments") && !"GET".equalsIgnoreCase(method) && !isAdmin) {
             return false;
         }
 

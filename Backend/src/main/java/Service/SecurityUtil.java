@@ -34,19 +34,28 @@ public final class SecurityUtil {
     }
 
     public static void requireAdmin() {
-        requireRole("ADMIN");
+        requireRole("ADMIN", "SYSTEM_ADMIN");
     }
 
     public static void requireStaff() {
-        requireRole("ADMIN", "RECEPTIONIST", "DENTIST");
+        requireRole("ADMIN", "RECEPTIONIST", "DENTIST", "SYSTEM_ADMIN");
     }
 
     public static void requireReceptionOrAdmin() {
-        requireRole("ADMIN", "RECEPTIONIST");
+        requireRole("ADMIN", "RECEPTIONIST", "SYSTEM_ADMIN");
     }
 
     public static void requirePatient() {
         requireRole("PATIENT");
+    }
+
+    public static boolean isSystemAdmin() {
+        return "SYSTEM_ADMIN".equals(session().role);
+    }
+
+    public static boolean isAdmin() {
+        String role = session().role;
+        return "ADMIN".equals(role) || "SYSTEM_ADMIN".equals(role);
     }
 
     public static int currentId() {

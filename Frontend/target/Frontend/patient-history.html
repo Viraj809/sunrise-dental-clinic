@@ -16,7 +16,8 @@
 <div class="container">
     <div id="toast-container"></div>
     <div class="page-header">
-        <div><h2>My Treatment History</h2><p>Appointments, treatments and billing records</p></div>
+        <div><h2 id="historyTitle">Treatment History</h2><p id="historySubtitle">Appointments, treatments and billing records</p></div>
+        <div id="patientInfo" style="text-align:right;font-size:0.875rem;color:var(--text-muted);"></div>
     </div>
 
     <div class="card">
@@ -42,20 +43,50 @@
 
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['PATIENT']);
-    const patientId = localStorage.getItem('patientId');
+    requireAuth();
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedPatientId = urlParams.get('patient_id');
+    const loggedPatientId = localStorage.getItem('patientId');
+    const currentRole = localStorage.getItem('role');
+    const isAdmin = currentRole === 'ADMIN' || currentRole === 'SYSTEM_ADMIN';
+    const patientId = selectedPatientId || loggedPatientId;
+
+    async function loadPatientInfo() {
+        if (!patientId) return;
+        try {
+            const p = await apiGet('/patients/' + patientId);
+            const info = document.getElementById('patientInfo');
+            const title = document.getElementById('historyTitle');
+            const subtitle = document.getElementById('historySubtitle');
+            if (info) {
+                info.innerHTML = `<strong>${p.name}</strong> &nbsp;|&nbsp; NIC: ${p.nic || '–'} &nbsp;|&nbsp; Contact: ${p.contact || '–'}`;
+            }
+            if (title && isAdmin && selectedPatientId) {
+                title.textContent = 'Patient History';
+                subtitle.textContent = 'Viewing history for ' + p.name;
+            } else if (title) {
+                title.textContent = 'My Treatment History';
+                subtitle.textContent = 'Appointments, treatments and billing records';
+            }
+        } catch (e) { console.error(e); }
+    }
 
     async function load() {
+        if (!patientId) {
+            document.querySelector('#apptTable tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No patient selected</td></tr>';
+            document.querySelector('#billTable tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No patient selected</td></tr>';
+            return;
+        }
         const appts = await apiGet('/appointments/patient/' + patientId);
         document.querySelector('#apptTable tbody').innerHTML = appts.length
             ? appts.map(a => `<tr>
                 <td><strong>${a.appointmentNo}</strong></td>
                 <td>${a.treatmentType}</td>
                 <td>${a.appointmentDate}</td>
-                <td>${a.appointmentTime}</td>
+                <td>${(a.appointmentTime||'').substring(0,5)}</td>
                 <td>${a.notes || '-'}</td>
                 <td>${getStatusBadge(a.status)}</td></tr>`).join('')
-            : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No appointments</td></tr>';
+            : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No appointment history found for this patient.</td></tr>';
 
         const billRows = await Promise.all(appts.map(async a => {
             try {
@@ -66,15 +97,16 @@
                     <td>${(b.totalAmount||0).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
                     <td>${getStatusBadge(b.paymentStatus)}</td>
                     <td>${b.issuedAt ? b.issuedAt.split('T')[0] : '-'}</td>
-                    <td><a class="btn btn-ghost btn-sm" href="/Frontend/patient-billing.html?appointment=${a.appointmentId}">View</a></td>
+                    <td><a class="btn btn-ghost btn-sm" href="/Frontend/billing.html?appt_id=${a.appointmentId}">View Bill</a></td>
                 </tr>`;
             } catch (e) { return ''; }
         }));
         const filtered = billRows.filter(r => r);
         document.querySelector('#billTable tbody').innerHTML = filtered.length
             ? filtered.join('')
-            : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No bills yet</td></tr>';
+            : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No billing history found for this patient.</td></tr>';
     }
+    loadPatientInfo();
     load();
 </script>
 </body>

@@ -116,7 +116,7 @@
 
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['RECEPTIONIST', 'ADMIN']);
+    requireAuth(['RECEPTIONIST', 'ADMIN', 'SYSTEM_ADMIN']);
 
     let selectedPatientId = null;
     let treatmentsList = [];
@@ -317,10 +317,34 @@
                 errorDiv.style.display = 'flex';
                 btn.disabled = false; btn.textContent = '✅ Register Appointment';
             } else {
-                showToast('🎉 Appointment registered: ' + res.appointmentNo);
-                setTimeout(() => {
-                    window.location.href = '/Frontend/view-appointment.html?no=' + res.appointmentNo;
-                }, 1200);
+                const dentistName = document.getElementById('dentistId').selectedOptions[0]?.textContent || '–';
+                const treatmentName = document.getElementById('treatmentType').selectedOptions[0]?.textContent || '–';
+                errorDiv.style.display = 'none';
+                const successHtml = `
+                    <h3 style="margin:0 0 10px;color:var(--success);">🎉 Appointment Registered Successfully!</h3>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.875rem;margin-bottom:12px;">
+                        <div><strong>Appointment No:</strong> ${res.appointmentNo}</div>
+                        <div><strong>Patient:</strong> ${document.getElementById('patientSearch').value || '–'}</div>
+                        <div><strong>Dentist:</strong> ${dentistName}</div>
+                        <div><strong>Date:</strong> ${data.appointmentDate}</div>
+                        <div><strong>Time:</strong> ${data.appointmentTime.substring(0,5)}</div>
+                        <div><strong>Treatment:</strong> ${treatmentName}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <a href="/Frontend/view-appointment.html?no=${res.appointmentNo}" class="btn btn-sm btn-primary">View Appointment</a>
+                        <button class="btn btn-sm btn-ghost" onclick="resetForm()">Register Another</button>
+                    </div>`;
+                const existing = document.getElementById('apptSuccess');
+                if (existing) { existing.innerHTML = successHtml; existing.style.display = 'flex'; }
+                else {
+                    const div = document.createElement('div');
+                    div.id = 'apptSuccess';
+                    div.className = 'alert alert-success';
+                    div.innerHTML = successHtml;
+                    div.style.display = 'flex';
+                    document.getElementById('appointmentForm').parentElement.insertBefore(div, document.getElementById('appointmentForm'));
+                }
+                btn.disabled = false; btn.textContent = '✅ Register Appointment';
             }
         } catch (e) {
             errorDiv.textContent = 'Failed to register appointment. Check that the backend is running.';
@@ -328,6 +352,15 @@
             btn.disabled = false; btn.textContent = '✅ Register Appointment';
         }
     });
+
+    function resetForm() {
+        document.getElementById('appointmentForm').reset();
+        document.getElementById('error-msg').style.display = 'none';
+        clearPatientSelection();
+        const existing = document.getElementById('apptSuccess');
+        if (existing) existing.style.display = 'none';
+        document.getElementById('appointmentDate').min = new Date().toISOString().split('T')[0];
+    }
 
     loadDropdowns();
 </script>

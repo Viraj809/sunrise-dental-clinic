@@ -32,7 +32,7 @@
 
 <script src="/Frontend/js/app.js"></script>
 <script>
-    requireAuth(['ADMIN']);
+    requireAuth(['ADMIN', 'SYSTEM_ADMIN']);
     async function load() {
         const list = await apiGet('/notifications');
         const tbody = document.querySelector('#notifTable tbody');

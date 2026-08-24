@@ -138,7 +138,9 @@
 
     async function loadStaff() {
         try {
-            allStaff = await apiGet('/staff');
+            const data = await apiGet('/staff');
+            // DENTIST role එක තියෙන අයව අයින් කරලා අනිත් අයව විතරක් පෙන්නන්න
+            allStaff = data.filter(s => s.role !== 'DENTIST');
             renderTable(allStaff);
         } catch (e) { showToast('Failed to load staff', 'error'); }
     }
@@ -344,10 +346,6 @@
 
         if (!name || !nic || !email || !password || !role) {
             errDiv.textContent = 'Name, NIC, email, password and role are required.';
-            errDiv.style.display = 'flex'; return;
-        }
-        if (role === 'DENTIST') {
-            errDiv.textContent = 'Dentists must be created through the Dentists page.';
             errDiv.style.display = 'flex'; return;
         }
         if (password.length < 8) {

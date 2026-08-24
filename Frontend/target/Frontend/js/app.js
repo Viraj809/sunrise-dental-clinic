@@ -134,14 +134,13 @@ function showNav() {
         html += '<a href="/Frontend/billing.html" class="' + (current.includes('billing') ? 'active' : '') + '">Billing</a>';
         html += '<a href="/Frontend/reports.html" class="' + (current.includes('reports') ? 'active' : '') + '">Reports</a>';
         html += '<a href="/Frontend/notifications.html" class="' + (current.includes('notifications') ? 'active' : '') + '">Notifications</a>';
-        html += '<a href="/Frontend/audit-log.html" class="' + (current.includes('audit-log') ? 'active' : '') + '">Audit Log</a>';
+        // Audit Log has been completely removed from here
     } else if (role === 'RECEPTIONIST') {
         html += '<a href="/Frontend/receptionist-dashboard.html" class="' + (current.includes('receptionist-dashboard') ? 'active' : '') + '">Dashboard</a>';
         html += '<a href="/Frontend/register-appointment.html" class="' + (current.includes('register-appointment') ? 'active' : '') + '">New Appointment</a>';
         html += '<a href="/Frontend/view-appointment.html" class="' + (current.includes('view-appointment') ? 'active' : '') + '">Appointments</a>';
         html += '<a href="/Frontend/manage-patients.html" class="' + (current.includes('manage-patients') ? 'active' : '') + '">Patients</a>';
-        html += '<a href="/Frontend/billing.html" class="' + (current.includes('billing') ? 'active' : '') + '">Billing</a>';
-        html += '<a href="/Frontend/queue.html" class="' + (current.includes('queue') ? 'active' : '') + '">Queue</a>';
+        html += '<a href="/Frontend/billing.html" class="' + (current.includes('billing') ? 'active' : '') + '">Billing</a>';    
     } else if (role === 'DENTIST') {
         html += '<a href="/Frontend/dentist-dashboard.html" class="' + (current.includes('dentist-dashboard') ? 'active' : '') + '">Dashboard</a>';
         html += '<a href="/Frontend/view-appointment.html" class="' + (current.includes('view-appointment') ? 'active' : '') + '">Appointments</a>';
@@ -167,4 +166,3 @@ document.addEventListener('DOMContentLoaded', function() {
         userInfo.textContent = userName + ' (' + (userRole || '') + ')';
     }
 });
-

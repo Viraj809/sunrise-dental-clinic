@@ -52,8 +52,10 @@
                 <select id="statusFilter" onchange="filterTable()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:0.875rem;">
                     <option value="">All Statuses</option>
                     <option value="Pending">Pending</option>
-                    <option value="Scheduled">Scheduled</option>
                     <option value="Confirmed">Confirmed</option>
+                    <option value="Waiting">Waiting</option>
+                    <option value="With Dentist">With Dentist</option>
+                    <option value="Treatment In Progress">Treatment In Progress</option>
                     <option value="Completed">Completed</option>
                     <option value="Cancelled">Cancelled</option>
                 </select>
@@ -138,8 +140,10 @@
                     ${(role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN' || role === 'DENTIST') ?
                       `<select class="btn btn-sm" style="border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-primary); cursor: pointer;" onchange="quickUpdateStatus(${a.appointmentId}, this.value)">
                           <option value="Pending" ${a.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                          <option value="Scheduled" ${a.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
                           <option value="Confirmed" ${a.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
+                          <option value="Waiting" ${a.status === 'Waiting' ? 'selected' : ''}>Waiting</option>
+                          <option value="With Dentist" ${a.status === 'With Dentist' ? 'selected' : ''}>With Dentist</option>
+                          <option value="Treatment In Progress" ${a.status === 'Treatment In Progress' ? 'selected' : ''}>Treatment In Progress</option>
                           <option value="Completed" ${a.status === 'Completed' ? 'selected' : ''}>Completed</option>
                           <option value="Cancelled" ${a.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
                       </select>` : ''}
@@ -151,20 +155,37 @@
             </tr>`).join('');
     }
 
-    // Quick Status Update without Modal
+    // ✅ FIXED: Fetch directly to catch any specific Backend/Database errors
     async function quickUpdateStatus(apptId, status) {
         try {
-            await apiPut('/appointments/' + apptId + '/status', { status });
+            const response = await fetch(API_BASE + '/appointments/' + apptId + '/status', {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify({ status: status })
+            });
+
+            if (!response.ok) {
+                let errText = 'Server Error ' + response.status;
+                try {
+                    const data = await response.json();
+                    if (data && data.error) errText = data.error;
+                } catch(e) {}
+                
+                showToast(errText, 'error'); 
+                await loadAll(); // Dropdown එක ආපහු පරණ තත්වෙටම ගන්න
+                return;
+            }
+
             showToast('Status updated to ' + status + ' ✅');
             await loadAll();
             
-            // Update details view if it's currently open
             if (document.getElementById('detailCard').style.display !== 'none' && currentApptId === apptId) {
                 showDetail(apptId);
             }
         } catch (e) { 
-            showToast('Failed to update status', 'error');
-            await loadAll(); // Revert the dropdown visual state
+            console.error(e);
+            showToast('Network error while updating status', 'error');
+            await loadAll(); 
         }
     }
 
@@ -246,8 +267,10 @@
                 btns.innerHTML += `
                     <select class="btn btn-sm" style="border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-primary); cursor: pointer; padding: 6px 12px; margin-right: 4px;" onchange="quickUpdateStatus(${a.appointmentId}, this.value)">
                           <option value="Pending" ${a.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                          <option value="Scheduled" ${a.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
                           <option value="Confirmed" ${a.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
+                          <option value="Waiting" ${a.status === 'Waiting' ? 'selected' : ''}>Waiting</option>
+                          <option value="With Dentist" ${a.status === 'With Dentist' ? 'selected' : ''}>With Dentist</option>
+                          <option value="Treatment In Progress" ${a.status === 'Treatment In Progress' ? 'selected' : ''}>Treatment In Progress</option>
                           <option value="Completed" ${a.status === 'Completed' ? 'selected' : ''}>Completed</option>
                           <option value="Cancelled" ${a.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
                     </select>

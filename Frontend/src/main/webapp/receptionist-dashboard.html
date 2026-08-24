@@ -115,7 +115,7 @@
         <h2>📅 Today's Schedule</h2>
         <div class="table-wrapper">
             <table class="table" id="todayTable">
-                <thead><tr><th>Appt No</th><th>Patient ID</th><th>Dentist</th><th>Treatment</th><th>Time</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Appt No</th><th>Patient</th><th>Dentist</th><th>Treatment</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr></tbody>
             </table>
         </div>
@@ -138,9 +138,10 @@
 
     async function loadDashboard() {
         try {
-            const [appointments, dentists] = await Promise.all([
+            const [appointments, dentists, patients] = await Promise.all([
                 apiGet('/appointments'),
-                apiGet('/dentists')
+                apiGet('/dentists'),
+                apiGet('/patients')
             ]);
 
             const todayAppts   = appointments.filter(a => a.appointmentDate === today);
@@ -148,7 +149,7 @@
             const completed    = todayAppts.filter(a => a.status === 'Completed');
             const cancelled    = todayAppts.filter(a => a.status === 'Cancelled');
 
-            document.getElementById('stat-today').textContent     = todayAppts.length;
+            document.getElementById('stat-today').textContent      = todayAppts.length;
             document.getElementById('stat-scheduled').textContent  = scheduled.length;
             document.getElementById('stat-completed').textContent  = completed.length;
             document.getElementById('stat-cancelled').textContent  = cancelled.length;
@@ -156,26 +157,48 @@
             const dentistMap = {};
             dentists.forEach(d => dentistMap[d.dentistId] = d.name);
 
+            const patientMap = {};
+            patients.forEach(p => patientMap[p.patientId] = p.name);
+
             const tbody = document.querySelector('#todayTable tbody');
             if (todayAppts.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">No appointments scheduled for today</td></tr>';
             } else {
                 tbody.innerHTML = todayAppts
-                    .sort((a,b) => a.appointmentTime.localeCompare(b.appointmentTime))
+                    .sort((a,b) => (a.appointmentTime || '').localeCompare(b.appointmentTime || ''))
                     .map(a => `
                     <tr>
                         <td><strong>${a.appointmentNo}</strong></td>
-                        <td>${a.patientId}</td>
+                        <td>${patientMap[a.patientId] || 'ID: ' + a.patientId}</td>
                         <td>${dentistMap[a.dentistId] || 'Dr. #' + a.dentistId}</td>
                         <td>${a.treatmentType}</td>
-                        <td>${a.appointmentTime}</td>
+                        <td>${a.appointmentTime ? a.appointmentTime.substring(0,5) : ''}</td>
                         <td>${getStatusBadge(a.status)}</td>
-                        <td>
+                        <td style="display:flex; gap:6px; flex-wrap:nowrap; align-items:center;">
                             <a href="/Frontend/view-appointment.html?no=${a.appointmentNo}" class="btn btn-sm btn-ghost">View</a>
+                            <select class="btn btn-sm" style="border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-primary); cursor: pointer;" onchange="quickUpdateStatus(${a.appointmentId}, this.value)">
+                                <option value="Pending" ${a.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Scheduled" ${a.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
+                                <option value="Confirmed" ${a.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
+                                <option value="Completed" ${a.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                <option value="Cancelled" ${a.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                            <a class="btn btn-sm btn-success" href="/Frontend/billing.html?appt_id=${a.appointmentId}">Bill</a>
                         </td>
                     </tr>`).join('');
             }
         } catch (e) { showToast('Failed to load dashboard', 'error'); }
+    }
+
+    async function quickUpdateStatus(apptId, status) {
+        try {
+            await apiPut('/appointments/' + apptId + '/status', { status });
+            showToast('Status updated to ' + status + ' ✅');
+            loadDashboard();
+        } catch (e) { 
+            showToast('Failed to update status', 'error');
+            loadDashboard(); 
+        }
     }
 
     loadDashboard();

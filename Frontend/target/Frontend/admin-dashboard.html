@@ -96,8 +96,8 @@
             <h2>📅 Today's Appointments</h2>
             <div class="table-wrapper">
                 <table class="table" id="todayTable">
-                    <thead><tr><th>No</th><th>Patient ID</th><th>Treatment</th><th>Time</th><th>Status</th></tr></thead>
-                    <tbody><tr><td colspan="5" class="empty-state" style="padding:30px;text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
+                    <thead><tr><th>No</th><th>Patient</th><th>Treatment</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody><tr><td colspan="6" class="empty-state" style="padding:30px;text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -127,6 +127,9 @@
             document.getElementById('stat-patients').textContent     = patients.length;
             document.getElementById('stat-dentists').textContent     = dentists.filter(d => d.active).length;
 
+            const patientMap = {};
+            patients.forEach(p => patientMap[p.patientId] = p.name);
+
             // Revenue
             const revenue = await apiGet('/reports/revenue/daily');
             document.getElementById('stat-revenue').textContent =
@@ -137,12 +140,30 @@
             const todayAppts = appointments.filter(a => a.appointmentDate === today);
             const tbody = document.querySelector('#todayTable tbody');
             if (todayAppts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted);">No appointments today</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No appointments today</td></tr>';
             } else {
-                tbody.innerHTML = todayAppts.map(a =>
-                    `<tr><td><strong>${a.appointmentNo}</strong></td><td>${a.patientId}</td>
-                     <td>${a.treatmentType}</td><td>${a.appointmentTime}</td>
-                     <td>${getStatusBadge(a.status)}</td></tr>`
+                tbody.innerHTML = todayAppts
+                    .sort((a,b) => (a.appointmentTime || '').localeCompare(b.appointmentTime || ''))
+                    .map(a =>
+                    `<tr>
+                        <td><strong>${a.appointmentNo}</strong></td>
+                        <td>${patientMap[a.patientId] || 'ID: ' + a.patientId}</td>
+                        <td>${a.treatmentType}</td>
+                        <td>${a.appointmentTime ? a.appointmentTime.substring(0,5) : ''}</td>
+                        <td>${getStatusBadge(a.status)}</td>
+                        <td style="display:flex; gap:6px; flex-wrap:nowrap; align-items:center;">
+                            <a href="/Frontend/view-appointment.html?no=${a.appointmentNo}" class="btn btn-sm btn-ghost">View</a>
+                            <select class="btn btn-sm" style="border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-primary); cursor: pointer;" onchange="quickUpdateStatus(${a.appointmentId}, this.value)">
+                                <option value="Pending" ${a.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Scheduled" ${a.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
+                                <option value="Confirmed" ${a.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
+                                <option value="Completed" ${a.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                <option value="Cancelled" ${a.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                            <a class="btn btn-sm btn-success" href="/Frontend/billing.html?appt_id=${a.appointmentId}">Bill</a>
+                            <button class="btn btn-sm btn-danger" onclick="deleteAppointment(${a.appointmentId}, '${a.appointmentNo}')">🗑️</button>
+                        </td>
+                    </tr>`
                 ).join('');
             }
 
@@ -151,6 +172,27 @@
             renderRevenueChart(monthly.revenue || 0, revenue.revenue || 0);
 
         } catch (e) { showToast('Failed to load dashboard data', 'error'); }
+    }
+
+    async function quickUpdateStatus(apptId, status) {
+        try {
+            await apiPut('/appointments/' + apptId + '/status', { status });
+            showToast('Status updated to ' + status + ' ✅');
+            loadDashboard();
+        } catch (e) { 
+            showToast('Failed to update status', 'error');
+            loadDashboard(); 
+        }
+    }
+
+    async function deleteAppointment(id, appointmentNo) {
+        if (!confirm('Are you sure you want to delete appointment "' + appointmentNo + '"?\n\nThis action cannot be undone.')) return;
+        try {
+            const res = await apiDelete('/appointments/' + id);
+            if (res.error) { showToast(res.error, 'error'); return; }
+            showToast('Appointment deleted ✅');
+            loadDashboard();
+        } catch (e) { showToast('Failed to delete appointment', 'error'); }
     }
 
     function renderRevenueChart(monthly, daily) {

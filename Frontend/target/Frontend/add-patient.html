@@ -11,7 +11,9 @@
     <h1>Sunrise Dental Clinic</h1>
     <div class="user-info" id="user-info"></div>
 </div>
-<nav class="nav" id="main-nav"></nav>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
 
 <div class="container" style="max-width:720px;">
     <div id="toast-container"></div>
@@ -34,7 +36,8 @@
                 </div>
                 <div class="form-group">
                     <label>NIC Number *</label>
-                    <input type="text" id="nic" placeholder="e.g. 901234567V or 199012345678" required>
+                    <!-- NIC length limited to 12 characters -->
+                    <input type="text" id="nic" placeholder="e.g. 901234567V or 199012345678" maxlength="12" required>
                 </div>
             </div>
             <div class="form-row">
@@ -61,25 +64,16 @@
                     <input type="email" id="email" placeholder="patient@email.com">
                 </div>
             </div>
+            
             <div class="form-group">
                 <label>Home Address</label>
                 <input type="text" id="address" placeholder="Full home address">
             </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Blood Group</label>
-                    <select id="bloodGroup">
-                        <option value="">Unknown</option>
-                        <option>A+</option><option>A-</option>
-                        <option>B+</option><option>B-</option>
-                        <option>AB+</option><option>AB-</option>
-                        <option>O+</option><option>O-</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Known Allergies</label>
-                    <input type="text" id="allergies" placeholder="e.g. Penicillin, Latex">
-                </div>
+            
+            <!-- Blood Group removed, only Known Allergies kept -->
+            <div class="form-group">
+                <label>Known Allergies</label>
+                <input type="text" id="allergies" placeholder="e.g. Penicillin, Latex">
             </div>
 
             <div id="successCard" style="display:none;" class="alert alert-success">
@@ -92,8 +86,8 @@
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <a id="okViewLink" href="/Frontend/manage-patients.html" class="btn btn-sm btn-primary">View Patient</a>
-                    <button class="btn btn-sm btn-ghost" onclick="resetForm()">Add Another Patient</button>
-                    <button class="btn btn-sm btn-ghost" onclick="document.getElementById('successCard').style.display='none'">Close</button>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="resetForm()">Add Another Patient</button>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="document.getElementById('successCard').style.display='none'">Close</button>
                 </div>
             </div>
 
@@ -122,6 +116,14 @@
 
         if (!name)    { errDiv.textContent = 'Patient name is required.'; errDiv.style.display = 'flex'; return; }
         if (!nic)     { errDiv.textContent = 'NIC is required.'; errDiv.style.display = 'flex'; return; }
+        
+        // NIC Validation (Sri Lankan Format check - 10 characters or 12 digits)
+        const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
+        if (!nicRegex.test(nic)) {
+            errDiv.textContent = 'Please enter a valid 12-digit or 10-character NIC.';
+            errDiv.style.display = 'flex'; return;
+        }
+
         if (!/^0\d{9}$/.test(contact)) {
             errDiv.textContent = 'Contact must be 10 digits starting with 0 (e.g. 0712345678).';
             errDiv.style.display = 'flex'; return;
@@ -138,7 +140,6 @@
             gender:      document.getElementById('gender').value,
             address:     document.getElementById('address').value,
             email:       document.getElementById('email').value,
-            bloodGroup:  document.getElementById('bloodGroup').value || null,
             allergies:   document.getElementById('allergies').value
         };
 

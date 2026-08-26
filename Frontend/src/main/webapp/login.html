@@ -6,77 +6,58 @@
     <title>Login – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-            background: #f8fafc;
-        }
-        
+        body { margin: 0; background: #f4f6fb; }
         .login-page {
             min-height: 100vh;
             display: flex;
         }
-
-        /* ── Left Side: Image Background Panel ── */
         .brand-panel {
-            flex: 1.2;
-            position: relative;
-            /* ඔයාගේ image folder එකේ තියෙන රූපය මෙතනින් load වේවි */
+            flex: 1.15;
             background: url('/Frontend/image/img.jpg') center/cover no-repeat;
             display: flex;
             flex-direction: column;
             justify-content: center;
             padding: 80px;
             color: white;
+            position: relative;
         }
-
-        /* Image එක උඩින් නිල් පාට Overlay එකක් (අකුරු පැහැදිලිව පේන්න) */
         .brand-panel::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.9) 0%, rgba(37, 99, 235, 0.6) 100%);
+            inset: 0;
+            background: linear-gradient(135deg, rgba(15,28,63,0.92) 0%, rgba(37,99,235,0.65) 100%);
         }
-
         .brand-content {
             position: relative;
             z-index: 1;
-            max-width: 500px;
+            max-width: 480px;
         }
-
         .brand-logo-icon {
-            font-size: 3.5rem;
-            margin-bottom: 24px;
+            font-size: 3.2rem;
+            margin-bottom: 22px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 90px; height: 90px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 24px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 88px; height: 88px;
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 22px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
         }
-
         .brand-content h1 {
-            font-size: 3.5rem;
+            font-size: 3.2rem;
             font-weight: 800;
-            margin: 0 0 15px 0;
-            line-height: 1.1;
+            margin: 0 0 14px 0;
+            line-height: 1.05;
             letter-spacing: -1px;
         }
-
         .brand-content p {
-            font-size: 1.15rem;
-            opacity: 0.9;
+            font-size: 1.1rem;
+            opacity: 0.92;
             line-height: 1.6;
+            font-weight: 400;
         }
-
-        /* ── Right Side: Login Form Panel ── */
         .form-panel {
             flex: 1;
             background: #ffffff;
@@ -85,152 +66,133 @@
             justify-content: center;
             padding: 40px;
         }
-
         .login-card {
             width: 100%;
             max-width: 420px;
         }
-
         .login-card h2 {
-            font-size: 2.2rem;
+            font-size: 2rem;
             color: #0f172a;
-            margin: 0 0 8px 0;
+            margin: 0 0 6px 0;
             font-weight: 800;
         }
-
         .login-card .sub {
             color: #64748b;
-            margin: 0 0 35px 0;
-            font-size: 1.05rem;
+            margin: 0 0 32px 0;
+            font-size: 1rem;
         }
-
         .form-group {
-            margin-bottom: 22px;
+            margin-bottom: 20px;
         }
-
         .form-group label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
+            margin-bottom: 7px;
+            font-weight: 700;
             color: #334155;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-
         .form-group input {
             width: 100%;
-            padding: 15px 18px;
-            border: 2px solid #e2e8f0;
+            padding: 14px 16px;
+            border: 1.5px solid #e2e8f0;
             border-radius: 12px;
-            font-size: 1.05rem;
-            transition: all 0.3s ease;
+            font-size: 1rem;
+            transition: all 0.2s ease;
             background: #f8fafc;
             color: #0f172a;
         }
-
         .form-group input:focus {
             border-color: #2563eb;
             background: #ffffff;
             outline: none;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
         }
-
         .password-container {
             position: relative;
         }
-
         .password-toggle {
             position: absolute;
-            right: 15px;
+            right: 14px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
             cursor: pointer;
             color: #64748b;
-            font-size: 1.2rem;
-            padding: 5px;
+            font-size: 1.15rem;
+            padding: 4px;
         }
-
         .btn-login {
             width: 100%;
-            padding: 16px;
+            padding: 15px;
             background: #2563eb;
             color: white;
             border: none;
             border-radius: 12px;
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.2);
+            transition: all 0.2s ease;
+            margin-top: 6px;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
         }
-
         .btn-login:hover {
             background: #1d4ed8;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
         }
-
         .btn-login:disabled {
             opacity: 0.7;
             cursor: not-allowed;
             transform: none;
         }
-
         .error-msg {
             background: #fef2f2;
             color: #dc2626;
-            padding: 14px 18px;
+            padding: 13px 16px;
             border-radius: 10px;
-            margin-bottom: 24px;
-            font-size: 0.95rem;
+            margin-bottom: 22px;
+            font-size: 0.9rem;
             border: 1px solid #fecaca;
             display: none;
-            font-weight: 500;
-            display: flex;
             align-items: center;
             gap: 10px;
+            font-weight: 500;
         }
-
         .login-foot {
             text-align: center;
-            margin-top: 35px;
-            font-size: 0.85rem;
+            margin-top: 32px;
+            font-size: 0.82rem;
             color: #94a3b8;
         }
-
-        /* Mobile View Response */
         @media (max-width: 900px) {
             .login-page { flex-direction: column; }
             .brand-panel { flex: none; padding: 60px 20px; text-align: center; }
             .brand-content { margin: 0 auto; }
-            .brand-logo-icon { width: 70px; height: 70px; font-size: 2.5rem; margin-bottom: 15px; }
-            .brand-content h1 { font-size: 2.5rem; }
+            .brand-logo-icon { width: 68px; height: 68px; font-size: 2.2rem; margin-bottom: 14px; }
+            .brand-content h1 { font-size: 2.4rem; }
         }
     </style>
 </head>
 <body>
     <div class="login-page">
-        <!-- ── Image Panel ── -->
         <aside class="brand-panel">
             <div class="brand-content">
                 <div class="brand-logo-icon">🦷</div>
                 <h1>Sunrise<br>Dental Clinic</h1>
-                <p>Welcome to our modern dental management system. Seamlessly manage appointments, patient records, and treatments in one secure place.</p>
+                <p>Your Smile, Our Care.<br>Modern dental management for a modern practice.</p>
             </div>
         </aside>
 
-        <!-- ── Login Form ── -->
         <main class="form-panel">
             <div class="login-card">
                 <h2>Welcome Back</h2>
                 <p class="sub">Sign in to access your dashboard.</p>
 
                 <div id="error-msg" class="error-msg" style="display: none;">
-                    ⚠️ <span id="error-text"></span>
+                    <span>⚠️</span> <span id="error-text"></span>
                 </div>
 
                 <form id="loginForm" novalidate>
@@ -238,7 +200,7 @@
                         <label>Email Address</label>
                         <input type="email" id="email" name="email" required placeholder="name@sunrisedental.lk" autocomplete="email">
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Password</label>
                         <div class="password-container">
@@ -246,7 +208,7 @@
                             <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
                         </div>
                     </div>
-                    
+
                     <button type="submit" class="btn-login" id="submitBtn">Sign In</button>
                 </form>
 
@@ -256,7 +218,6 @@
     </div>
 
     <script>
-        // Redirect if already logged in
         (function() {
             const token = localStorage.getItem('token');
             const role  = localStorage.getItem('role');
@@ -265,7 +226,7 @@
                 if (userRole === 'SYSTEM_ADMIN' || userRole === 'ADMIN') window.location.href = '/Frontend/admin-dashboard.html';
                 else if (userRole === 'RECEPTIONIST') window.location.href = '/Frontend/receptionist-dashboard.html';
                 else if (userRole === 'DENTIST')      window.location.href = '/Frontend/dentist-dashboard.html';
-                else if (userRole === 'PATIENT')      window.location.href = '/Frontend/patient-dashboard.html';
+                else if (userRole === 'PATIENT')      window.location.href = '/Frontend/login.html';
             }
         })();
 
@@ -313,7 +274,6 @@
                 localStorage.setItem('patientId', data.patientId);
                 localStorage.setItem('email',   data.email);
 
-                // Convert role to uppercase to avoid mismatch issues (e.g. 'Admin' vs 'ADMIN')
                 const activeRole = (data.role || '').toUpperCase();
 
                 if (activeRole === 'SYSTEM_ADMIN' || activeRole === 'ADMIN') {
@@ -323,7 +283,8 @@
                 } else if (activeRole === 'DENTIST') {
                     window.location.href = '/Frontend/dentist-dashboard.html';
                 } else if (activeRole === 'PATIENT') {
-                    window.location.href = '/Frontend/patient-dashboard.html';
+                    showToast('Patient portal is not available. Please contact the clinic.', 'error');
+                    setTimeout(() => window.location.href = '/Frontend/login.html', 2000);
                 } else {
                     window.location.href = '/Frontend/login.html';
                 }
@@ -339,6 +300,16 @@
         function togglePassword() {
             const input = document.getElementById('password');
             input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function showToast(message, type) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         }
     </script>
 </body>

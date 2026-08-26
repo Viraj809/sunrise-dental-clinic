@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My History – Sunrise Dental Clinic</title>
+    <title>Treatment History – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
 </head>
 <body>
@@ -11,31 +11,36 @@
     <h1>Sunrise Dental Clinic</h1>
     <div class="user-info" id="user-info"></div>
 </div>
-<nav class="nav" id="main-nav"></nav>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
 
 <div class="container">
     <div id="toast-container"></div>
     <div class="page-header">
-        <div><h2 id="historyTitle">Treatment History</h2><p id="historySubtitle">Appointments, treatments and billing records</p></div>
-        <div id="patientInfo" style="text-align:right;font-size:0.875rem;color:var(--text-muted);"></div>
+        <div>
+            <h2 id="historyTitle">Treatment History</h2>
+            <p id="historySubtitle">Appointments, treatments and billing records</p>
+        </div>
+        <div id="patientInfo"></div>
     </div>
 
     <div class="card">
-        <h2>📋 Appointment History</h2>
+        <h2>Appointment History</h2>
         <div class="table-wrapper">
             <table class="table" id="apptTable">
                 <thead><tr><th>No</th><th>Treatment</th><th>Date</th><th>Time</th><th>Notes</th><th>Status</th></tr></thead>
-                <tbody><tr><td colspan="6" class="empty-state" style="padding:30px;text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
+                <tbody><tr><td colspan="6" class="empty-state">Loading...</td></tbody>
             </table>
         </div>
     </div>
 
     <div class="card">
-        <h2>🧾 Billing History</h2>
+        <h2>Billing History</h2>
         <div class="table-wrapper">
             <table class="table" id="billTable">
                 <thead><tr><th>Bill #</th><th>Appointment</th><th>Total (LKR)</th><th>Payment</th><th>Date</th><th>Action</th></tr></thead>
-                <tbody><tr><td colspan="6" class="empty-state" style="padding:30px;text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
+                <tbody><tr><td colspan="6" class="empty-state">Loading...</td></tbody>
             </table>
         </div>
     </div>
@@ -59,7 +64,7 @@
             const title = document.getElementById('historyTitle');
             const subtitle = document.getElementById('historySubtitle');
             if (info) {
-                info.innerHTML = `<strong>${p.name}</strong> &nbsp;|&nbsp; NIC: ${p.nic || '–'} &nbsp;|&nbsp; Contact: ${p.contact || '–'}`;
+                info.innerHTML = '<strong>' + p.name + '</strong> &nbsp;|&nbsp; NIC: ' + (p.nic || '–') + ' &nbsp;|&nbsp; Contact: ' + (p.contact || '–');
             }
             if (title && isAdmin && selectedPatientId) {
                 title.textContent = 'Patient History';
@@ -73,38 +78,38 @@
 
     async function load() {
         if (!patientId) {
-            document.querySelector('#apptTable tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No patient selected</td></tr>';
-            document.querySelector('#billTable tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No patient selected</td></tr>';
+            document.querySelector('#apptTable tbody').innerHTML = '<tr><td colspan="6" class="empty-state">No patient selected</td></tr>';
+            document.querySelector('#billTable tbody').innerHTML = '<tr><td colspan="6" class="empty-state">No patient selected</td></tr>';
             return;
         }
         const appts = await apiGet('/appointments/patient/' + patientId);
         document.querySelector('#apptTable tbody').innerHTML = appts.length
-            ? appts.map(a => `<tr>
-                <td><strong>${a.appointmentNo}</strong></td>
-                <td>${a.treatmentType}</td>
-                <td>${a.appointmentDate}</td>
-                <td>${(a.appointmentTime||'').substring(0,5)}</td>
-                <td>${a.notes || '-'}</td>
-                <td>${getStatusBadge(a.status)}</td></tr>`).join('')
-            : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No appointment history found for this patient.</td></tr>';
+            ? appts.map(a => '<tr>' +
+                '<td><strong>' + a.appointmentNo + '</strong></td>' +
+                '<td>' + a.treatmentType + '</td>' +
+                '<td>' + a.appointmentDate + '</td>' +
+                '<td>' + (a.appointmentTime||'').substring(0,5) + '</td>' +
+                '<td>' + (a.notes || '-') + '</td>' +
+                '<td>' + getStatusBadge(a.status) + '</td></tr>').join('')
+            : '<tr><td colspan="6" class="empty-state">No appointment history found for this patient.</td></tr>';
 
         const billRows = await Promise.all(appts.map(async a => {
             try {
                 const b = await apiGet('/bills/appointment/' + a.appointmentId);
-                return `<tr>
-                    <td>#${b.billId}</td>
-                    <td>${a.appointmentNo}</td>
-                    <td>${(b.totalAmount||0).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
-                    <td>${getStatusBadge(b.paymentStatus)}</td>
-                    <td>${b.issuedAt ? b.issuedAt.split('T')[0] : '-'}</td>
-                    <td><a class="btn btn-ghost btn-sm" href="/Frontend/billing.html?appt_id=${a.appointmentId}">View Bill</a></td>
-                </tr>`;
+                return '<tr>' +
+                    '<td>#' + b.billId + '</td>' +
+                    '<td>' + a.appointmentNo + '</td>' +
+                    '<td>' + (b.totalAmount||0).toLocaleString('en-LK',{minimumFractionDigits:2}) + '</td>' +
+                    '<td>' + getStatusBadge(b.paymentStatus) + '</td>' +
+                    '<td>' + (b.issuedAt ? b.issuedAt.split('T')[0] : '-') + '</td>' +
+                    '<td><a class="btn btn-ghost btn-sm" href="/Frontend/billing.html?appt_id=' + a.appointmentId + '">View Bill</a></td>' +
+                '</tr>';
             } catch (e) { return ''; }
         }));
         const filtered = billRows.filter(r => r);
         document.querySelector('#billTable tbody').innerHTML = filtered.length
             ? filtered.join('')
-            : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No billing history found for this patient.</td></tr>';
+            : '<tr><td colspan="6" class="empty-state">No billing history found for this patient.</td></tr>';
     }
     loadPatientInfo();
     load();

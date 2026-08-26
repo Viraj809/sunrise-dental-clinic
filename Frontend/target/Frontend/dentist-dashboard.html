@@ -6,44 +6,42 @@
     <title>Dentist Dashboard – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
     <style>
-        .sticky-nav {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: #5f98F3;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        .stat-card {
+            background: var(--surface); border-radius: var(--radius-lg); padding: 22px;
+            border: 1px solid var(--border); box-shadow: var(--card-shadow);
+            display: flex; align-items: center; gap: 18px; transition: all var(--transition);
         }
-        .sticky-nav .nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2px;
-            padding: 10px 16px;
-            justify-content: center;
+        .stat-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-lg); }
+        .stat-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+        .stat-icon.blue { background: var(--primary-light); }
+        .stat-icon.green { background: var(--success-light); }
+        .stat-icon.amber { background: var(--warning-light); }
+        .stat-value { font-size: 1.8rem; font-weight: 800; line-height: 1.1; color: var(--text-primary); }
+        .stat-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+        .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+        .qa-btn {
+            background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+            padding: 14px 12px; text-decoration: none; color: inherit; display: flex; align-items: center;
+            gap: 10px; transition: all var(--transition); box-shadow: var(--card-shadow); font-size: 0.85rem; font-weight: 600;
         }
-        .sticky-nav .nav a {
-            color: #ffffff;
-            text-decoration: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: background 0.2s;
-            white-space: nowrap;
+        .qa-btn:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px); box-shadow: var(--card-shadow-lg); }
+        .qa-icon { font-size: 1.3rem; width: 38px; height: 38px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        .notice-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 16px 20px; margin-bottom: 12px; box-shadow: var(--card-shadow); transition: all var(--transition);
         }
-        .sticky-nav .nav a:hover,
-        .sticky-nav .nav a.active {
-            background: rgba(255,255,255,0.25);
-        }
-        .sticky-nav .nav a.logout-link {
-            color: #ffe6e6;
-            font-weight: 600;
-        }
-        @media (max-width: 768px) {
-            .sticky-nav .nav a {
-                padding: 6px 10px;
-                font-size: 0.78rem;
-            }
-        }
+        .notice-card.unread { background: var(--primary-light); border-color: var(--primary); }
+        .notice-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; color: var(--text-primary); }
+        .notice-desc { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .notice-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 0.78rem; color: var(--text-muted); }
+        .notice-badge { display: inline-flex; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+        .notice-badge.urgent { background: var(--danger-light); color: var(--danger); }
+        .notice-badge.important { background: var(--warning-light); color: var(--warning); }
+        .notice-badge.general { background: var(--info-light); color: var(--info); }
+
+        .section-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     </style>
 </head>
 <body>
@@ -51,7 +49,6 @@
     <h1>Sunrise Dental Clinic</h1>
     <div class="user-info" id="user-info"></div>
 </div>
-<!-- Nav fix here -->
 <div class="sticky-nav">
     <nav class="nav" id="main-nav"></nav>
 </div>
@@ -61,58 +58,70 @@
 
     <div class="page-header">
         <div>
-            <h2>Dentist Dashboard</h2>
-            <p id="greeting">Welcome, Doctor! Here's your schedule for today.</p>
+            <h2 id="greeting">Welcome, Doctor!</h2>
+            <p>Here's your schedule for today.</p>
         </div>
         <span id="current-date" style="color:var(--text-muted);font-size:0.875rem;"></span>
     </div>
 
     <!-- Stats -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-bottom:28px;">
-        <div class="card-stat">
-            <span class="stat-icon">📅</span>
-            <div class="stat-value" id="stat-today" style="color:var(--primary);">–</div>
-            <div class="stat-label">Today's Patients</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;">
+        <div class="stat-card">
+            <div class="stat-icon blue">📅</div>
+            <div><div class="stat-value" id="stat-today">–</div><div class="stat-label">Today's Patients</div></div>
         </div>
-        <div class="card-stat">
-            <span class="stat-icon">✅</span>
-            <div class="stat-value" id="stat-done" style="color:var(--success);">–</div>
-            <div class="stat-label">Completed</div>
+        <div class="stat-card">
+            <div class="stat-icon green">✅</div>
+            <div><div class="stat-value" id="stat-done">–</div><div class="stat-label">Completed</div></div>
         </div>
-        <div class="card-stat">
-            <span class="stat-icon">⏳</span>
-            <div class="stat-value" id="stat-pending" style="color:var(--warning);">–</div>
-            <div class="stat-label">Remaining</div>
+        <div class="stat-card">
+            <div class="stat-icon amber">⏳</div>
+            <div><div class="stat-value" id="stat-pending">–</div><div class="stat-label">Remaining</div></div>
         </div>
     </div>
 
     <!-- Quick Actions -->
-    <div class="action-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:24px;">
-        <a href="/Frontend/dentist-schedule.html" class="action-card">
-            <div class="ac-icon">📋</div>
-            <div><div class="ac-label">My Schedule</div><div class="ac-sub">View any date</div></div>
-        </a>
-        <a href="/Frontend/patient-history.html" class="action-card">
-            <div class="ac-icon">📁</div>
-            <div><div class="ac-label">Patient History</div><div class="ac-sub">Search records</div></div>
-        </a>
-        <a href="/Frontend/help.html" class="action-card">
-            <div class="ac-icon">❓</div>
-            <div><div class="ac-label">Help</div><div class="ac-sub">User guide</div></div>
-        </a>
+    <div class="card" style="margin-bottom:24px;">
+        <div class="section-title">⚡ Quick Actions</div>
+        <div class="quick-actions">
+            <a href="/Frontend/dentist-schedule.html" class="qa-btn"><span class="qa-icon">📋</span> My Schedule</a>
+            <a href="/Frontend/patient-history.html" class="qa-btn"><span class="qa-icon">📁</span> Patient History</a>
+            <a href="/Frontend/help.html" class="qa-btn"><span class="qa-icon">❓</span> Help</a>
+        </div>
     </div>
 
-    <!-- Today's Schedule -->
-    <div class="card">
-        <h2>📋 Today's Patients</h2>
-        <div id="scheduleDate" style="margin-bottom:12px;">
-            <span style="font-size:0.875rem;color:var(--text-muted);">Date: </span>
-            <strong id="todayStr"></strong>
-        </div>
+    <!-- Today's Patients -->
+    <div class="card" style="margin-bottom:24px;">
+        <div class="section-title">📋 Today's Patients</div>
+        <div id="scheduleDate" style="margin-bottom:12px;"><span style="font-size:0.875rem;color:var(--text-muted);">Date: </span><strong id="todayStr"></strong></div>
         <div class="table-wrapper">
             <table class="table" id="scheduleTable">
                 <thead><tr><th>Time</th><th>Appt No</th><th>Patient ID</th><th>Treatment</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">Loading schedule...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Clinic Notice Board -->
+    <div class="card" style="margin-bottom:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div class="section-title" style="margin-bottom:0;">📢 Clinic Notice Board <span id="noticeUnreadBadge" style="display:none;"></span></div>
+        </div>
+        <div id="noticeList" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- Patient Clinical Timeline -->
+    <div class="card">
+        <div class="section-title">📅 Patient Clinical Timeline</div>
+        <div class="form-row" style="margin-bottom:16px;align-items:end;">
+            <div class="form-group" style="margin-bottom:0;"><label>Select Patient</label><select id="timelinePatientSelect"><option value="">-- Select Patient --</option></select></div>
+            <div class="form-group" style="margin-bottom:0;"><label>Sort By</label><select id="timelineSort"><option value="newest">Newest First</option><option value="oldest">Oldest First</option></select></div>
+            <button type="button" class="btn btn-primary" onclick="loadTimeline()">View Timeline</button>
+        </div>
+        <div class="table-wrapper">
+            <table class="table" id="timelineTable">
+                <thead><tr><th>Date</th><th>Chief Complaint</th><th>Diagnosis</th><th>Treatment</th><th>Follow-up</th><th>Next Visit</th><th>Clinical Notes</th></tr></thead>
+                <tbody><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Select a patient to view timeline</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -121,14 +130,18 @@
 <script src="/Frontend/js/app.js"></script>
 <script>
     requireAuth(['DENTIST', 'ADMIN', 'SYSTEM_ADMIN']);
-
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('todayStr').textContent =
-        new Date().toLocaleDateString('en-LK', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    document.getElementById('todayStr').textContent = new Date().toLocaleDateString('en-LK', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
     document.getElementById('current-date').textContent = document.getElementById('todayStr').textContent;
-
     const name = localStorage.getItem('name') || 'Doctor';
-    document.getElementById('greeting').textContent = `Welcome, ${name}! Here's your schedule for today.`;
+    document.getElementById('greeting').textContent = 'Welcome, ' + name + '! Here\'s your schedule for today.';
+
+    function getStatusBadge(status) {
+        const cls = 'status-' + String(status).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        return '<span class="status-badge ' + cls + '">' + status + '</span>';
+    }
+
+    let todayAppointments = [];
 
     async function loadSchedule() {
         try {
@@ -142,53 +155,80 @@
                 const email = (localStorage.getItem('email') || '').toLowerCase();
                 const me = dentists.find(d => (d.email || '').toLowerCase() === email);
                 const myDentistId = me ? me.dentistId : null;
-                if (myDentistId) {
-                    myAppointments = all.filter(a => a.dentistId === myDentistId);
-                } else {
-                    myAppointments = all;
-                }
+                myAppointments = myDentistId ? all.filter(a => a.dentistId === myDentistId) : all;
             }
-
             let todayAppts = myAppointments.filter(a => a.appointmentDate === today);
-            const done    = todayAppts.filter(a => a.status === 'Completed').length;
+            todayAppointments = todayAppts;
+            const done = todayAppts.filter(a => a.status === 'Completed').length;
             const pending = todayAppts.filter(a => a.status !== 'Completed' && a.status !== 'Cancelled').length;
-
-            document.getElementById('stat-today').textContent   = todayAppts.length;
-            document.getElementById('stat-done').textContent    = done;
+            document.getElementById('stat-today').textContent = todayAppts.length;
+            document.getElementById('stat-done').textContent = done;
             document.getElementById('stat-pending').textContent = pending;
 
             const tbody = document.querySelector('#scheduleTable tbody');
-            if (todayAppts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No appointments scheduled for today 🎉</td></tr>';
-            } else {
-                tbody.innerHTML = todayAppts
-                    .sort((a,b) => a.appointmentTime.localeCompare(b.appointmentTime))
-                    .map(a => `
-                    <tr>
-                        <td><strong>${a.appointmentTime}</strong></td>
-                        <td>${a.appointmentNo}</td>
-                        <td>${a.patientId}</td>
-                        <td>${a.treatmentType}</td>
-                        <td>${getStatusBadge(a.status)}</td>
-                        <td style="display:flex;gap:6px;">
-                            <a href="/Frontend/patient-history.html?patient_id=${a.patientId}" class="btn btn-sm btn-ghost">History</a>
-                            ${a.status !== 'Completed' && a.status !== 'Cancelled' ?
-                              `<button class="btn btn-sm btn-success" onclick="markDone(${a.appointmentId})">Done</button>` : ''}
-                        </td>
-                    </tr>`).join('');
+            if (!todayAppts.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No appointments scheduled for today 🎉</td></tr>'; }
+            else {
+                tbody.innerHTML = todayAppts.sort((a,b) => a.appointmentTime.localeCompare(b.appointmentTime)).map(a => `<tr>
+                    <td><strong>${a.appointmentTime}</strong></td><td>${a.appointmentNo}</td><td>${a.patientId}</td><td>${a.treatmentType}</td><td>${getStatusBadge(a.status)}</td>
+                    <td style="display:flex;gap:6px;"><a href="/Frontend/patient-history.html?patient_id=${a.patientId}" class="btn btn-sm btn-ghost">History</a>${a.status !== 'Completed' && a.status !== 'Cancelled' ? '<button class="btn btn-sm btn-success" onclick="markDone(' + a.appointmentId + ')">Done</button>' : ''}</td>
+                </tr>`).join('');
             }
+            populateNoteAppointmentSelect(todayAppts);
+            populateTimelinePatientSelect(todayAppts);
         } catch (e) { showToast('Failed to load schedule', 'error'); }
     }
 
-    async function markDone(appointmentId) {
-        try {
-            await apiPut('/appointments/' + appointmentId + '/status', { status: 'Completed' });
-            showToast('Appointment marked as completed ✅');
-            loadSchedule();
-        } catch (e) { showToast('Failed to update status', 'error'); }
+    async function markDone(appointmentId) { try { await apiPut('/appointments/' + appointmentId + '/status', {status: 'Completed'}); showToast('Appointment marked as completed ✅'); loadSchedule(); } catch(e){ showToast('Failed','error'); } }
+
+    function populateNoteAppointmentSelect(appts) {
+        const select = document.getElementById('noteAppointmentSelect'); if (!select) return;
+        if (!appts.length) { select.innerHTML = '<option value="">No appointments today</option>'; return; }
+        select.innerHTML = appts.map(a => '<option value="' + a.appointmentId + '">' + a.appointmentTime + ' - Patient ' + a.patientId + ' - ' + a.treatmentType + '</option>').join('');
+        loadExistingNote(appts[0].appointmentId);
+    }
+    function populateTimelinePatientSelect(appts) {
+        const select = document.getElementById('timelinePatientSelect'); if (!select) return;
+        const patients = [...new Set(appts.map(a => a.patientId))];
+        select.innerHTML = '<option value="">-- Select Patient --</option>' + patients.map(p => '<option value="' + p + '">Patient ' + p + '</option>').join('');
     }
 
-    loadSchedule();
+    async function loadNotices() {
+        const container = document.getElementById('noticeList'); if (!container) return;
+        try {
+            const notices = await apiGet('/notices/my');
+            if (!notices || !notices.length) { container.innerHTML = '<div class="empty-state"><p>No notices available</p></div>'; return; }
+            container.innerHTML = notices.map(n => {
+                const isRead = n.isRead;
+                const badgeColor = n.priority === 'Urgent' ? 'var(--danger)' : n.priority === 'Important' ? 'var(--warning)' : 'var(--info)';
+                const badgeBg = n.priority === 'Urgent' ? 'var(--danger-light)' : n.priority === 'Important' ? 'var(--warning-light)' : 'var(--info-light)';
+                return '<div class="notice-card ' + (isRead ? '' : 'unread') + '"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;"><strong style="font-size:1rem;">' + (n.title||'') + '</strong><span style="background:' + badgeBg + ';color:' + badgeColor + ';padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">' + (n.priority||'General') + '</span></div><p style="color:var(--text-secondary);font-size:0.9rem;margin:8px 0;">' + (n.description ? n.description.substring(0, 200) + (n.description.length > 200 ? '...' : '') : '') + '</p><div style="font-size:0.8rem;color:var(--text-muted);display:flex;gap:16px;flex-wrap:wrap;"><span>📅 Published: ' + (n.publishDate||'-') + '</span><span>⏳ Expires: ' + (n.expiryDate||'-') + '</span></div>' + (!isRead ? '<button class="btn btn-sm btn-primary" onclick="markNoticeRead(' + n.noticeId + ')" style="margin-top:10px;">Mark as Read</button>' : '<span style="font-size:0.8rem;color:var(--success);margin-top:10px;display:inline-block;">✓ Read</span>') + '</div>';
+            }).join('');
+        } catch (e) { showToast('Failed to load notices', 'error'); }
+    }
+
+    async function markNoticeRead(id) { try { await apiPost('/notices/' + id + '/read'); showToast('Notice marked as read'); loadNotices(); loadUnreadCount(); } catch(e){ showToast('Failed','error'); } }
+
+    async function loadUnreadCount() {
+        try {
+            const res = await apiGet('/notices/unread-count');
+            const count = res.count;
+            const badge = document.getElementById('noticeUnreadBadge');
+            if (count > 0) { badge.textContent = count + ' New'; badge.style.display = 'inline'; badge.style.background = 'var(--danger-light)'; badge.style.color = 'var(--danger)'; badge.style.padding = '3px 10px'; badge.style.borderRadius = '20px'; badge.style.fontSize = '0.75rem'; badge.style.fontWeight = '700'; }
+            else { badge.style.display = 'none'; }
+        } catch (e) {}
+    }
+
+    async function loadTimeline() {
+        const patientId = document.getElementById('timelinePatientSelect').value;
+        if (!patientId) { showToast('Please select a patient', 'error'); return; }
+        const sort = document.getElementById('timelineSort').value;
+        try {
+            const tbody = document.querySelector('#timelineTable tbody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Feature not available</td></tr>';
+        } catch (e) { showToast('Failed to load timeline', 'error'); }
+    }
+
+    loadSchedule(); loadNotices(); loadUnreadCount();
 </script>
 </body>
 </html>

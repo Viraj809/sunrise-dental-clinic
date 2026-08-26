@@ -1,13 +1,12 @@
 package com.mycompany.backend.resources;
 
-import Model.Staff;
-import Model.Dentist;
-import DAO.StaffDAO;
-import DAO.DentistDAO;
-import Service.SecurityUtil;
-import Service.AuditService;
-import Validation.NICValidator;
-import Validation.ContactNumberValidator;
+import model.Staff;
+import model.Dentist;
+import dao.StaffDAO;
+import dao.DentistDAO;
+import service.SecurityUtil;
+import validation.NICValidator;
+import validation.ContactNumberValidator;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -92,21 +91,18 @@ public class StaffResource {
         String contactErr = ContactNumberValidator.validate(contact != null ? contact : "");
         if (contactErr != null) return Response.status(400).entity(error(contactErr)).build();
 
-        String hash = org.mindrot.jbcrypt.BCrypt.hashpw(password, org.mindrot.jbcrypt.BCrypt.gensalt());
-
         Staff s = new Staff();
         s.setName(name);
         s.setEmail(email);
         s.setContact(contact != null ? contact : "");
         s.setAddress(address != null ? address : "");
         s.setNic(nic);
-        s.setPasswordHash(hash);
+        s.setPassword(password);
         s.setRole(role);
         s.setShiftHours(shift != null ? shift : "");
         s.setActive(true);
 
         if (dao.insert(s)) {
-            AuditService.getInstance().logCurrent("INSERT", "staff", s.getStaffId(), "Staff created: " + email);
             Map<String, Object> res = new HashMap<>();
             res.put("message", "Staff created successfully");
             res.put("email", email);
@@ -132,8 +128,7 @@ public class StaffResource {
         if (body.containsKey("role"))        s.setRole(body.get("role"));
         if (body.containsKey("shift_hours")) s.setShiftHours(body.get("shift_hours"));
         if (body.containsKey("password")) {
-            s.setPasswordHash(org.mindrot.jbcrypt.BCrypt.hashpw(
-                    body.get("password"), org.mindrot.jbcrypt.BCrypt.gensalt()));
+            s.setPassword(body.get("password"));
         }
 
         if (dao.update(s)) return Response.ok(s).build();
@@ -150,7 +145,7 @@ public class StaffResource {
             return Response.status(403).entity(error("System Admin account cannot be deleted")).build();
         }
 
-        // Staff කෙනෙක් DENTIST කෙනෙක් නම්, Dentist table එකෙන් ඒ record එකත් මකන්න
+        // Staff à¶šà·™à¶±à·™à¶šà·Š DENTIST à¶šà·™à¶±à·™à¶šà·Š à¶±à¶¸à·Š, Dentist table à¶‘à¶šà·™à¶±à·Š à¶’ record à¶‘à¶šà¶­à·Š à¶¸à¶šà¶±à·Šà¶±
         if ("DENTIST".equals(s.getRole()) && s.getEmail() != null) {
             try {
                 DentistDAO dentistDao = new DentistDAO();
@@ -164,7 +159,6 @@ public class StaffResource {
         }
 
         if (dao.delete(id)) {
-            AuditService.getInstance().logCurrent("DELETE", "staff", id, "Staff deleted: " + s.getEmail());
             return Response.ok(success("Staff deleted successfully")).build();
         }
         return Response.status(500).entity(error("Failed to delete staff")).build();

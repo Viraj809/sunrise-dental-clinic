@@ -1,8 +1,8 @@
 package com.mycompany.backend.resources;
 
-import Model.Treatment;
-import DAO.TreatmentDAO;
-import Service.SecurityUtil;
+import model.Treatment;
+import dao.TreatmentDAO;
+import service.SecurityUtil;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;

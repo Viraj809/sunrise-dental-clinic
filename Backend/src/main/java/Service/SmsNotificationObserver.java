@@ -1,10 +1,11 @@
-package Service;
+package service;
 
-import DAO.NotificationDAO;
-import Model.Notification;
+import dao.NotificationDAO;
+import model.Notification;
+import service.NotificationObserver;
 
-// Simulated SMS observer
-public class SmsNotificationObserver implements NotificationObserver {
+public class SmsNotificationObserver
+implements NotificationObserver {
     private NotificationDAO dao = new NotificationDAO();
 
     @Override
@@ -15,7 +16,8 @@ public class SmsNotificationObserver implements NotificationObserver {
         n.setRecipient(recipient);
         n.setMessage("SMS: [" + eventType + "] " + message);
         n.setStatus("SENT");
-        dao.insert(n);
+        this.dao.insert(n);
         System.out.println("[SMS] To: " + recipient + " | " + message);
     }
 }
+

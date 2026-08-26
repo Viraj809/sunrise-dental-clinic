@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Appointments – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
+    <style>
+        .status-select {
+            border: 1.5px solid var(--border-strong);
+            background: var(--surface);
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-family: inherit;
+        }
+    </style>
 </head>
 <body>
 <div class="header">
@@ -19,47 +31,55 @@
     <div id="toast-container"></div>
 
     <div class="page-header">
-        <div><h2>Appointment Management</h2><p>Search, view and manage appointments</p></div>
-        <a href="/Frontend/register-appointment.html" class="btn btn-primary" id="newApptBtn">➕ New Appointment</a>
+        <div>
+            <h2>Appointment Management</h2>
+            <p>Search, view and manage appointments</p>
+        </div>
+        <a href="/Frontend/register-appointment.html" class="btn btn-primary" id="newApptBtn">New Appointment</a>
     </div>
 
     <!-- Search -->
     <div class="card">
-        <h2>🔍 Search Appointment</h2>
+        <h2>Search Appointment</h2>
         <div class="search-bar">
             <input type="text" id="searchInput" placeholder="Search appointment by number or patient name..."
-                   onkeydown="if(event.key==='Enter') searchAppointment();" style="flex:1;">
+                   onkeydown="if(event.key==='Enter') searchAppointment();">
             <button class="btn btn-primary" onclick="searchAppointment()">Search</button>
             <button class="btn btn-ghost" onclick="resetSearch()">Show All</button>
         </div>
-        <div id="searchResult" style="display:none;"></div>
+        <div id="searchResult" class="alert" style="display:none;"></div>
     </div>
 
-    <!-- Appointment Detail Card (shown after search or view) -->
+    <!-- Appointment Detail Card -->
     <div id="detailCard" class="card" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <h2>📋 Appointment Details</h2>
-            <div style="display:flex;gap:8px; align-items: center;" id="actionButtons"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+            <h2>Appointment Details</h2>
+            <div id="actionButtons"></div>
         </div>
         <div id="apptDetails"></div>
     </div>
 
     <!-- All Appointments Table -->
     <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <h2>📅 Appointments List</h2>
-            <div style="display:flex;gap:8px;align-items:center;">
-                <select id="statusFilter" onchange="filterTable()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:0.875rem;">
-                    <option value="">All Statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Confirmed">Confirmed</option>
-                    <option value="Waiting">Waiting</option>
-                    <option value="With Dentist">With Dentist</option>
-                    <option value="Treatment In Progress">Treatment In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                </select>
-                <input type="date" id="dateFilter" onchange="filterTable()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:0.875rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+            <h2>Appointments List</h2>
+            <div class="form-row" style="margin-bottom:0;gap:10px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <select id="statusFilter" onchange="filterTable()">
+                        <option value="">All Statuses</option>
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Checked In">Checked In</option>
+                        <option value="Waiting">Waiting</option>
+                        <option value="With Dentist">With Dentist</option>
+                        <option value="Treatment In Progress">Treatment In Progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <input type="date" id="dateFilter" onchange="filterTable()">
+                </div>
             </div>
         </div>
         <div class="table-wrapper">
@@ -67,7 +87,7 @@
                 <thead>
                     <tr><th>Appt No</th><th>Patient</th><th>Dentist</th><th>Treatment</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr>
                 </thead>
-                <tbody><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tr></tbody>
+                <tbody><tr><td colspan="8" class="empty-state">Loading...</td></tbody>
             </table>
         </div>
     </div>
@@ -96,10 +116,10 @@
                 apiGet('/dentists'),
                 apiGet('/patients')
             ]);
-            
+
             allDentists = dentists;
             allPatients = patients;
-            
+
             allDentists.forEach(d => dentistMap[d.dentistId] = d.name);
             allPatients.forEach(p => patientMap[p.patientId] = p.name);
 
@@ -122,40 +142,46 @@
     function renderTable(appointments) {
         const tbody = document.querySelector('#apptTable tbody');
         if (!appointments.length) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">No appointments found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No appointments found</td></tr>';
             return;
         }
-        tbody.innerHTML = appointments.map(a => `
-            <tr>
-                <td><strong>${a.appointmentNo}</strong></td>
-                <td>${patientMap[a.patientId] || 'Patient #' + a.patientId}</td>
-                <td>${dentistMap[a.dentistId] || 'Dr. #' + a.dentistId}</td>
-                <td>${a.treatmentType}</td>
-                <td>${a.appointmentDate}</td>
-                <td>${a.appointmentTime ? a.appointmentTime.substring(0,5) : ''}</td>
-                <td>${getStatusBadge(a.status)}</td>
-                <td style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-                    <button class="btn btn-sm btn-ghost" onclick="showDetail(${a.appointmentId})">View</button>
-                    
-                    ${(role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN' || role === 'DENTIST') ?
-                      `<select class="btn btn-sm" style="border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-primary); cursor: pointer;" onchange="quickUpdateStatus(${a.appointmentId}, this.value)">
-                          <option value="Pending" ${a.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                          <option value="Confirmed" ${a.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
-                          <option value="Waiting" ${a.status === 'Waiting' ? 'selected' : ''}>Waiting</option>
-                          <option value="With Dentist" ${a.status === 'With Dentist' ? 'selected' : ''}>With Dentist</option>
-                          <option value="Treatment In Progress" ${a.status === 'Treatment In Progress' ? 'selected' : ''}>Treatment In Progress</option>
-                          <option value="Completed" ${a.status === 'Completed' ? 'selected' : ''}>Completed</option>
-                          <option value="Cancelled" ${a.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                      </select>` : ''}
-                      
-                    ${(role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN') ?
-                      `<a class="btn btn-sm btn-success" href="/Frontend/billing.html?appt_id=${a.appointmentId}">Bill</a>` : ''}
-                    ${(role === 'ADMIN' || role === 'SYSTEM_ADMIN') ? `<button class="btn btn-sm btn-danger" onclick="deleteAppointment(${a.appointmentId}, '${a.appointmentNo}')">🗑️</button>` : ''}
-                </td>
-            </tr>`).join('');
+        tbody.innerHTML = appointments.map(a => {
+            const canEdit = role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN' || role === 'DENTIST';
+            const canBill = role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN';
+            const canDelete = role === 'ADMIN' || role === 'SYSTEM_ADMIN';
+            let actions = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
+            actions += '<button class="btn btn-sm btn-ghost" onclick="showDetail(' + a.appointmentId + ')">View</button>';
+            if (canEdit) {
+                actions += '<select class="btn btn-sm status-select" onchange="quickUpdateStatus(' + a.appointmentId + ', this.value)">' +
+                    '<option value="Scheduled" ' + (a.status === 'Scheduled' ? 'selected' : '') + '>Scheduled</option>' +
+                    '<option value="Confirmed" ' + (a.status === 'Confirmed' ? 'selected' : '') + '>Confirmed</option>' +
+                    '<option value="Waiting" ' + (a.status === 'Waiting' ? 'selected' : '') + '>Waiting</option>' +
+                    '<option value="With Dentist" ' + (a.status === 'With Dentist' ? 'selected' : '') + '>With Dentist</option>' +
+                    '<option value="Treatment In Progress" ' + (a.status === 'Treatment In Progress' ? 'selected' : '') + '>Treatment In Progress</option>' +
+                    '<option value="Completed" ' + (a.status === 'Completed' ? 'selected' : '') + '>Completed</option>' +
+                    '<option value="Cancelled" ' + (a.status === 'Cancelled' ? 'selected' : '') + '>Cancelled</option>' +
+                '</select>';
+            }
+            if (canBill) {
+                actions += '<a class="btn btn-sm btn-success" href="/Frontend/billing.html?appt_id=' + a.appointmentId + '">Bill</a>';
+            }
+            if (canDelete) {
+                actions += '<button class="btn btn-sm btn-danger" onclick="deleteAppointment(' + a.appointmentId + ', \'' + a.appointmentNo + '\')">Delete</button>';
+            }
+            actions += '</div>';
+            return '<tr>' +
+                '<td><strong>' + a.appointmentNo + '</strong></td>' +
+                '<td>' + (patientMap[a.patientId] || 'Patient #' + a.patientId) + '</td>' +
+                '<td>' + (dentistMap[a.dentistId] || 'Dr. #' + a.dentistId) + '</td>' +
+                '<td>' + a.treatmentType + '</td>' +
+                '<td>' + a.appointmentDate + '</td>' +
+                '<td>' + (a.appointmentTime ? a.appointmentTime.substring(0,5) : '') + '</td>' +
+                '<td>' + getStatusBadge(a.status) + '</td>' +
+                '<td>' + actions + '</td>' +
+            '</tr>';
+        }).join('');
     }
 
-    // ✅ FIXED: Fetch directly to catch any specific Backend/Database errors
     async function quickUpdateStatus(apptId, status) {
         try {
             const response = await fetch(API_BASE + '/appointments/' + apptId + '/status', {
@@ -170,22 +196,22 @@
                     const data = await response.json();
                     if (data && data.error) errText = data.error;
                 } catch(e) {}
-                
-                showToast(errText, 'error'); 
-                await loadAll(); // Dropdown එක ආපහු පරණ තත්වෙටම ගන්න
+
+                showToast(errText, 'error');
+                await loadAll();
                 return;
             }
 
             showToast('Status updated to ' + status + ' ✅');
             await loadAll();
-            
+
             if (document.getElementById('detailCard').style.display !== 'none' && currentApptId === apptId) {
                 showDetail(apptId);
             }
-        } catch (e) { 
+        } catch (e) {
             console.error(e);
             showToast('Network error while updating status', 'error');
-            await loadAll(); 
+            await loadAll();
         }
     }
 
@@ -204,26 +230,26 @@
             resetSearch();
             return;
         }
-        
+
         const res = document.getElementById('searchResult');
-        let matched = allAppointments.filter(a => 
-            (a.appointmentNo || '').toLowerCase().includes(q) || 
+        let matched = allAppointments.filter(a =>
+            (a.appointmentNo || '').toLowerCase().includes(q) ||
             (patientMap[a.patientId] || '').toLowerCase().includes(q)
         );
 
         if (matched.length > 0) {
             res.style.display = 'none';
-            renderTable(matched); 
+            renderTable(matched);
             showDetail(matched[0].appointmentId);
             document.getElementById('detailCard').scrollIntoView({ behavior: 'smooth' });
         } else {
             res.className = 'alert alert-error';
             res.style.display = 'flex';
-            res.textContent = '❌ No appointments found matching "' + q + '".';
+            res.textContent = 'No appointments found matching "' + q + '".';
             renderTable([]);
         }
     }
-    
+
     function resetSearch() {
         document.getElementById('searchInput').value = '';
         document.getElementById('searchResult').style.display = 'none';
@@ -238,52 +264,52 @@
             const dentistName = dentistMap[a.dentistId] || 'Dentist #' + a.dentistId;
             const patientName = patientMap[a.patientId] || 'Patient #' + a.patientId;
 
-            document.getElementById('apptDetails').innerHTML = `
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Appointment No</p>
-                         <p style="font-size:1.1rem;font-weight:700;color:var(--primary);">${a.appointmentNo}</p></div>
-                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Status</p>
-                         <p>${getStatusBadge(a.status)}</p></div>
-                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Patient</p>
-                         <p style="font-weight:600;">${patientName}</p></div>
-                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Dentist</p>
-                         <p style="font-weight:600;">${dentistName}</p></div>
-                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Treatment</p>
-                         <p>${a.treatmentType}</p></div>
-                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Contact</p>
-                         <p>${a.contact || '–'}</p></div>
-                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Date</p>
-                         <p>${a.appointmentDate}</p></div>
-                    <div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Time</p>
-                         <p>${a.appointmentTime ? a.appointmentTime.substring(0,5) : '–'}</p></div>
-                    <div style="grid-column:1/-1;"><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Notes</p>
-                         <p>${a.notes || '–'}</p></div>
-                </div>`;
+            document.getElementById('apptDetails').innerHTML =
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+                    '<div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Appointment No</p>' +
+                         '<p style="font-size:1.1rem;font-weight:700;color:var(--primary);">' + a.appointmentNo + '</p></div>' +
+                    '<div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Status</p>' +
+                         '<p>' + getStatusBadge(a.status) + '</p></div>' +
+                    '<div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Patient</p>' +
+                         '<p style="font-weight:600;">' + patientName + '</p></div>' +
+                    '<div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Dentist</p>' +
+                         '<p style="font-weight:600;">' + dentistName + '</p></div>' +
+                    '<div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Treatment</p>' +
+                         '<p>' + a.treatmentType + '</p></div>' +
+                    '<div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Contact</p>' +
+                         '<p>' + (a.contact || '–') + '</p></div>' +
+                    '<div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Date</p>' +
+                         '<p>' + a.appointmentDate + '</p></div>' +
+                    '<div><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Time</p>' +
+                         '<p>' + (a.appointmentTime ? a.appointmentTime.substring(0,5) : '–') + '</p></div>' +
+                    '<div style="grid-column:1/-1;"><p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;">Notes</p>' +
+                         '<p>' + (a.notes || '–') + '</p></div>' +
+                '</div>';
 
             const btns = document.getElementById('actionButtons');
             btns.innerHTML = '';
-            
+
             if (role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN' || role === 'DENTIST') {
-                btns.innerHTML += `
-                    <select class="btn btn-sm" style="border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-primary); cursor: pointer; padding: 6px 12px; margin-right: 4px;" onchange="quickUpdateStatus(${a.appointmentId}, this.value)">
-                          <option value="Pending" ${a.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                          <option value="Confirmed" ${a.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
-                          <option value="Waiting" ${a.status === 'Waiting' ? 'selected' : ''}>Waiting</option>
-                          <option value="With Dentist" ${a.status === 'With Dentist' ? 'selected' : ''}>With Dentist</option>
-                          <option value="Treatment In Progress" ${a.status === 'Treatment In Progress' ? 'selected' : ''}>Treatment In Progress</option>
-                          <option value="Completed" ${a.status === 'Completed' ? 'selected' : ''}>Completed</option>
-                          <option value="Cancelled" ${a.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                    </select>
-                `;
+                btns.innerHTML +=
+                    '<select class="btn btn-sm status-select" onchange="quickUpdateStatus(' + a.appointmentId + ', this.value)" style="margin-right:4px;">' +
+                        '<option value="Scheduled" ' + (a.status === 'Scheduled' ? 'selected' : '') + '>Scheduled</option>' +
+                        '<option value="Confirmed" ' + (a.status === 'Confirmed' ? 'selected' : '') + '>Confirmed</option>' +
+                        '<option value="Checked In" ' + (a.status === 'Checked In' ? 'selected' : '') + '>Checked In</option>' +
+                        '<option value="Waiting" ' + (a.status === 'Waiting' ? 'selected' : '') + '>Waiting</option>' +
+                        '<option value="With Dentist" ' + (a.status === 'With Dentist' ? 'selected' : '') + '>With Dentist</option>' +
+                        '<option value="Treatment In Progress" ' + (a.status === 'Treatment In Progress' ? 'selected' : '') + '>Treatment In Progress</option>' +
+                        '<option value="Completed" ' + (a.status === 'Completed' ? 'selected' : '') + '>Completed</option>' +
+                        '<option value="Cancelled" ' + (a.status === 'Cancelled' ? 'selected' : '') + '>Cancelled</option>' +
+                    '</select>';
                 if (a.patientId) {
-                    btns.innerHTML += `<a class="btn btn-ghost btn-sm" href="/Frontend/patient-history.html?patient_id=${a.patientId}">📁 Patient History</a>`;
+                    btns.innerHTML += '<a class="btn btn-ghost btn-sm" href="/Frontend/patient-history.html?patient_id=' + a.patientId + '">Patient History</a>';
                 }
             }
             if (role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN') {
-                btns.innerHTML += `<a class="btn btn-success btn-sm" href="/Frontend/billing.html?appt_id=${a.appointmentId}">🧾 Generate Bill</a>`;
+                btns.innerHTML += '<a class="btn btn-success btn-sm" href="/Frontend/billing.html?appt_id=' + a.appointmentId + '">Generate Bill</a>';
             }
             if (role === 'ADMIN' || role === 'SYSTEM_ADMIN') {
-                btns.innerHTML += `<button class="btn btn-danger btn-sm" onclick="deleteAppointment(${a.appointmentId}, '${a.appointmentNo}')">🗑️ Delete</button>`;
+                btns.innerHTML += '<button class="btn btn-danger btn-sm" onclick="deleteAppointment(' + a.appointmentId + ', \'' + a.appointmentNo + '\')">Delete</button>';
             }
 
             currentApptId = a.appointmentId;
@@ -297,7 +323,7 @@
             const res = await apiDelete('/appointments/' + id);
             if (res.error) { showToast(res.error, 'error'); return; }
             showToast('Appointment deleted ✅');
-            
+
             document.getElementById('detailCard').style.display = 'none';
             await loadAll();
         } catch (e) { showToast('Failed to delete appointment', 'error'); }

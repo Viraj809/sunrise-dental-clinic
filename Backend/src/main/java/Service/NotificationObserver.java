@@ -1,6 +1,6 @@
-package Service;
+package service;
 
-// Observer interface
 public interface NotificationObserver {
-    void update(String eventType, int appointmentId, String recipient, String message);
+    public void update(String var1, int var2, String var3, String var4);
 }
+

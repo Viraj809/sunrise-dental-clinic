@@ -1,11 +1,12 @@
-package Validation;
+package validation;
 
-import Model.Appointment;
-import DAO.AppointmentDAO;
-
+import dao.AppointmentDAO;
+import model.Appointment;
+import validation.AppointmentValidator;
 import java.time.LocalTime;
 
-public class ClinicHoursValidator extends AppointmentValidator {
+public class ClinicHoursValidator
+extends AppointmentValidator {
     private static final LocalTime OPEN = LocalTime.of(8, 0);
     private static final LocalTime CLOSE = LocalTime.of(18, 0);
 
@@ -15,9 +16,10 @@ public class ClinicHoursValidator extends AppointmentValidator {
         if (time.isBefore(OPEN) || time.isAfter(CLOSE)) {
             return "Appointment time must be between 08:00 and 18:00.";
         }
-        if (next != null) {
-            return next.validate(appointment, dao);
+        if (this.next != null) {
+            return this.next.validate(appointment, dao);
         }
         return null;
     }
 }
+

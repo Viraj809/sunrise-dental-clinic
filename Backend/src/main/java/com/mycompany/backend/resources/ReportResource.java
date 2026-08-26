@@ -1,7 +1,7 @@
 package com.mycompany.backend.resources;
 
-import Service.ReportFacade;
-import Service.SecurityUtil;
+import service.ReportFacade;
+import service.SecurityUtil;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -42,6 +42,22 @@ public class ReportResource {
     public Response getDentistWorkload() {
         SecurityUtil.requireAdmin();
         Map<String, Object> report = facade.getDentistWorkloadReport();
+        return Response.ok(report).build();
+    }
+
+    @GET
+    @Path("/appointment-status")
+    public Response getAppointmentStatus() {
+        SecurityUtil.requireAdmin();
+        Map<String, Object> report = facade.getAppointmentStatusReport();
+        return Response.ok(report).build();
+    }
+
+    @GET
+    @Path("/payment-report")
+    public Response getPaymentReport() {
+        SecurityUtil.requireAdmin();
+        Map<String, Object> report = facade.getPaymentReport();
         return Response.ok(report).build();
     }
 }

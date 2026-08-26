@@ -7,7 +7,7 @@ import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
 
 /**
- * Global CORS filter – applied to every JAX-RS response.
+ * Global CORS filter â€“ applied to every JAX-RS response.
  * Design Pattern: Decorator / Filter pattern (cross-cutting concern).
  */
 @Provider

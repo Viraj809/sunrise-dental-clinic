@@ -2,15 +2,22 @@ const API_BASE = 'http://localhost:8080/Backend/resources';
 let authToken = localStorage.getItem('token');
 let userRole  = localStorage.getItem('role');
 let userName  = localStorage.getItem('name');
+let sessionStart = Date.now();
+const SESSION_TIMEOUT = 30 * 60 * 1000;
 
-// ── Auth guard: call this at the top of every dashboard page ──────────────
+// ── Auth guard ─────────────────────────────────────────────────────────────
 function requireAuth(allowedRoles) {
     if (!authToken) {
         window.location.href = '/Frontend/login.html';
         return false;
     }
+    if (Date.now() - sessionStart > SESSION_TIMEOUT) {
+        logout();
+        showToast('Your session has expired. Please login again.', 'error');
+        window.location.href = '/Frontend/login.html';
+        return false;
+    }
     if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-        // Wrong role – send to their own dashboard
         redirectToDashboard(userRole);
         return false;
     }
@@ -25,17 +32,25 @@ function redirectToDashboard(role) {
     } else if (role === 'DENTIST') {
         window.location.href = '/Frontend/dentist-dashboard.html';
     } else if (role === 'PATIENT') {
-        window.location.href = '/Frontend/patient-dashboard.html';
+        showToast('Patient portal is not available. Please contact the clinic.', 'error');
+        setTimeout(() => logout(), 1500);
     } else {
         window.location.href = '/Frontend/login.html';
     }
 }
 
-// ── Logout ────────────────────────────────────────────────────────────────
+// ── Session timeout handler ────────────────────────────────────────────────
+function resetSessionTimer() {
+    sessionStart = Date.now();
+}
+['click', 'keypress', 'mousemove', 'scroll', 'touchstart'].forEach(evt =>
+    document.addEventListener(evt, resetSessionTimer)
+);
+
+// ── Logout ─────────────────────────────────────────────────────────────────
 function logout() {
     const token = localStorage.getItem('token');
     if (token) {
-        // Best-effort server-side session invalidation.
         fetch(API_BASE + '/auth/logout', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + token }
@@ -56,9 +71,11 @@ function getHeaders() {
     return headers;
 }
 
+// ── API Helpers ────────────────────────────────────────────────────────────
 async function apiGet(path) {
     const res = await fetch(API_BASE + path, { headers: getHeaders() });
     if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+    if (res.status === 403) { showToast('Access Denied', 'error'); throw new Error('Forbidden'); }
     return res.json();
 }
 
@@ -69,6 +86,7 @@ async function apiPost(path, data) {
         body: JSON.stringify(data)
     });
     if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+    if (res.status === 403) { showToast('Access Denied', 'error'); throw new Error('Forbidden'); }
     return res.json();
 }
 
@@ -79,6 +97,7 @@ async function apiPut(path, data) {
         body: JSON.stringify(data)
     });
     if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+    if (res.status === 403) { showToast('Access Denied', 'error'); throw new Error('Forbidden'); }
     return res.json();
 }
 
@@ -88,11 +107,11 @@ async function apiDelete(path) {
         headers: getHeaders()
     });
     if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+    if (res.status === 403) { showToast('Access Denied', 'error'); throw new Error('Forbidden'); }
     return res.json();
 }
 
-function redirectToLogin() { logout(); }
-
+// ── UI Helpers ─────────────────────────────────────────────────────────────
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -117,6 +136,7 @@ function canAccess(role, allowed) {
     return allowed.includes(role);
 }
 
+// ── Navigation ─────────────────────────────────────────────────────────────
 function showNav() {
     const role = localStorage.getItem('role');
     const nav  = document.getElementById('main-nav');
@@ -124,38 +144,39 @@ function showNav() {
 
     const current = window.location.pathname;
     let html = '';
+
     if (role === 'ADMIN' || role === 'SYSTEM_ADMIN') {
         html += '<a href="/Frontend/admin-dashboard.html" class="' + (current.includes('admin-dashboard') ? 'active' : '') + '">Dashboard</a>';
-        html += '<a href="/Frontend/manage-staff.html" class="' + (current.includes('manage-staff') ? 'active' : '') + '">Manage Staff</a>';
-        html += '<a href="/Frontend/manage-dentists.html" class="' + (current.includes('manage-dentists') ? 'active' : '') + '">Dentists</a>';
         html += '<a href="/Frontend/manage-patients.html" class="' + (current.includes('manage-patients') ? 'active' : '') + '">Patients</a>';
+        html += '<a href="/Frontend/manage-dentists.html" class="' + (current.includes('manage-dentists') ? 'active' : '') + '">Dentists</a>';
         html += '<a href="/Frontend/view-appointment.html" class="' + (current.includes('view-appointment') ? 'active' : '') + '">Appointments</a>';
         html += '<a href="/Frontend/manage-treatments.html" class="' + (current.includes('manage-treatments') ? 'active' : '') + '">Treatments</a>';
         html += '<a href="/Frontend/billing.html" class="' + (current.includes('billing') ? 'active' : '') + '">Billing</a>';
         html += '<a href="/Frontend/reports.html" class="' + (current.includes('reports') ? 'active' : '') + '">Reports</a>';
-        html += '<a href="/Frontend/notifications.html" class="' + (current.includes('notifications') ? 'active' : '') + '">Notifications</a>';
-        // Audit Log has been completely removed from here
+        html += '<a href="/Frontend/manage-staff.html" class="' + (current.includes('manage-staff') ? 'active' : '') + '">Staff</a>';
+        html += '<a href="/Frontend/manage-notices.html" class="' + (current.includes('manage-notices') ? 'active' : '') + '">Notices</a>';
+        html += '<a href="/Frontend/help.html" class="' + (current.includes('help') ? 'active' : '') + '">Help</a>';
+        html += '<a href="#" onclick="logout(); return false;" class="logout-link">Logout</a>';
     } else if (role === 'RECEPTIONIST') {
         html += '<a href="/Frontend/receptionist-dashboard.html" class="' + (current.includes('receptionist-dashboard') ? 'active' : '') + '">Dashboard</a>';
-        html += '<a href="/Frontend/register-appointment.html" class="' + (current.includes('register-appointment') ? 'active' : '') + '">New Appointment</a>';
-        html += '<a href="/Frontend/view-appointment.html" class="' + (current.includes('view-appointment') ? 'active' : '') + '">Appointments</a>';
         html += '<a href="/Frontend/manage-patients.html" class="' + (current.includes('manage-patients') ? 'active' : '') + '">Patients</a>';
-        html += '<a href="/Frontend/billing.html" class="' + (current.includes('billing') ? 'active' : '') + '">Billing</a>';    
+        html += '<a href="/Frontend/view-appointment.html" class="' + (current.includes('view-appointment') ? 'active' : '') + '">Appointments</a>';
+        html += '<a href="/Frontend/billing.html" class="' + (current.includes('billing') ? 'active' : '') + '">Billing</a>';
+        html += '<a href="/Frontend/notices.html" class="' + (current.includes('notices') ? 'active' : '') + '">Notices</a>';
+        html += '<a href="/Frontend/help.html" class="' + (current.includes('help') ? 'active' : '') + '">Help</a>';
+        html += '<a href="#" onclick="logout(); return false;" class="logout-link">Logout</a>';
     } else if (role === 'DENTIST') {
         html += '<a href="/Frontend/dentist-dashboard.html" class="' + (current.includes('dentist-dashboard') ? 'active' : '') + '">Dashboard</a>';
-        html += '<a href="/Frontend/view-appointment.html" class="' + (current.includes('view-appointment') ? 'active' : '') + '">Appointments</a>';
         html += '<a href="/Frontend/dentist-schedule.html" class="' + (current.includes('dentist-schedule') ? 'active' : '') + '">My Schedule</a>';
         html += '<a href="/Frontend/patient-history.html" class="' + (current.includes('patient-history') ? 'active' : '') + '">Patient History</a>';
+        html += '<a href="/Frontend/notices.html" class="' + (current.includes('notices') ? 'active' : '') + '">Notices</a>';
+        html += '<a href="/Frontend/help.html" class="' + (current.includes('help') ? 'active' : '') + '">Help</a>';
+        html += '<a href="#" onclick="logout(); return false;" class="logout-link">Logout</a>';
     } else if (role === 'PATIENT') {
-        html += '<a href="/Frontend/patient-dashboard.html" class="' + (current.includes('patient-dashboard') ? 'active' : '') + '">Dashboard</a>';
-        html += '<a href="/Frontend/patient-appointments.html" class="' + (current.includes('patient-appointments') ? 'active' : '') + '">Appointments</a>';
-        html += '<a href="/Frontend/patient-history.html" class="' + (current.includes('patient-history') ? 'active' : '') + '">Treatment History</a>';
-        html += '<a href="/Frontend/patient-billing.html" class="' + (current.includes('patient-billing') ? 'active' : '') + '">Billing</a>';
-        html += '<a href="/Frontend/patient-notifications.html" class="' + (current.includes('patient-notifications') ? 'active' : '') + '">Notifications</a>';
-        html += '<a href="/Frontend/patient-profile.html" class="' + (current.includes('patient-profile') ? 'active' : '') + '">Profile</a>';
+        showToast('Patient portal is not available. Please contact the clinic.', 'error');
+        setTimeout(() => logout(), 1500);
     }
-    html += '<a href="/Frontend/help.html" class="' + (current.includes('help') ? 'active' : '') + '">Help</a>';
-    html += '<a href="#" onclick="logout(); return false;" class="logout-link">Logout</a>';
+
     nav.innerHTML = html;
 }
 
@@ -165,4 +186,5 @@ document.addEventListener('DOMContentLoaded', function() {
     if (userInfo && userName) {
         userInfo.textContent = userName + ' (' + (userRole || '') + ')';
     }
+    resetSessionTimer();
 });

@@ -1,20 +1,20 @@
 package com.mycompany.backend.resources;
 
-import Model.Appointment;
-import Model.Dentist;
-import Model.Notification;
-import Model.Staff;
-import DAO.AppointmentDAO;
-import DAO.DentistDAO;
-import DAO.NotificationDAO;
-import DAO.StaffDAO;
-import Validation.*;
-import Service.AppointmentSubject;
-import Service.EmailNotificationObserver;
-import Service.SmsNotificationObserver;
-import Service.StaffNotificationObserver;
-import Service.SecurityUtil;
-import Service.TokenManager;
+import model.Appointment;
+import model.Dentist;
+import model.Notification;
+import model.Staff;
+import dao.AppointmentDAO;
+import dao.DentistDAO;
+import dao.NotificationDAO;
+import dao.StaffDAO;
+import validation.*;
+import service.AppointmentSubject;
+import service.EmailNotificationObserver;
+import service.SmsNotificationObserver;
+import service.StaffNotificationObserver;
+import service.SecurityUtil;
+import service.TokenManager;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -124,10 +124,10 @@ public class AppointmentResource {
         if (!"DENTIST".equals(session.role)) return session.id;
         try {
             StaffDAO staffDao = new StaffDAO();
-            Model.Staff staff = staffDao.findById(session.id);
+            model.Staff staff = staffDao.findById(session.id);
             if (staff == null || staff.getEmail() == null) return -1;
             DentistDAO dentistDao = new DentistDAO();
-            Model.Dentist d = dentistDao.findByEmail(staff.getEmail());
+            model.Dentist d = dentistDao.findByEmail(staff.getEmail());
             if (d != null) return d.getDentistId();
         } catch (Exception e) { e.printStackTrace(); }
         return -1;
@@ -180,13 +180,34 @@ public class AppointmentResource {
     }
 
     @PUT
+    @Path("/{id}/checkin")
+    public Response checkIn(@PathParam("id") int id) {
+        SecurityUtil.requireReceptionOrAdmin();
+        Appointment appt = dao.findById(id);
+        if (appt == null) return Response.status(404).entity(error("Appointment not found")).build();
+        if (!"Scheduled".equals(appt.getStatus()) && !"Confirmed".equals(appt.getStatus()) && !"Pending".equals(appt.getStatus())) {
+            return Response.status(400).entity(error("Cannot check in appointment with status: " + appt.getStatus())).build();
+        }
+        appt.setStatus("Checked In");
+        if (dao.update(appt)) {
+            notifyObservers("CHECKED_IN", appt);
+            Map<String, Object> res = new HashMap<>();
+            res.put("appointmentId", id);
+            res.put("status", "Checked In");
+            res.put("message", "Patient checked in successfully");
+            return Response.ok(res).build();
+        }
+        return Response.status(500).entity(error("Failed to check in appointment")).build();
+    }
+
+    @PUT
     @Path("/{id}/status")
     public Response updateStatus(@PathParam("id") int id, Map<String, String> body) {
         String newStatus = body.get("status");
         if (newStatus == null || !newStatus.matches(
-                "Pending|Confirmed|Waiting|With Dentist|Treatment In Progress|Completed|Cancelled")) {
+                "Pending|Confirmed|Waiting|With Dentist|Treatment In Progress|Completed|Cancelled|Checked In")) {
             return Response.status(400).entity(error(
-                    "Invalid status. Use: Pending, Confirmed, Waiting, With Dentist, Treatment In Progress, Completed, Cancelled")).build();
+                    "Invalid status. Use: Pending, Scheduled, Confirmed, Waiting, With Dentist, Treatment In Progress, Completed, Cancelled, Checked In")).build();
         }
         Appointment appt = dao.findById(id);
         if (appt == null) return Response.status(404).entity(error("Appointment not found")).build();
@@ -200,7 +221,7 @@ public class AppointmentResource {
                 return Response.status(403).entity(error("Patients may only cancel their appointments")).build();
             }
         } else if ("DENTIST".equals(role)) {
-            // මෙන්න මෙතන තමයි වැරැද්ද තිබුණේ. දැන් ඒක resolveDentistId() හරහා නිවැරදි කරලා තියෙන්නේ.
+            // à¶¸à·™à¶±à·Šà¶± à¶¸à·™à¶­à¶± à¶­à¶¸à¶ºà·’ à·€à·à¶»à·à¶¯à·Šà¶¯ à¶­à·’à¶¶à·”à¶«à·š. à¶¯à·à¶±à·Š à¶’à¶š resolveDentistId() à·„à¶»à·„à· à¶±à·’à·€à·à¶»à¶¯à·’ à¶šà¶»à¶½à· à¶­à·’à¶ºà·™à¶±à·Šà¶±à·š.
             int myDentistId = resolveDentistId(SecurityUtil.session());
             if (appt.getDentistId() != myDentistId) {
                 return Response.status(403).entity(error("You can only manage your own appointments")).build();
@@ -237,7 +258,7 @@ public class AppointmentResource {
         return Response.status(500).entity(error("Failed to delete appointment")).build();
     }
 
-    // ── Private helpers ──────────────────────────────────────────────────────
+    // â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private void enforceViewOwnership(Appointment appt) {
         if (SecurityUtil.isPatient()) {
             if (appt.getPatientId() != SecurityUtil.currentId()) {

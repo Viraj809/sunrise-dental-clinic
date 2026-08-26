@@ -6,27 +6,21 @@
     <title>Manage Dentists – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
     <style>
-        /* Container එකේ පළල වැඩි කිරීම */
-        .container {
-            max-width: 1550px !important; 
-            width: 98% !important;
-        }
-        
         .day-btn {
             width: 44px; height: 44px;
             border-radius: 50%;
-            border: 2px solid var(--border, #e2e8f0);
+            border: 2px solid var(--border);
             background: #fff;
-            color: var(--text-primary, #0f172a);
+            color: var(--text-primary);
             font-weight: 700;
             font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.15s;
         }
         .day-btn.active {
-            background: var(--primary, #2563eb);
+            background: var(--primary);
             color: #fff;
-            border-color: var(--primary, #2563eb);
+            border-color: var(--primary);
         }
     </style>
 </head>
@@ -43,20 +37,28 @@
     <div id="toast-container"></div>
 
     <div class="page-header">
-        <div><h2>Dentist Management</h2><p>View, add and manage dentists</p></div>
+        <div>
+            <h2>Dentist Management</h2>
+            <p>View, add and manage dentists</p>
+        </div>
         <button class="btn btn-primary" onclick="openModal()">➕ Add Dentist</button>
     </div>
 
-    <!-- Search Bar -->
-    <div class="card" style="margin-bottom:20px;">
+    <div class="card card-stat">
+        <div class="stat-icon">🦷</div>
+        <div class="stat-body">
+            <div class="stat-value" id="totalDentists">0</div>
+            <div class="stat-label">Total Dentists</div>
+        </div>
+    </div>
+
+    <div class="card">
         <div class="search-bar">
-            <input type="text" id="dentistSearch" placeholder="Search by name, email, specialization or contact..."
-                   oninput="filterDentists()" style="flex:1;">
+            <input type="text" id="dentistSearch" placeholder="Search by name, email, specialization or contact..." oninput="filterDentists()">
             <button class="btn btn-ghost" onclick="clearSearch()">Clear</button>
         </div>
     </div>
 
-    <!-- Dentists Table -->
     <div class="card">
         <div class="table-wrapper">
             <table class="table" id="dentistTable">
@@ -72,7 +74,7 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tr></tbody>
+                <tbody><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tbody>
             </table>
         </div>
     </div>
@@ -85,7 +87,6 @@
         <div id="dentistFormFields">
             <div class="form-row">
                 <div class="form-group"><label>Full Name *</label><input type="text" id="m-name" placeholder="Dr. Perera"></div>
-                <!-- NIC Input - maxlength 12 added here -->
                 <div class="form-group"><label>NIC *</label><input type="text" id="m-nic" placeholder="e.g. 199012345678" maxlength="12"></div>
             </div>
             <div class="form-row">
@@ -108,7 +109,7 @@
             </div>
             <div class="form-row">
                 <div class="form-group"><label>Email * (login)</label><input type="email" id="m-email" placeholder="dr@clinic.com"></div>
-                <div class="form-group"><label>Password (login)</label><input type="text" id="m-password" placeholder="dentist123"></div>
+                <div class="form-group"><label>Password (login)</label><input type="password" id="m-password" placeholder="dentist123"></div>
             </div>
             <div class="form-group"><label>Available Days</label>
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
@@ -184,6 +185,7 @@
     async function loadDentists() {
         try {
             allDentists = await apiGet('/dentists');
+            document.getElementById('totalDentists').textContent = allDentists.length;
             renderTable(allDentists);
         } catch (e) { showToast('Failed to load dentists', 'error'); }
     }
@@ -197,7 +199,7 @@
         tbody.innerHTML = dentists.map(d => {
             const days = (d.availableDays || '').split(',').map(s => s.trim()).filter(Boolean).join(', ') || '–';
             const statusBadge = `<span class="badge ${d.active ? 'badge-paid' : 'badge-cancelled'}">${d.active ? 'Active' : 'Inactive'}</span>`;
-            
+
             return `<tr>
                 <td><strong>${d.dentistId}</strong></td>
                 <td><div style="font-weight:600;">Dr. ${d.name.replace(/^Dr\.\s*/i, '')}</div></td>
@@ -206,8 +208,8 @@
                 <td>${d.email || '–'}</td>
                 <td><div style="max-width:250px; white-space:normal; line-height:1.4; color:var(--text-secondary); font-size:0.85rem;">${days}</div></td>
                 <td>${statusBadge}</td>
-                <td style="display:flex; gap:6px; flex-wrap:nowrap; align-items:center;">
-                    <button class="btn btn-sm btn-warning" style="color:white;" onclick="openEditModal(${d.dentistId})">✏️ Edit</button>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="openEditModal(${d.dentistId})">✏️ Edit</button>
                     <button class="btn btn-sm btn-danger" onclick="confirmDeleteDentist(${d.dentistId}, '${(d.name || '').replace(/'/g,"\\'")}')">🗑️ Delete</button>
                 </td>
             </tr>`;
@@ -250,7 +252,7 @@
         document.getElementById('m-spec').value = '';
         document.getElementById('m-allDays').checked = true;
         toggleAllDays();
-        
+
         document.getElementById('dentistModal').style.display = 'flex';
     }
 
@@ -265,8 +267,8 @@
             document.getElementById('m-nic').value            = d.nic || '';
             document.getElementById('m-contact').value        = d.contact || '';
             document.getElementById('m-email').value          = d.email || '';
-            document.getElementById('m-password').value       = ''; // Leave blank for edit
-            
+            document.getElementById('m-password').value       = '';
+
             const days = (d.availableDays || '').split(',').map(s => s.trim()).filter(Boolean);
             const allDays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
             if (days.length === 7 && allDays.every(day => days.includes(day))) {
@@ -295,8 +297,7 @@
         if (!spec) { showToast('Please select a specialization.', 'error'); return; }
         const nic = document.getElementById('m-nic').value.trim();
         if (!nic) { showToast('NIC is required.', 'error'); return; }
-        
-        // NIC Validation (Sri Lankan Format check - 10 characters or 12 digits)
+
         const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
         if (!nicRegex.test(nic)) {
             showToast('Please enter a valid 12-digit or 10-character NIC.', 'error');
@@ -318,7 +319,6 @@
                     availableDays:  document.getElementById('m-days').value,
                     active:         true
                 };
-                // For edit, if password is typed, send it. Else it keeps the old one.
                 const pwd = document.getElementById('m-password').value;
                 if (pwd) data.password = pwd;
 
@@ -327,7 +327,7 @@
                     showToast(res.error, 'error');
                 } else {
                     showToast('Dentist updated successfully ✅');
-                    closeModal(); 
+                    closeModal();
                     loadDentists();
                 }
             } else {
@@ -341,12 +341,11 @@
                     available_days: document.getElementById('m-days').value,
                     active:         true
                 };
-                
+
                 res = await apiPost('/dentists/register', data);
                 if (res.error) {
                     showToast(res.error, 'error');
                 } else if (res.password) {
-                    // Success Popup with Credentials!
                     document.getElementById('succEmail').textContent = res.email || '-';
                     document.getElementById('succPassword').textContent = res.password;
                     closeModal();

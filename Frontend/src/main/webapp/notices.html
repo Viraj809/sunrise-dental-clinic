@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinic Notices – Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+    <style>
+        .notice-unread {
+            border-left: 4px solid var(--primary);
+            background: linear-gradient(135deg, var(--surface) 0%, var(--primary-light) 100%);
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
+
+<div class="container">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Clinic Notices</h2>
+            <p>Important updates and announcements</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="loadNotices()">Refresh</button>
+    </div>
+
+    <div id="notices-list"></div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth();
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function renderNoticeCard(notice) {
+        const badgeCls = notice.priority === 'Urgent' ? 'badge-danger'
+            : notice.priority === 'Important' ? 'badge-warning'
+            : 'badge-info';
+
+        const unreadClass = !notice.readAt ? 'notice-unread' : '';
+        const readLabel = !notice.readAt
+            ? `<button class="btn btn-sm btn-primary" onclick="markAsRead(${notice.noticeId})">Mark as Read</button>`
+            : `<span style="font-size:0.8rem;color:var(--text-muted);">Read</span>`;
+
+        return `
+            <div class="card ${unreadClass}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+                    <strong style="font-size:1.05rem;">${escapeHtml(notice.title)}</strong>
+                    <span class="badge ${badgeCls}">${notice.priority || 'General'}</span>
+                </div>
+                <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.6;margin-bottom:14px;">${escapeHtml(notice.description || '')}</p>
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <div style="font-size:0.8rem;color:var(--text-muted);display:flex;gap:16px;flex-wrap:wrap;">
+                        <span>Published: ${notice.publishDate || '-'}</span>
+                        ${notice.expiryDate ? '<span>Expires: ' + notice.expiryDate + '</span>' : ''}
+                    </div>
+                    ${readLabel}
+                </div>
+            </div>
+        `;
+    }
+
+    async function loadNotices() {
+        const container = document.getElementById('notices-list');
+        try {
+            const notices = await apiGet('/notices/my');
+            if (!notices || notices.length === 0) {
+                container.innerHTML = `
+                    <div class="card">
+                        <div class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            <p>No active notices at this time</p>
+                        </div>
+                    </div>`;
+                return;
+            }
+            container.innerHTML = notices.map(renderNoticeCard).join('');
+        } catch (e) {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <p>Unable to load notices. Please try again later.</p>
+                    </div>
+                </div>`;
+        }
+    }
+
+    async function markAsRead(noticeId) {
+        try {
+            await apiPost('/notices/' + noticeId + '/read', {});
+            showToast('Notice marked as read');
+            loadNotices();
+        } catch (e) {
+            showToast('Failed to mark notice as read', 'error');
+        }
+    }
+
+    loadNotices();
+</script>
+</body>
+</html>

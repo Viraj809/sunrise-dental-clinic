@@ -1,7 +1,7 @@
-package Validation;
+package validation;
 
-import Model.Appointment;
-import DAO.AppointmentDAO;
+import dao.AppointmentDAO;
+import model.Appointment;
 
 public abstract class AppointmentValidator {
     protected AppointmentValidator next;
@@ -10,5 +10,6 @@ public abstract class AppointmentValidator {
         this.next = next;
     }
 
-    public abstract String validate(Appointment appointment, AppointmentDAO dao);
+    public abstract String validate(Appointment var1, AppointmentDAO var2);
 }
+

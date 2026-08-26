@@ -6,59 +6,25 @@
     <title>Billing – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
     <style>
-        /* Container එකේ පළල වැඩි කිරීම */
-        .container {
-            max-width: 1280px !important; 
-            width: 98% !important;
-        }
-
         @media print {
             body > *:not(#printArea) { display: none !important; }
             #printArea { display: block !important; padding: 20px; }
             .no-print { display: none !important; }
             .header, .nav, .page-header, .container > .card:not(#billCard), #toast-container { display: none !important; }
         }
-        .receipt-box {
-            background: #fff;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            padding: 18px;
-            max-width: 520px;
-            margin: 0 auto;
+        .receipt-card {
+            background: var(--surface); border-radius: var(--radius-lg); padding: 28px;
+            border: 1px solid var(--border); box-shadow: var(--card-shadow); max-width: 540px; margin: 0 auto;
         }
-        .receipt-box h2 {
-            text-align: center;
-            color: var(--primary);
-            margin-bottom: 4px;
-        }
-        .receipt-box .clinic-info {
-            text-align: center;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-        }
-        .receipt-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            border-bottom: 1px dashed var(--border);
-            font-size: 0.88rem;
-        }
-        .receipt-row.total {
-            border-top: 2px solid var(--text-primary);
-            border-bottom: none;
-            font-weight: 700;
-            font-size: 1rem;
-            color: var(--primary);
-            margin-top: 6px;
-            padding-top: 8px;
-        }
-        .receipt-footer {
-            text-align: center;
-            margin-top: 14px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
+        .receipt-header { text-align: center; padding-bottom: 18px; border-bottom: 2px dashed var(--border-strong); margin-bottom: 18px; }
+        .receipt-header h2 { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin: 0 0 4px; }
+        .receipt-header p { font-size: 0.82rem; color: var(--text-muted); margin: 2px 0; }
+        .receipt-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .receipt-row:last-child { border-bottom: none; }
+        .receipt-row .r-label { color: var(--text-secondary); font-weight: 500; }
+        .receipt-row .r-value { font-weight: 600; }
+        .receipt-total { display: flex; justify-content: space-between; padding: 14px 0; border-top: 2.5px solid var(--text-primary); margin-top: 10px; font-size: 1.1rem; font-weight: 800; }
+        .receipt-footer { text-align: center; margin-top: 18px; font-size: 0.82rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -70,7 +36,6 @@
     <nav class="nav" id="main-nav"></nav>
 </div>
 
-<!-- මෙතන තිබුණු style="max-width:800px;" එක අයින් කළා -->
 <div class="container">
     <div id="toast-container"></div>
 
@@ -79,54 +44,49 @@
         <a href="/Frontend/view-appointment.html" class="btn btn-ghost btn-sm">← Back to Appointments</a>
     </div>
 
-    <!-- Search -->
-    <div class="card" style="padding:16px;">
-        <h2 style="margin:0 0 12px;font-size:1.1rem;">🔍 Find Appointment</h2>
+    <div class="card" style="padding:20px;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;font-size:1.05rem;font-weight:700;">🔍 Find Appointment</h3>
+        </div>
         <div class="search-bar">
-            <input type="text" id="apptNoSearch" placeholder="Enter appointment number e.g. SDC-2026-0001"
-                   onkeydown="if(event.key==='Enter') searchAppointment();" style="flex:1;">
+            <input type="text" id="apptNoSearch" placeholder="Enter appointment number e.g. SDC-2026-0001" style="flex:1;">
             <button class="btn btn-primary" onclick="searchAppointment()">Find</button>
         </div>
         <div id="searchMsg" class="alert" style="display:none;"></div>
 
-        <!-- Appointment summary (shown after search) -->
         <div id="apptSummary" style="display:none;margin-top:16px;">
-            <div style="background:var(--surface-alt);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+            <div style="background:var(--surface-alt);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;">
                 <div><div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Appt No</div><div id="s-apptNo" style="font-weight:700;color:var(--primary);"></div></div>
                 <div><div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Patient</div><div id="s-patient" style="font-weight:600;"></div></div>
                 <div><div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Dentist</div><div id="s-dentist"></div></div>
                 <div><div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Treatment</div><div id="s-treatment"></div></div>
                 <div><div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Date</div><div id="s-date"></div></div>
             </div>
-            <div style="display:flex;gap:10px;margin-top:12px;align-items:flex-end;">
-                <div class="form-group" style="margin-bottom:0;flex:1;">
+            <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                <div class="form-group" style="margin-bottom:0;flex:1;min-width:180px;">
                     <label>Payment Method</label>
-                    <select id="paymentMethod">
-                        <option value="CASH">💵 Cash</option>
-                        <option value="CARD">💳 Card</option>
-                        <option value="INSURANCE">🏥 Insurance</option>
-                    </select>
+                    <select id="paymentMethod"><option value="CASH">💵 Cash</option><option value="CARD">💳 Card</option><option value="INSURANCE">🏥 Insurance</option></select>
                 </div>
                 <button class="btn btn-primary" onclick="generateBill()" id="genBtn">🧾 Generate Bill</button>
             </div>
         </div>
     </div>
 
-    <!-- Bill Receipt -->
-    <div id="billCard" class="card" style="display:none;padding:16px;">
+    <div id="billCard" class="card" style="display:none;padding:20px;margin-bottom:20px;">
         <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <h2 style="margin:0;font-size:1.1rem;">🧾 Bill Receipt</h2>
+            <h3 style="margin:0;font-size:1.05rem;font-weight:700;">🧾 Bill Receipt</h3>
             <div style="display:flex;gap:6px;">
-                <button class="btn btn-ghost" onclick="printBill()">🖨️ Print Bill</button>
-                <button id="markPaidBtn" class="btn btn-success" onclick="markPaid()" style="display:none;">✅ Mark as PAID</button>
+                <button class="btn btn-ghost" onclick="printBill()">🖨️ Print Receipt</button>
+                <button id="markPaidBtn" class="btn btn-success" onclick="markPaid()" style="display:none;">✅ Mark as Paid</button>
             </div>
         </div>
         <div id="billContent"></div>
     </div>
 
-    <!-- All Bills List -->
-    <div class="card" style="padding:16px;">
-        <h2 style="margin:0 0 12px;font-size:1.1rem;">📋 All Bills</h2>
+    <div class="card" style="padding:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;font-size:1.05rem;font-weight:700;">📋 All Bills</h3>
+        </div>
         <div class="table-wrapper">
             <table class="table" id="billsTable">
                 <thead><tr><th>Bill ID</th><th>Appt No</th><th>Total (LKR)</th><th>Method</th><th>Status</th><th>Issued At</th><th>Actions</th></tr></thead>
@@ -136,33 +96,20 @@
     </div>
 </div>
 
-<!-- Print-only area (hidden on screen, shown via JS for print) -->
 <div id="printArea" style="display:none;"></div>
 
 <script src="/Frontend/js/app.js"></script>
 <script>
     requireAuth(['RECEPTIONIST', 'ADMIN', 'SYSTEM_ADMIN']);
-
-    let currentBillId = null;
-    let foundApptId   = null;
-    let allDentists   = [];
-    let allPatients   = [];
+    let currentBillId = null, foundApptId = null, allDentists = [], allPatients = [];
 
     async function init() {
         try {
-            [allDentists, allPatients] = await Promise.all([
-                apiGet('/dentists'),
-                apiGet('/patients')
-            ]);
+            [allDentists, allPatients] = await Promise.all([apiGet('/dentists'), apiGet('/patients')]);
             loadBills();
-
-            // Auto-search from URL param
             const params = new URLSearchParams(window.location.search);
             const apptId = params.get('appt_id');
-            if (apptId) {
-                const a = await apiGet('/appointments/' + apptId);
-                prefillFromAppointment(a);
-            }
+            if (apptId) { const a = await apiGet('/appointments/' + apptId); prefillFromAppointment(a); }
         } catch (e) { console.error(e); }
     }
 
@@ -175,9 +122,7 @@
             prefillFromAppointment(a);
             msg.style.display = 'none';
         } catch (e) {
-            msg.className = 'alert alert-error';
-            msg.style.display = 'flex';
-            msg.textContent = '❌ Appointment "' + no + '" not found.';
+            msg.className = 'alert alert-error'; msg.style.display = 'flex'; msg.textContent = '❌ Appointment "' + no + '" not found.';
             document.getElementById('apptSummary').style.display = 'none';
         }
     }
@@ -186,18 +131,13 @@
         foundApptId = a.appointmentId;
         const dentist = allDentists.find(d => d.dentistId === a.dentistId);
         const patient = allPatients.find(p => p.patientId === a.patientId);
-
-        document.getElementById('s-apptNo').textContent    = a.appointmentNo;
-        document.getElementById('s-patient').textContent   = patient ? patient.name : 'Patient #' + a.patientId;
-        document.getElementById('s-dentist').textContent   = dentist ? dentist.name : 'Dr. #' + a.dentistId;
+        document.getElementById('s-apptNo').textContent = a.appointmentNo;
+        document.getElementById('s-patient').textContent = patient ? patient.name : 'Patient #' + a.patientId;
+        document.getElementById('s-dentist').textContent = dentist ? dentist.name : 'Dr. #' + a.dentistId;
         document.getElementById('s-treatment').textContent = a.treatmentType;
-        document.getElementById('s-date').textContent      = a.appointmentDate + ' ' + (a.appointmentTime||'').substring(0,5);
+        document.getElementById('s-date').textContent = a.appointmentDate + ' ' + (a.appointmentTime||'').substring(0,5);
         document.getElementById('apptSummary').style.display = 'block';
-
-        // Check if bill already exists
-        apiGet('/bills/appointment/' + a.appointmentId)
-            .then(bill => { showReceipt(bill); })
-            .catch(() => { /* no bill yet, that's fine */ });
+        apiGet('/bills/appointment/' + a.appointmentId).then(bill => showReceipt(bill)).catch(() => {});
     }
 
     async function generateBill() {
@@ -206,18 +146,10 @@
         btn.disabled = true; btn.textContent = 'Generating...';
         try {
             const method = document.getElementById('paymentMethod').value;
-            const res = await apiPost('/bills/generate', {
-                appointment_id: foundApptId,
-                issued_by: parseInt(localStorage.getItem('staffId') || '1')
-            });
+            const res = await apiPost('/bills/generate', { appointment_id: foundApptId, issued_by: parseInt(localStorage.getItem('staffId') || '1') });
             if (res.error) { showToast(res.error, 'error'); return; }
-            // Update payment method immediately
-            if (method !== 'CASH') {
-                await apiPut('/bills/' + res.billId + '/payment', { payment_method: method, payment_status: 'PENDING' });
-                res.paymentMethod = method;
-            }
-            showReceipt(res);
-            showToast('Bill generated successfully 🎉');
+            if (method !== 'CASH') { await apiPut('/bills/' + res.billId + '/payment', { payment_method: method, payment_status: 'PENDING' }); res.paymentMethod = method; }
+            showReceipt(res); showToast('Bill generated successfully');
             loadBills();
         } catch (e) { showToast('Failed to generate bill', 'error'); }
         finally { btn.disabled = false; btn.textContent = '🧾 Generate Bill'; }
@@ -225,32 +157,30 @@
 
     function showReceipt(b) {
         currentBillId = b.billId;
-        const isPaid  = b.paymentStatus === 'PAID';
-
+        const isPaid = b.paymentStatus === 'PAID';
         document.getElementById('billContent').innerHTML = `
-            <div class="receipt-header">
-                <h2>🦷 Sunrise Dental Clinic</h2>
-                <p>123 Dental Road, Colombo 07 | Tel: +94 11 234 5678</p>
-                <p style="margin-top:8px;">OFFICIAL RECEIPT</p>
-            </div>
-            <div class="receipt-row"><span class="r-label">Bill No.</span><span class="r-value">#${b.billId}</span></div>
-            <div class="receipt-row"><span class="r-label">Appointment No.</span><span class="r-value">${b.appointmentNo || '–'}</span></div>
-            <div class="receipt-row"><span class="r-label">Date</span><span class="r-value">${b.appointmentDate || new Date().toISOString().split('T')[0]}</span></div>
-            <div class="receipt-row"><span class="r-label">Patient</span><span class="r-value">${b.patientName || '–'}</span></div>
-            <div class="receipt-row"><span class="r-label">Contact</span><span class="r-value">${b.patientContact || '–'}</span></div>
-            <div class="receipt-row"><span class="r-label">Dentist</span><span class="r-value">${b.dentistName || '–'}</span></div>
-            <div class="receipt-row"><span class="r-label">Treatment</span><span class="r-value">${b.treatmentName || b.treatmentCode || '–'}</span></div>
-            <hr>
-            <div class="receipt-row"><span class="r-label">Consultation Fee</span><span class="r-value">LKR ${Number(b.consultationFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
-            <div class="receipt-row"><span class="r-label">Treatment Fee</span><span class="r-value">LKR ${Number(b.treatmentFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
-            ${b.discount > 0 ? `<div class="receipt-row"><span class="r-label">Discount (Senior)</span><span class="r-value" style="color:var(--success);">– LKR ${Number(b.discount).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>` : ''}
-            <div class="receipt-row"><span class="r-label">Tax (5%)</span><span class="r-value">LKR ${Number(b.tax).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
-            <div class="receipt-total"><span>TOTAL AMOUNT</span><span>LKR ${Number(b.totalAmount).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
-            <div class="receipt-row"><span class="r-label">Payment Method</span><span class="r-value">${b.paymentMethod || '–'}</span></div>
-            <div class="receipt-row"><span class="r-label">Payment Status</span>
-                <span class="r-value"><span class="badge ${isPaid ? 'badge-paid' : 'badge-pending'}">${b.paymentStatus}</span></span></div>
-            <p style="text-align:center;margin-top:20px;color:var(--text-muted);font-size:0.875rem;">Thank you for choosing Sunrise Dental Clinic! 😊</p>`;
-
+            <div class="receipt-card">
+                <div class="receipt-header">
+                    <h2>🦷 Sunrise Dental Clinic</h2>
+                    <p>123 Dental Road, Colombo 07 | Tel: +94 11 234 5678</p>
+                    <p style="margin-top:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--primary);">Official Receipt</p>
+                </div>
+                <div class="receipt-row"><span class="r-label">Bill No.</span><span class="r-value">#${b.billId}</span></div>
+                <div class="receipt-row"><span class="r-label">Appointment No.</span><span class="r-value">${b.appointmentNo || '–'}</span></div>
+                <div class="receipt-row"><span class="r-label">Date</span><span class="r-value">${b.appointmentDate || new Date().toISOString().split('T')[0]}</span></div>
+                <div class="receipt-row"><span class="r-label">Patient</span><span class="r-value">${b.patientName || '–'}</span></div>
+                <div class="receipt-row"><span class="r-label">Contact</span><span class="r-value">${b.patientContact || '–'}</span></div>
+                <div class="receipt-row"><span class="r-label">Dentist</span><span class="r-value">${b.dentistName || '–'}</span></div>
+                <div class="receipt-row"><span class="r-label">Treatment</span><span class="r-value">${b.treatmentName || b.treatmentCode || '–'}</span></div>
+                <div class="receipt-row"><span class="r-label">Consultation Fee</span><span class="r-value">LKR ${Number(b.consultationFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
+                <div class="receipt-row"><span class="r-label">Treatment Fee</span><span class="r-value">LKR ${Number(b.treatmentFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
+                ${b.discount > 0 ? `<div class="receipt-row"><span class="r-label">Discount</span><span class="r-value" style="color:var(--success);">– LKR ${Number(b.discount).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>` : ''}
+                <div class="receipt-row"><span class="r-label">Tax (5%)</span><span class="r-value">LKR ${Number(b.tax).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
+                <div class="receipt-total"><span>TOTAL</span><span>LKR ${Number(b.totalAmount).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
+                <div class="receipt-row"><span class="r-label">Payment Method</span><span class="r-value">${b.paymentMethod || '–'}</span></div>
+                <div class="receipt-row"><span class="r-label">Payment Status</span><span class="r-value"><span class="badge ${isPaid?'badge-paid':'badge-pending'}">${b.paymentStatus}</span></span></div>
+                <div class="receipt-footer">Thank you for choosing Sunrise Dental Clinic! 😊</div>
+            </div>`;
         document.getElementById('billCard').style.display = 'block';
         document.getElementById('markPaidBtn').style.display = isPaid ? 'none' : 'inline-flex';
         document.getElementById('billCard').scrollIntoView({ behavior: 'smooth' });
@@ -258,45 +188,31 @@
 
     async function markPaid() {
         if (!currentBillId) return;
-        const method = document.getElementById('paymentMethod').value;
         try {
-            const res = await apiPut('/bills/' + currentBillId + '/payment', {
-                payment_method: method,
-                payment_status: 'PAID'
-            });
+            const method = document.getElementById('paymentMethod').value;
+            await apiPut('/bills/' + currentBillId + '/payment', { payment_method: method, payment_status: 'PAID' });
             showToast('Payment recorded ✅');
-            // Reload receipt
             const bill = await apiGet('/bills/' + currentBillId + '/receipt');
-            showReceipt(bill);
-            loadBills();
+            showReceipt(bill); loadBills();
         } catch (e) { showToast('Failed to update payment', 'error'); }
     }
 
-    async function viewBill(billId) {
-        try {
-            const b = await apiGet('/bills/' + billId + '/receipt');
-            showReceipt(b);
-        } catch (e) { showToast('Failed to load bill', 'error'); }
-    }
+    async function viewBill(billId) { try { const b = await apiGet('/bills/' + billId + '/receipt'); showReceipt(b); } catch(e){ showToast('Failed','error'); } }
 
     async function loadBills() {
         try {
             const bills = await apiGet('/bills');
             const tbody = document.querySelector('#billsTable tbody');
-            if (!bills.length) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">No bills yet</td></tr>';
-                return;
-            }
-            tbody.innerHTML = bills.map(b => `
-                <tr>
-                    <td><strong>#${b.billId}</strong></td>
-                    <td>${b.appointmentId}</td>
-                    <td style="font-weight:700;">LKR ${Number(b.totalAmount).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
-                    <td>${b.paymentMethod}</td>
-                    <td><span class="badge ${b.paymentStatus === 'PAID' ? 'badge-paid' : 'badge-pending'}">${b.paymentStatus}</span></td>
-                    <td>${(b.issuedAt||'').substring(0,16)}</td>
-                    <td><button class="btn btn-sm btn-ghost" onclick="viewBill(${b.billId})">View</button></td>
-                </tr>`).join('');
+            if (!bills.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">No bills yet</td></tr>'; return; }
+            tbody.innerHTML = bills.map(b => `<tr>
+                <td><strong>#${b.billId}</strong></td>
+                <td>${b.appointmentId}</td>
+                <td style="font-weight:700;">LKR ${Number(b.totalAmount).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
+                <td>${b.paymentMethod}</td>
+                <td><span class="badge ${b.paymentStatus==='PAID'?'badge-paid':'badge-pending'}">${b.paymentStatus}</span></td>
+                <td>${(b.issuedAt||'').substring(0,16)}</td>
+                <td><button class="btn btn-sm btn-ghost" onclick="viewBill(${b.billId})">View</button></td>
+            </tr>`).join('');
         } catch (e) { console.error('Failed to load bills', e); }
     }
 
@@ -304,23 +220,9 @@
         if (!currentBillId) return;
         const content = document.getElementById('billContent').innerHTML;
         const printArea = document.getElementById('printArea');
-        printArea.innerHTML = `
-            <div style="max-width:500px;margin:0 auto;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#0f172a;">
-                <div style="text-align:center;border-bottom:3px solid #1e3a8a;padding-bottom:12px;margin-bottom:16px;">
-                    <h1 style="margin:0;color:#1e3a8a;font-size:1.6rem;">Sunrise Dental Clinic</h1>
-                    <p style="margin:4px 0 0;color:#64748b;font-size:0.85rem;">123 Dental Road, Colombo 07 | Tel: +94 11 234 5678</p>
-                    <p style="margin:6px 0 0;font-weight:700;color:#1e3a8a;text-transform:uppercase;font-size:0.9rem;">Official Receipt</p>
-                </div>
-                ${content}
-                <div style="text-align:center;margin-top:24px;padding-top:14px;border-top:2px dashed #e2e8f0;">
-                    <p style="margin:0;color:#64748b;font-size:0.85rem;">Thank you for choosing Sunrise Dental Clinic.</p>
-                </div>
-            </div>`;
+        printArea.innerHTML = '<div style="max-width:500px;margin:0 auto;font-family:Inter,Segoe UI,sans-serif;color:#0f172a;"><div style="text-align:center;border-bottom:3px solid #1e3a8a;padding-bottom:12px;margin-bottom:16px;"><h1 style="margin:0;color:#1e3a8a;font-size:1.6rem;">Sunrise Dental Clinic</h1><p style="margin:4px 0 0;color:#64748b;font-size:0.85rem;">123 Dental Road, Colombo 07 | Tel: +94 11 234 5678</p><p style="margin:6px 0 0;font-weight:700;color:#1e3a8a;text-transform:uppercase;font-size:0.9rem;">Official Receipt</p></div>' + content + '<div style="text-align:center;margin-top:24px;padding-top:14px;border-top:2px dashed #e2e8f0;"><p style="margin:0;color:#64748b;font-size:0.85rem;">Thank you for choosing Sunrise Dental Clinic.</p></div></div>';
         printArea.style.display = 'block';
-        setTimeout(() => {
-            window.print();
-            printArea.style.display = 'none';
-        }, 150);
+        setTimeout(() => { window.print(); printArea.style.display = 'none'; }, 150);
     }
 
     init();

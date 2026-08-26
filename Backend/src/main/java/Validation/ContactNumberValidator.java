@@ -1,17 +1,19 @@
-package Validation;
+package validation;
 
-import Model.Appointment;
-import DAO.AppointmentDAO;
+import dao.AppointmentDAO;
+import model.Appointment;
+import validation.AppointmentValidator;
 
-public class ContactNumberValidator extends AppointmentValidator {
+public class ContactNumberValidator
+extends AppointmentValidator {
     @Override
     public String validate(Appointment appointment, AppointmentDAO dao) {
         String contact = appointment.getContact();
         if (contact == null || !contact.matches("^0\\d{9}$")) {
             return "Please enter a valid Sri Lankan mobile number (e.g. 0712345678).";
         }
-        if (next != null) {
-            return next.validate(appointment, dao);
+        if (this.next != null) {
+            return this.next.validate(appointment, dao);
         }
         return null;
     }
@@ -26,3 +28,4 @@ public class ContactNumberValidator extends AppointmentValidator {
         return null;
     }
 }
+

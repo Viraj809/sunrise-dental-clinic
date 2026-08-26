@@ -1,24 +1,23 @@
-package Validation;
+package validation;
 
-import Model.Appointment;
-import DAO.AppointmentDAO;
+import dao.AppointmentDAO;
+import model.Appointment;
+import validation.AppointmentValidator;
+import java.util.List;
 
-public class DoubleBookingValidator extends AppointmentValidator {
+public class DoubleBookingValidator
+extends AppointmentValidator {
     @Override
     public String validate(Appointment appointment, AppointmentDAO dao) {
-        java.util.List<Appointment> existing = dao.findByDentistIdAndDate(
-                appointment.getDentistId(),
-                appointment.getAppointmentDate()
-        );
+        List<Appointment> existing = dao.findByDentistIdAndDate(appointment.getDentistId(), appointment.getAppointmentDate());
         for (Appointment a : existing) {
-            if (a.getAppointmentTime().equals(appointment.getAppointmentTime())
-                    && a.getAppointmentId() != appointment.getAppointmentId()) {
-                return "Double booking detected: dentist already has an appointment at this date and time.";
-            }
+            if (!a.getAppointmentTime().equals(appointment.getAppointmentTime()) || a.getAppointmentId() == appointment.getAppointmentId()) continue;
+            return "Double booking detected: dentist already has an appointment at this date and time.";
         }
-        if (next != null) {
-            return next.validate(appointment, dao);
+        if (this.next != null) {
+            return this.next.validate(appointment, dao);
         }
         return null;
     }
 }
+

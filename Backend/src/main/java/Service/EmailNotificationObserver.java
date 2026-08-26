@@ -1,10 +1,11 @@
-package Service;
+package service;
 
-import DAO.NotificationDAO;
-import Model.Notification;
+import dao.NotificationDAO;
+import model.Notification;
+import service.NotificationObserver;
 
-// Simulated email observer
-public class EmailNotificationObserver implements NotificationObserver {
+public class EmailNotificationObserver
+implements NotificationObserver {
     private NotificationDAO dao = new NotificationDAO();
 
     @Override
@@ -15,7 +16,8 @@ public class EmailNotificationObserver implements NotificationObserver {
         n.setRecipient(recipient);
         n.setMessage("Email: [" + eventType + "] " + message);
         n.setStatus("SENT");
-        dao.insert(n);
+        this.dao.insert(n);
         System.out.println("[EMAIL] To: " + recipient + " | " + message);
     }
 }
+

@@ -1,72 +1,65 @@
-package Service;
+package service;
 
+import service.TokenManager;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
 
-/**
- * SecurityUtil – centralises Role-Based Access Control for JAX-RS resources.
- *
- * Resources call these helpers at the top of protected methods. They rely on the
- * {@link TokenManager.Session} that {@code TokenAuthFilter} attached to the
- * current request thread, throwing Jakarta REST exceptions that Jersey maps to
- * 401 (unauthenticated) / 403 (forbidden) responses.
- */
 public final class SecurityUtil {
+    private SecurityUtil() {
+    }
 
-    private SecurityUtil() {}
-
-    /** Return the current request Session or throw 401 if missing. */
     public static TokenManager.Session session() {
         TokenManager.Session s = TokenManager.getInstance().current();
         if (s == null) {
-            throw new NotAuthorizedException("Missing or invalid session");
+            throw new NotAuthorizedException((Object)"Missing or invalid session", new Object[0]);
         }
         return s;
     }
 
-    /** Throw 403 unless the current role is one of the allowed roles. */
-    public static void requireRole(String... roles) {
-        String role = session().role;
+    public static void requireRole(String ... roles) {
+        String role = SecurityUtil.session().role;
         for (String r : roles) {
-            if (r.equals(role)) return;
+            if (!r.equals(role)) continue;
+            return;
         }
         throw new ForbiddenException("You are not authorized to perform this action");
     }
 
     public static void requireAdmin() {
-        requireRole("ADMIN", "SYSTEM_ADMIN");
+        SecurityUtil.requireRole("ADMIN", "SYSTEM_ADMIN");
     }
 
     public static void requireStaff() {
-        requireRole("ADMIN", "RECEPTIONIST", "DENTIST", "SYSTEM_ADMIN");
+        SecurityUtil.requireRole("ADMIN", "RECEPTIONIST", "DENTIST", "SYSTEM_ADMIN");
     }
 
     public static void requireReceptionOrAdmin() {
-        requireRole("ADMIN", "RECEPTIONIST", "SYSTEM_ADMIN");
+        SecurityUtil.requireRole("ADMIN", "RECEPTIONIST", "SYSTEM_ADMIN");
     }
 
     public static void requirePatient() {
-        requireRole("PATIENT");
+        SecurityUtil.requireRole("PATIENT");
     }
 
     public static boolean isSystemAdmin() {
-        return "SYSTEM_ADMIN".equals(session().role);
+        return "SYSTEM_ADMIN".equals(SecurityUtil.session().role);
     }
 
     public static boolean isAdmin() {
-        String role = session().role;
+        String role = SecurityUtil.session().role;
         return "ADMIN".equals(role) || "SYSTEM_ADMIN".equals(role);
     }
 
     public static int currentId() {
-        return session().id;
+        return SecurityUtil.session().id;
     }
 
     public static String currentRole() {
-        return session().role;
+        return SecurityUtil.session().role;
     }
 
     public static boolean isPatient() {
-        return "PATIENT".equals(session().role);
+        return "PATIENT".equals(SecurityUtil.session().role);
     }
 }
+

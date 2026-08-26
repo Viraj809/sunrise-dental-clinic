@@ -23,11 +23,9 @@ public class ApplicationConfig extends Application {
         classes.add(BillResource.class);
         classes.add(ReportResource.class);
         classes.add(StaffResource.class);
-        classes.add(PatientAuthResource.class);
-        classes.add(QueueResource.class);
         classes.add(ScheduleResource.class);
         classes.add(NotificationResource.class);
-        classes.add(AuditResource.class);
+        classes.add(NoticeResource.class);
         return classes;
     }
 }

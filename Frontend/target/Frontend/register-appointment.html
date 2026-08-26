@@ -5,42 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register Appointment – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
+    <style>
+        .autocomplete-wrapper { position: relative; }
+        .autocomplete-dropdown {
+            display: none;
+            position: absolute;
+            z-index: 50;
+            background: #fff;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            max-height: 220px;
+            overflow-y: auto;
+            width: 100%;
+            box-shadow: var(--card-shadow-lg);
+            top: calc(100% + 4px);
+            left: 0;
+        }
+        .autocomplete-dropdown.active { display: block; }
+        .autocomplete-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background var(--transition);
+        }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .autocomplete-item:hover { background: var(--surface-alt); }
+        .autocomplete-item .ac-name { font-weight: 600; font-size: 0.9rem; }
+        .autocomplete-item .ac-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    </style>
 </head>
 <body>
 <div class="header">
     <h1>Sunrise Dental Clinic</h1>
     <div class="user-info" id="user-info"></div>
 </div>
-<nav class="nav" id="main-nav"></nav>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
 
-<div class="container" style="max-width:760px;">
+<div class="container">
     <div id="toast-container"></div>
 
     <div class="page-header">
-        <div><h2>Register New Appointment</h2><p>Fill in patient and appointment details below</p></div>
-        <a href="/Frontend/view-appointment.html" class="btn btn-ghost btn-sm">← Back to Appointments</a>
+        <div>
+            <h2>Register New Appointment</h2>
+            <p>Fill in patient and appointment details below</p>
+        </div>
+        <a href="/Frontend/view-appointment.html" class="btn btn-ghost">← Back to Appointments</a>
     </div>
 
-    <!-- Step 1: Patient -->
+    <!-- Patient Information -->
     <div class="card">
-        <h2>👤 Step 1: Patient</h2>
-        <div class="form-group" style="margin-bottom:16px;">
+        <h2>Patient Information</h2>
+        <div class="form-group">
             <label>Search Patient by Name</label>
-            <input type="text" id="patientSearch" placeholder="Type patient name..." autocomplete="off" style="width:100%;">
-            <div id="patientAutocomplete" style="display:none;position:absolute;z-index:50;background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);max-height:220px;overflow-y:auto;width:calc(100% - 32px);box-shadow:var(--shadow);"></div>
+            <div class="autocomplete-wrapper">
+                <input type="text" id="patientSearch" placeholder="Type patient name..." autocomplete="off">
+                <div id="patientAutocomplete" class="autocomplete-dropdown"></div>
+            </div>
         </div>
         <div id="patientResult" class="alert" style="display:none;"></div>
 
-        <div id="selectedPatientCard" style="display:none;margin-bottom:16px;" class="alert alert-success">
-            <strong>Selected Patient:</strong> <span id="selectedPatientName"></span><br>
-            <span style="font-size:0.8rem;">NIC: <span id="selectedPatientNic"></span> | Contact: <span id="selectedPatientContact"></span></span>
-            <button class="btn btn-sm btn-ghost" onclick="clearPatientSelection()" style="margin-left:8px;">Clear</button>
+        <div id="selectedPatientCard" class="alert alert-success" style="display:none;">
+            <div>
+                <strong>Selected Patient:</strong> <span id="selectedPatientName"></span><br>
+                <span style="font-size:0.8rem;">NIC: <span id="selectedPatientNic"></span> | Contact: <span id="selectedPatientContact"></span></span>
+            </div>
+            <button class="btn btn-sm btn-ghost" onclick="clearPatientSelection()">Clear</button>
         </div>
 
         <div id="newPatientFields" style="display:none;">
-            <div style="background:var(--info-light);border-left:4px solid var(--info);padding:12px 16px;border-radius:var(--radius);margin-bottom:16px;font-size:0.875rem;color:#164e63;">
-                ℹ️ Patient not found. Please enter new patient details below.
-            </div>
+            <div class="alert alert-info">Patient not found. Please enter new patient details below.</div>
             <div class="form-row">
                 <div class="form-group"><label>Full Name *</label><input type="text" id="newPatientName" placeholder="Patient full name" required></div>
                 <div class="form-group"><label>NIC *</label><input type="text" id="newPatientNic" placeholder="e.g. 901234567V" required></div>
@@ -57,15 +92,14 @@
             </div>
             <div class="form-group"><label>Address</label><input type="text" id="newPatientAddress" placeholder="Home address"></div>
             <div class="form-row">
-                <div class="form-group"><label>Blood Group</label><input type="text" id="newPatientBlood" placeholder="e.g. B+"></div>
                 <div class="form-group"><label>Known Allergies</label><input type="text" id="newPatientAllergies" placeholder="e.g. Penicillin"></div>
             </div>
         </div>
     </div>
 
-    <!-- Step 2: Appointment Details -->
+    <!-- Appointment Details -->
     <div class="card">
-        <h2>📋 Step 2: Appointment Details</h2>
+        <h2>Appointment Details</h2>
         <div id="error-msg" class="alert alert-error" style="display:none;"></div>
         <form id="appointmentForm">
             <div class="form-row">
@@ -83,7 +117,7 @@
                 </div>
             </div>
 
-            <div id="pricePreview" style="display:none;margin-bottom:16px;" class="alert alert-info"></div>
+            <div id="pricePreview" class="alert alert-info" style="display:none;"></div>
 
             <div class="form-row">
                 <div class="form-group">
@@ -107,7 +141,7 @@
             </div>
 
             <div style="display:flex;gap:12px;margin-top:8px;">
-                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">✅ Register Appointment</button>
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">Register Appointment</button>
                 <a href="/Frontend/view-appointment.html" class="btn btn-ghost btn-lg">Cancel</a>
             </div>
         </form>
@@ -121,7 +155,6 @@
     let selectedPatientId = null;
     let treatmentsList = [];
 
-    // Set min date to today
     document.getElementById('appointmentDate').min = new Date().toISOString().split('T')[0];
 
     async function loadDropdowns() {
@@ -156,7 +189,7 @@
         const div = document.getElementById('pricePreview');
         if (t) {
             div.style.display = 'flex';
-            div.innerHTML = `💰 Estimated: Consultation <strong>LKR ${t.consultationFee.toLocaleString()}</strong> + Treatment <strong>LKR ${t.basePrice.toLocaleString()}</strong> + 5% Tax`;
+            div.innerHTML = '💰 Estimated: Consultation <strong>LKR ' + t.consultationFee.toLocaleString() + '</strong> + Treatment <strong>LKR ' + t.basePrice.toLocaleString() + '</strong> + 5% Tax';
         } else {
             div.style.display = 'none';
         }
@@ -172,7 +205,7 @@
             document.getElementById('newPatientFields').style.display = 'none';
             res.className = 'alert alert-success';
             res.style.display = 'flex';
-            res.innerHTML = `✅ Patient found: <strong style="margin-left:6px;">${p.name}</strong>&nbsp;(ID: ${p.patientId}, ${p.contact})`;
+            res.innerHTML = '✅ Patient found: <strong style="margin-left:6px;">' + p.name + '</strong>&nbsp;(ID: ' + p.patientId + ', ' + p.contact + ')';
             document.getElementById('contact').value = p.contact || '';
         } catch (e) {
             selectedPatientId = null;
@@ -193,14 +226,12 @@
             try {
                 const list = await apiGet('/patients/search/' + encodeURIComponent(q));
                 if (!list.length) { box.style.display = 'none'; return; }
-                box.innerHTML = list.map(p => `
-                    <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);"
-                         onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='#fff'"
-                         onclick="selectPatient(${p.patientId}, '${p.name.replace(/'/g,"\\'")}', '${(p.nic || '').replace(/'/g,"\\'")}', '${(p.contact || '').replace(/'/g,"\\'")}')">
-                        <div style="font-weight:600;font-size:0.9rem;">${p.name}</div>
-                        <div style="font-size:0.75rem;color:var(--text-muted);">NIC: ${p.nic || '–'} | Contact: ${p.contact || '–'}</div>
-                    </div>
-                `).join('');
+                box.innerHTML = list.map(p =>
+                    '<div class="autocomplete-item" onclick="selectPatient(' + p.patientId + ', \'' + p.name.replace(/'/g,"\\'") + '\', \'' + (p.nic || '').replace(/'/g,"\\'") + '\', \'' + (p.contact || '').replace(/'/g,"\\'") + '\')">' +
+                        '<div class="ac-name">' + p.name + '</div>' +
+                        '<div class="ac-meta">NIC: ' + (p.nic || '–') + ' | Contact: ' + (p.contact || '–') + '</div>' +
+                    '</div>'
+                ).join('');
                 box.style.display = 'block';
             } catch (e) { box.style.display = 'none'; }
         }, 200);
@@ -242,7 +273,6 @@
 
         let patientId = selectedPatientId;
 
-        // Register new patient if needed
         if (patientId == null) {
             const name    = document.getElementById('newPatientName').value.trim();
             const nic     = document.getElementById('newPatientNic').value.trim();
@@ -250,13 +280,13 @@
             if (!name || !nic || !contact) {
                 errorDiv.textContent = 'Patient Name, NIC and Contact are required for new patients.';
                 errorDiv.style.display = 'flex';
-                btn.disabled = false; btn.textContent = '✅ Register Appointment';
+                btn.disabled = false; btn.textContent = 'Register Appointment';
                 return;
             }
             if (!/^0\d{9}$/.test(contact)) {
                 errorDiv.textContent = 'Contact number must be 10 digits starting with 0.';
                 errorDiv.style.display = 'flex';
-                btn.disabled = false; btn.textContent = '✅ Register Appointment';
+                btn.disabled = false; btn.textContent = 'Register Appointment';
                 return;
             }
             try {
@@ -268,7 +298,6 @@
                     gender:      document.getElementById('newPatientGender').value,
                     address:     document.getElementById('newPatientAddress').value,
                     email:       document.getElementById('newPatientEmail').value,
-                    bloodGroup:  document.getElementById('newPatientBlood').value,
                     allergies:   document.getElementById('newPatientAllergies').value
                 };
                 const created = await apiPost('/patients', np);
@@ -278,7 +307,7 @@
             } catch (err) {
                 errorDiv.textContent = 'Failed to register patient: ' + (err.message || 'Unknown error');
                 errorDiv.style.display = 'flex';
-                btn.disabled = false; btn.textContent = '✅ Register Appointment';
+                btn.disabled = false; btn.textContent = 'Register Appointment';
                 return;
             }
         }
@@ -288,7 +317,7 @@
         if (!/^0\d{9}$/.test(contact)) {
             errorDiv.textContent = 'Contact number must be 10 digits starting with 0.';
             errorDiv.style.display = 'flex';
-            btn.disabled = false; btn.textContent = '✅ Register Appointment';
+            btn.disabled = false; btn.textContent = 'Register Appointment';
             return;
         }
 
@@ -306,7 +335,7 @@
         if (!data.dentistId || !data.treatmentType || !data.appointmentDate || !data.appointmentTime) {
             errorDiv.textContent = 'Please fill in all required appointment fields.';
             errorDiv.style.display = 'flex';
-            btn.disabled = false; btn.textContent = '✅ Register Appointment';
+            btn.disabled = false; btn.textContent = 'Register Appointment';
             return;
         }
 
@@ -315,25 +344,25 @@
             if (res.error) {
                 errorDiv.textContent = res.error;
                 errorDiv.style.display = 'flex';
-                btn.disabled = false; btn.textContent = '✅ Register Appointment';
+                btn.disabled = false; btn.textContent = 'Register Appointment';
             } else {
                 const dentistName = document.getElementById('dentistId').selectedOptions[0]?.textContent || '–';
                 const treatmentName = document.getElementById('treatmentType').selectedOptions[0]?.textContent || '–';
                 errorDiv.style.display = 'none';
-                const successHtml = `
-                    <h3 style="margin:0 0 10px;color:var(--success);">🎉 Appointment Registered Successfully!</h3>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.875rem;margin-bottom:12px;">
-                        <div><strong>Appointment No:</strong> ${res.appointmentNo}</div>
-                        <div><strong>Patient:</strong> ${document.getElementById('patientSearch').value || '–'}</div>
-                        <div><strong>Dentist:</strong> ${dentistName}</div>
-                        <div><strong>Date:</strong> ${data.appointmentDate}</div>
-                        <div><strong>Time:</strong> ${data.appointmentTime.substring(0,5)}</div>
-                        <div><strong>Treatment:</strong> ${treatmentName}</div>
-                    </div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <a href="/Frontend/view-appointment.html?no=${res.appointmentNo}" class="btn btn-sm btn-primary">View Appointment</a>
-                        <button class="btn btn-sm btn-ghost" onclick="resetForm()">Register Another</button>
-                    </div>`;
+                const successHtml =
+                    '<h3 style="margin:0 0 10px;color:var(--success);">🎉 Appointment Registered Successfully!</h3>' +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.875rem;margin-bottom:12px;">' +
+                        '<div><strong>Appointment No:</strong> ' + res.appointmentNo + '</div>' +
+                        '<div><strong>Patient:</strong> ' + (document.getElementById('patientSearch').value || '–') + '</div>' +
+                        '<div><strong>Dentist:</strong> ' + dentistName + '</div>' +
+                        '<div><strong>Date:</strong> ' + data.appointmentDate + '</div>' +
+                        '<div><strong>Time:</strong> ' + data.appointmentTime.substring(0,5) + '</div>' +
+                        '<div><strong>Treatment:</strong> ' + treatmentName + '</div>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+                        '<a href="/Frontend/view-appointment.html?no=' + res.appointmentNo + '" class="btn btn-sm btn-primary">View Appointment</a>' +
+                        '<button class="btn btn-sm btn-ghost" onclick="resetForm()">Register Another</button>' +
+                    '</div>';
                 const existing = document.getElementById('apptSuccess');
                 if (existing) { existing.innerHTML = successHtml; existing.style.display = 'flex'; }
                 else {
@@ -344,12 +373,12 @@
                     div.style.display = 'flex';
                     document.getElementById('appointmentForm').parentElement.insertBefore(div, document.getElementById('appointmentForm'));
                 }
-                btn.disabled = false; btn.textContent = '✅ Register Appointment';
+                btn.disabled = false; btn.textContent = 'Register Appointment';
             }
         } catch (e) {
             errorDiv.textContent = 'Failed to register appointment. Check that the backend is running.';
             errorDiv.style.display = 'flex';
-            btn.disabled = false; btn.textContent = '✅ Register Appointment';
+            btn.disabled = false; btn.textContent = 'Register Appointment';
         }
     });
 

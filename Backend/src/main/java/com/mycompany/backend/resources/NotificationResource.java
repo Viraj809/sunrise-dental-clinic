@@ -1,8 +1,8 @@
 package com.mycompany.backend.resources;
 
-import Model.Notification;
-import DAO.NotificationDAO;
-import Service.SecurityUtil;
+import model.Notification;
+import dao.NotificationDAO;
+import service.SecurityUtil;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;

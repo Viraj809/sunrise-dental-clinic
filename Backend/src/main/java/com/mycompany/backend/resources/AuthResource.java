@@ -1,11 +1,10 @@
 package com.mycompany.backend.resources;
 
-import Model.Staff;
-import Model.Patient;
-import DAO.StaffDAO;
-import DAO.PatientDAO;
-import Service.TokenManager;
-import Service.AuditService;
+import model.Staff;
+import model.Patient;
+import dao.StaffDAO;
+import dao.PatientDAO;
+import service.TokenManager;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -44,44 +43,15 @@ public class AuthResource {
         // 1) Try staff accounts (ADMIN / RECEPTIONIST / DENTIST)
         Staff staff = staffDao.findByEmail(email);
         if (staff != null) {
-            String hash = staff.getPasswordHash();
-            if (hash != null && hash.startsWith("$2b$")) {
-                hash = "$2a$" + hash.substring(4);
-            }
-            if (hash == null || !org.mindrot.jbcrypt.BCrypt.checkpw(password, hash)) {
+            String stored = staff.getPassword();
+            if (stored == null || !stored.equals(password)) {
                 return Response.status(401)
                         .header("Access-Control-Allow-Origin", "*")
                         .entity(error("Invalid email or password")).build();
             }
             String token = TokenManager.getInstance().createStaff(staff.getStaffId(), staff.getRole());
-            AuditService.getInstance().log("LOGIN", "staff", staff.getStaffId(),
-                    staff.getStaffId(), staff.getRole(), "Staff login: " + staff.getEmail());
             return buildTokenResponse(token, staff.getRole(), staff.getName(),
                     staff.getStaffId(), email, 0);
-        }
-
-        // 2) Try patient self-service accounts
-        Patient patient = patientDao.findByEmail(email);
-        if (patient != null) {
-            if (!patient.isActive()) {
-                return Response.status(403)
-                        .header("Access-Control-Allow-Origin", "*")
-                        .entity(error("Your account is deactivated. Please contact the clinic.")).build();
-            }
-            String hash = patient.getPasswordHash();
-            if (hash != null && hash.startsWith("$2b$")) {
-                hash = "$2a$" + hash.substring(4);
-            }
-            if (hash == null || !org.mindrot.jbcrypt.BCrypt.checkpw(password, hash)) {
-                return Response.status(401)
-                        .header("Access-Control-Allow-Origin", "*")
-                        .entity(error("Invalid email or password")).build();
-            }
-            String token = TokenManager.getInstance().createPatient(patient.getPatientId());
-            AuditService.getInstance().log("LOGIN", "patients", patient.getPatientId(),
-                    patient.getPatientId(), "PATIENT", "Patient login: " + patient.getEmail());
-            return buildTokenResponse(token, "PATIENT", patient.getName(),
-                    0, email, patient.getPatientId());
         }
 
         return Response.status(401)
@@ -107,8 +77,6 @@ public class AuthResource {
             String token = authHeader.substring(7).trim();
             TokenManager.Session session = TokenManager.getInstance().resolve(token);
             if (session != null) {
-                AuditService.getInstance().log("LOGOUT", "system", session.id,
-                        session.id, session.role, "Logout");
             }
             TokenManager.getInstance().remove(token);
         }

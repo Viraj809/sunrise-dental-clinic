@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notice Board Management – Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+    <style>
+        .td-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
+
+<div class="container">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Notice Board Management</h2>
+            <p>Create and manage clinic-wide notices</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openNoticeModal()">Add Notice</button>
+    </div>
+
+    <div class="card">
+        <div class="table-wrapper">
+            <table class="table" id="noticeTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Priority</th>
+                        <th>Target Role</th>
+                        <th>Status</th>
+                        <th>Expiry Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Notice Modal -->
+<div id="noticeModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <h3 id="noticeModalTitle">Add Notice</h3>
+        <form id="noticeForm" onsubmit="saveNotice(event)">
+            <input type="hidden" id="noticeId">
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="noticeTitle" required placeholder="Enter notice title">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="noticeDescription" rows="3" placeholder="Enter notice description"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="noticePriority">
+                        <option value="General">General</option>
+                        <option value="Important">Important</option>
+                        <option value="Urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Role</label>
+                    <select id="noticeTargetRole">
+                        <option value="ALL">ALL</option>
+                        <option value="ADMIN">ADMIN</option>
+                        <option value="DENTIST">DENTIST</option>
+                        <option value="RECEPTIONIST">RECEPTIONIST</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="noticeStatus">
+                        <option value="Published">Published</option>
+                        <option value="Unpublished">Unpublished</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Expiry Date</label>
+                    <input type="date" id="noticeExpiryDate">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" onclick="closeNoticeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Notice</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['ADMIN', 'SYSTEM_ADMIN']);
+
+    async function loadNotices() {
+        try {
+            const notices = await apiGet('/notices');
+            const tbody = document.querySelector('#noticeTable tbody');
+            if (!notices || notices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">No notices found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = notices.map(n => `
+                <tr>
+                    <td>${n.noticeId}</td>
+                    <td><strong>${escapeHtml(n.title)}</strong></td>
+                    <td><span class="badge ${n.priority === 'Urgent' ? 'badge-danger' : n.priority === 'Important' ? 'badge-warning' : 'badge-info'}">${n.priority || 'General'}</span></td>
+                    <td>${n.targetRole || '-'}</td>
+                    <td><span class="badge ${n.status === 'Published' ? 'badge-success' : 'badge-pending'}">${n.status || '-'}</span></td>
+                    <td>${n.expiryDate || '-'}</td>
+                    <td>
+                        <div class="td-actions">
+                            <button class="btn btn-sm btn-ghost" onclick="editNotice(${n.noticeId})">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteNotice(${n.noticeId}, '${escapeHtml(n.title).replace(/'/g, "\\'")}')">Delete</button>
+                            <button class="btn btn-sm ${n.status === 'Published' ? 'btn-warning' : 'btn-success'}" onclick="toggleNoticeStatus(${n.noticeId}, '${n.status}')">
+                                ${n.status === 'Published' ? 'Unpublish' : 'Publish'}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            const tbody = document.querySelector('#noticeTable tbody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Failed to load notices</td></tr>';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function openNoticeModal(notice) {
+        document.getElementById('noticeModal').style.display = 'flex';
+        document.getElementById('noticeModalTitle').textContent = notice ? 'Edit Notice' : 'Add Notice';
+        document.getElementById('noticeId').value = notice ? notice.noticeId : '';
+        document.getElementById('noticeTitle').value = notice ? notice.title : '';
+        document.getElementById('noticeDescription').value = notice ? notice.description : '';
+        document.getElementById('noticePriority').value = notice ? (notice.priority || 'General') : 'General';
+        document.getElementById('noticeTargetRole').value = notice ? (notice.targetRole || 'ALL') : 'ALL';
+        document.getElementById('noticeStatus').value = notice ? (notice.status || 'Unpublished') : 'Unpublished';
+        document.getElementById('noticeExpiryDate').value = notice ? (notice.expiryDate || '') : '';
+    }
+
+    function closeNoticeModal() {
+        document.getElementById('noticeModal').style.display = 'none';
+        document.getElementById('noticeForm').reset();
+    }
+
+    async function saveNotice(e) {
+        e.preventDefault();
+        const id = document.getElementById('noticeId').value;
+        const data = {
+            title: document.getElementById('noticeTitle').value,
+            description: document.getElementById('noticeDescription').value,
+            priority: document.getElementById('noticePriority').value,
+            targetRole: document.getElementById('noticeTargetRole').value,
+            status: document.getElementById('noticeStatus').value,
+            expiryDate: document.getElementById('noticeExpiryDate').value || null,
+            publishDate: new Date().toISOString().split('T')[0]
+        };
+
+        try {
+            if (id) {
+                await apiPut('/notices/' + id, data);
+                showToast('Notice updated');
+            } else {
+                await apiPost('/notices', data);
+                showToast('Notice created');
+            }
+            closeNoticeModal();
+            loadNotices();
+        } catch (e) {
+            showToast('Failed to save notice', 'error');
+        }
+    }
+
+    async function editNotice(id) {
+        try {
+            const notice = await apiGet('/notices/' + id);
+            openNoticeModal(notice);
+        } catch (e) {
+            showToast('Failed to load notice', 'error');
+        }
+    }
+
+    async function deleteNotice(id, title) {
+        if (!confirm('Are you sure you want to delete notice "' + title + '"?\n\nThis action cannot be undone.')) return;
+        try {
+            await apiDelete('/notices/' + id);
+            showToast('Notice deleted');
+            loadNotices();
+        } catch (e) { showToast('Failed to delete notice', 'error'); }
+    }
+
+    async function toggleNoticeStatus(id, currentStatus) {
+        const newStatus = currentStatus === 'Published' ? 'Unpublished' : 'Published';
+        try {
+            const notice = await apiGet('/notices/' + id);
+            notice.status = newStatus;
+            await apiPut('/notices/' + id, notice);
+            showToast('Notice ' + (newStatus === 'Published' ? 'published' : 'unpublished'));
+            loadNotices();
+        } catch (e) { showToast('Failed to update notice status', 'error'); }
+    }
+
+    loadNotices();
+</script>
+</body>
+</html>

@@ -11,30 +11,42 @@
     <h1>Sunrise Dental Clinic</h1>
     <div class="user-info" id="user-info"></div>
 </div>
-<nav class="nav" id="main-nav"></nav>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
 
 <div class="container">
     <div id="toast-container"></div>
 
     <div class="page-header">
-        <div><h2>Patient Management</h2><p>Search, view and manage patient records</p></div>
+        <div>
+            <h2>Patient Management</h2>
+            <p>Search, view and manage patient records</p>
+        </div>
         <a href="/Frontend/add-patient.html" class="btn btn-primary">➕ Add New Patient</a>
     </div>
 
+    <div class="card card-stat">
+        <div class="stat-icon">👥</div>
+        <div class="stat-body">
+            <div class="stat-value" id="totalPatients">0</div>
+            <div class="stat-label">Total Patients</div>
+        </div>
+    </div>
+
     <div class="card">
-        <div class="search-bar" style="margin-bottom:8px;">
-            <input type="text" id="searchInput" placeholder="Search by name, NIC or contact..."
-                   oninput="filterPatients()" style="flex:1;">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search by name, NIC or contact..." oninput="filterPatients()">
             <button class="btn btn-ghost" onclick="clearSearch()">Clear</button>
         </div>
-        <p id="resultCount" style="font-size:0.875rem;color:var(--text-muted);margin-bottom:16px;"></p>
+        <p id="resultCount"></p>
 
         <div class="table-wrapper">
             <table class="table" id="patientTable">
                 <thead>
-                    <tr><th>ID</th><th>Name</th><th>NIC</th><th>Contact</th><th>Email</th><th>Blood</th><th>Actions</th></tr>
+                    <tr><th>ID</th><th>Name</th><th>NIC</th><th>Contact</th><th>Email</th><th>Actions</th></tr>
                 </thead>
-                <tbody><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tr></tbody>
+                <tbody><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tbody>
             </table>
         </div>
     </div>
@@ -50,6 +62,7 @@
     async function loadPatients() {
         try {
             allPatients = await apiGet('/patients');
+            document.getElementById('totalPatients').textContent = allPatients.length;
             renderTable(allPatients);
         } catch (e) { showToast('Failed to load patients', 'error'); }
     }
@@ -80,11 +93,10 @@
                 <td>${p.nic}</td>
                 <td>${p.contact}</td>
                 <td>${p.email || '–'}</td>
-                <td>${p.bloodGroup || '–'}</td>
-                <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                <td>
                     <a href="/Frontend/edit-patient.html?patient_id=${p.patientId}" class="btn btn-sm btn-warning">✏️ Edit</a>
                     <a href="/Frontend/patient-history.html?patient_id=${p.patientId}" class="btn btn-sm btn-ghost">📁 History</a>
-                    <a href="/Frontend/register-appointment.html" class="btn btn-sm btn-primary" 
+                    <a href="/Frontend/register-appointment.html" class="btn btn-sm btn-primary"
                        onclick="localStorage.setItem('quickNic','${p.nic}')">📅 Book</a>
                     ${(role === 'ADMIN' || role === 'SYSTEM_ADMIN') ? `<button class="btn btn-sm btn-danger" onclick="deletePatient(${p.patientId}, '${p.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>` : ''}
                 </td>

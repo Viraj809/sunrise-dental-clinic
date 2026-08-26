@@ -1,11 +1,10 @@
 package com.mycompany.backend.resources;
 
-import Model.Patient;
-import DAO.PatientDAO;
-import Service.SecurityUtil;
-import Service.AuditService;
-import Validation.NICValidator;
-import Validation.ContactNumberValidator;
+import model.Patient;
+import dao.PatientDAO;
+import service.SecurityUtil;
+import validation.NICValidator;
+import validation.ContactNumberValidator;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -71,7 +70,6 @@ public class PatientResource {
         Patient p = dao.findById(id);
         if (p == null) return Response.status(404).entity(error("Patient not found")).build();
         if (dao.delete(id)) {
-            AuditService.getInstance().logCurrent("DELETE", "patients", id, "Patient deleted: " + p.getName());
             return Response.ok(success("Patient deleted successfully")).build();
         }
         return Response.status(500).entity(error("Failed to delete patient")).build();
@@ -95,31 +93,6 @@ public class PatientResource {
             return Response.ok(patient).build();
         }
         return Response.status(500).entity(error("Failed to update profile")).build();
-    }
-
-    @PUT
-    @Path("/me/password")
-    public Response changePassword(Map<String, String> body) {
-        SecurityUtil.requirePatient();
-        String current = body.get("currentPassword");
-        String next = body.get("newPassword");
-        if (current == null || next == null) {
-            return Response.status(400).entity(error("Both current and new password are required")).build();
-        }
-        Patient p = dao.findById(SecurityUtil.currentId());
-        String currentHash = p.getPasswordHash();
-        if (currentHash != null && currentHash.startsWith("$2b$")) {
-            currentHash = "$2a$" + currentHash.substring(4);
-        }
-        if (p == null || currentHash == null
-                || !org.mindrot.jbcrypt.BCrypt.checkpw(current, currentHash)) {
-            return Response.status(400).entity(error("Current password is incorrect")).build();
-        }
-        String hash = org.mindrot.jbcrypt.BCrypt.hashpw(next, org.mindrot.jbcrypt.BCrypt.gensalt());
-        if (dao.updatePassword(p.getPatientId(), hash)) {
-            return Response.ok(success("Password changed successfully")).build();
-        }
-        return Response.status(500).entity(error("Failed to change password")).build();
     }
 
     @POST

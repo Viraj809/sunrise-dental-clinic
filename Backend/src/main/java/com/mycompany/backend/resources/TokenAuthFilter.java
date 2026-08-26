@@ -1,6 +1,6 @@
 package com.mycompany.backend.resources;
 
-import Service.TokenManager;
+import service.TokenManager;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.Response;
@@ -12,7 +12,7 @@ import jakarta.ws.rs.ext.Provider;
  * Enforces authentication on every protected JAX-RS endpoint. It validates the
  * {@code Authorization: Bearer <token>} header against the server-side
  * {@link TokenManager} registry, attaches the resolved {@link TokenManager.Session}
- * to the request thread (for {@link Service.SecurityUtil} RBAC checks), and
+ * to the request thread (for {@link service.SecurityUtil} RBAC checks), and
  * applies a small set of coarse path-based guards as defence-in-depth. Fine
  * grained, resource-level authorization is still performed inside each resource.
  *
@@ -32,6 +32,11 @@ public class TokenAuthFilter implements ContainerRequestFilter {
         if ("OPTIONS".equalsIgnoreCase(requestContext.getMethod())
                 || path.contains("auth/login")
                 || path.contains("auth/patient/register")) {
+            return;
+        }
+
+        // Allow public health check or static resources if needed
+        if (path.startsWith("public") || path.endsWith(".html") || path.endsWith(".css") || path.endsWith(".js") || path.endsWith(".png") || path.endsWith(".jpg")) {
             return;
         }
 
@@ -60,7 +65,7 @@ public class TokenAuthFilter implements ContainerRequestFilter {
     }
 
     private boolean coarseAllowed(String path, String method, String role) {
-        // Patient self-service endpoints – only the patient themselves.
+        // Patient self-service endpoints â€“ only the patient themselves.
         if (path.startsWith("patients/me") && !"PATIENT".equals(role)) return false;
         if (path.startsWith("patient/") && !"PATIENT".equals(role)) return false;
 

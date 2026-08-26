@@ -1,6 +1,6 @@
 package com.mycompany.backend.resources;
 
-import Service.TokenManager;
+import service.TokenManager;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;

@@ -1,13 +1,10 @@
 package com.mycompany.backend.resources;
 
-import Model.Dentist;
-import Model.Staff;
-import DAO.DentistDAO;
-import DAO.StaffDAO;
-import Service.SecurityUtil;
-import Service.AuditService;
-import Validation.NICValidator;
-import Validation.ContactNumberValidator;
+import model.Dentist;
+import dao.DentistDAO;
+import service.SecurityUtil;
+import validation.NICValidator;
+import validation.ContactNumberValidator;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -20,7 +17,6 @@ import java.util.stream.Collectors;
 public class DentistResource {
 
     private final DentistDAO dao = new DentistDAO();
-    private final StaffDAO   staffDao = new StaffDAO();
 
     @GET
     public Response getAll() {
@@ -88,7 +84,6 @@ public class DentistResource {
         }
         dentist.setActive(true);
         if (dao.insert(dentist)) {
-            AuditService.getInstance().logCurrent("INSERT", "dentists", dentist.getDentistId(), "Dentist added: " + dentist.getName());
             return Response.ok(dentist).build();
         }
         return Response.status(500).entity(error("Failed to add dentist")).build();
@@ -113,20 +108,10 @@ public class DentistResource {
         }
         String nicErr = NICValidator.validate(nic);
         if (nicErr != null) return Response.status(400).entity(error(nicErr)).build();
-        if (staffDao.findByNic(nic) != null) {
-            return Response.status(400).entity(error("This NIC number is already registered")).build();
-        }
         String contactErr = ContactNumberValidator.validate(contact != null ? contact : "");
         if (contactErr != null) return Response.status(400).entity(error(contactErr)).build();
-        if (contact != null && !contact.trim().isEmpty() && staffDao.findByContact(contact) != null) {
-            return Response.status(400).entity(error("This contact number is already registered")).build();
-        }
-        if (staffDao.findByEmail(email) != null) {
-            return Response.status(400)
-                    .entity(error("A login account with email " + email + " already exists")).build();
-        }
         if (rawPassword == null || rawPassword.isEmpty()) {
-            rawPassword = "dentist123";
+            rawPassword = "Dentist@123";
         }
 
         Dentist d = new Dentist();
@@ -135,6 +120,7 @@ public class DentistResource {
         d.setContact(contact != null ? contact : "");
         d.setEmail(email);
         d.setNic(nic);
+        d.setPassword(rawPassword);
         d.setAvailableDays(availableDays != null ? availableDays : "");
         d.setActive(true);
         if (!dao.insert(d)) {
@@ -149,23 +135,8 @@ public class DentistResource {
         }
         dao.saveAvailableDays(d.getDentistId(), days);
 
-        String hash = org.mindrot.jbcrypt.BCrypt.hashpw(rawPassword, org.mindrot.jbcrypt.BCrypt.gensalt());
-        Staff s = new Staff();
-        s.setName(name);
-        s.setEmail(email);
-        s.setContact(contact != null ? contact : "");
-        s.setNic(nic);
-        s.setPasswordHash(hash);
-        s.setRole("DENTIST");
-        s.setShiftHours("09:00 - 17:00");
-        s.setActive(true);
-        if (!staffDao.insert(s)) {
-            return Response.status(500)
-                    .entity(error("Dentist saved, but failed to create the login account")).build();
-        }
-
         Map<String, Object> res = new HashMap<>();
-        res.put("message", "Dentist and login account created successfully");
+        res.put("message", "Dentist added successfully");
         res.put("email", email);
         res.put("password", rawPassword);
         return Response.ok(res).build();
@@ -173,27 +144,52 @@ public class DentistResource {
 
     @PUT
     @Path("/{id}")
-    public Response update(@PathParam("id") int id, Dentist dentist) {
+    public Response update(@PathParam("id") int id, Map<String, String> body) {
         SecurityUtil.requireAdmin();
-        dentist.setDentistId(id);
-        if (dentist.getNic() != null && !dentist.getNic().trim().isEmpty()) {
-            String nicErr = NICValidator.validate(dentist.getNic());
+        Dentist existing = dao.findById(id);
+        if (existing == null) return Response.status(404).entity(error("Dentist not found")).build();
+
+        String name = body.get("name");
+        String specialization = body.get("specialization");
+        String nic = body.get("nic");
+        String contact = body.get("contact");
+        String email = body.get("email");
+        String availableDays = body.get("availableDays");
+        String password = body.get("password");
+        String activeStr = body.get("active");
+
+        if (nic != null && !nic.trim().isEmpty()) {
+            String nicErr = NICValidator.validate(nic);
             if (nicErr != null) return Response.status(400).entity(error(nicErr)).build();
         }
-        if (dentist.getContact() != null && !dentist.getContact().trim().isEmpty()) {
-            String contactErr = ContactNumberValidator.validate(dentist.getContact());
+        if (contact != null && !contact.trim().isEmpty()) {
+            String contactErr = ContactNumberValidator.validate(contact);
             if (contactErr != null) return Response.status(400).entity(error(contactErr)).build();
         }
-        if (dao.update(dentist)) {
+
+        existing.setName(name != null ? name : existing.getName());
+        existing.setSpecialization(specialization != null ? specialization : existing.getSpecialization());
+        existing.setNic(nic != null ? nic : existing.getNic());
+        existing.setContact(contact != null ? contact : existing.getContact());
+        existing.setEmail(email != null ? email : existing.getEmail());
+        existing.setAvailableDays(availableDays != null ? availableDays : existing.getAvailableDays());
+        if (password != null && !password.isEmpty()) {
+            existing.setPassword(password);
+        }
+        if (activeStr != null) {
+            existing.setActive(Boolean.parseBoolean(activeStr));
+        }
+
+        if (dao.update(existing)) {
             List<String> days = new ArrayList<>();
-            if (dentist.getAvailableDays() != null && !dentist.getAvailableDays().trim().isEmpty()) {
-                for (String s : dentist.getAvailableDays().split(",")) {
+            if (existing.getAvailableDays() != null && !existing.getAvailableDays().trim().isEmpty()) {
+                for (String s : existing.getAvailableDays().split(",")) {
                     String t = s.trim();
                     if (!t.isEmpty()) days.add(t);
                 }
             }
             dao.saveAvailableDays(id, days);
-            return Response.ok(dentist).build();
+            return Response.ok(existing).build();
         }
         return Response.status(500).entity(error("Failed to update dentist")).build();
     }
@@ -208,7 +204,6 @@ public class DentistResource {
             return Response.status(400).entity(error("Cannot delete dentist with existing appointments. Cancel or reassign appointments first.")).build();
         }
         if (dao.delete(id)) {
-            AuditService.getInstance().logCurrent("DELETE", "dentists", id, "Dentist deleted: " + d.getName());
             return Response.ok(success("Dentist deleted successfully")).build();
         }
         return Response.status(500).entity(error("Failed to delete dentist")).build();

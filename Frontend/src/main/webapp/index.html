@@ -5,28 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
+    <style>
+        .landing-hero {
+            background: linear-gradient(135deg, #0f1c3f 0%, #1e3a8a 45%, #2563eb 100%);
+            border-radius: var(--radius-xl); padding: 60px 40px; color: #ffffff;
+            text-align: center; position: relative; overflow: hidden;
+            box-shadow: var(--card-shadow-lg); margin-bottom: 28px;
+        }
+        .landing-hero::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%);
+        }
+        .landing-hero h1 { font-size: 2.8rem; font-weight: 800; margin: 0 0 12px; position: relative; }
+        .landing-hero p { font-size: 1.1rem; opacity: 0.92; margin: 0 auto 24px; max-width: 600px; position: relative; }
+        .landing-logo { font-size: 3.5rem; margin-bottom: 16px; display: block; position: relative; }
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+        .service-card {
+            background: var(--surface); border-radius: var(--radius-lg); padding: 22px;
+            border: 1px solid var(--border); box-shadow: var(--card-shadow); text-align: center;
+            transition: all var(--transition);
+        }
+        .service-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-lg); border-color: var(--primary); }
+        .service-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+        .service-card h3 { font-size: 1rem; font-weight: 700; margin: 0 0 6px; color: var(--text-primary); }
+        .service-card p { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
+    </style>
 </head>
 <body>
     <div class="header">
         <h1>Sunrise Dental Clinic</h1>
-        <p>Colombo's trusted dental care since 2010</p>
     </div>
+
     <div class="container">
-        <div class="card" style="text-align:center; padding:60px 20px;">
-            <h2>Welcome to Sunrise Dental Clinic</h2>
-            <p style="margin:20px 0;">Patient & Appointment Management System</p>
-            <a href="/Frontend/login.html" class="btn btn-primary" style="font-size:1.1rem; padding:14px 40px;">Login to System</a>
+        <div class="landing-hero">
+            <span class="landing-logo">🦷</span>
+            <h1>Sunrise Dental Clinic</h1>
+            <p>Your Smile, Our Care. Modern dental management for a modern practice.</p>
+            <a href="/Frontend/login.html" class="btn btn-primary btn-lg" style="position:relative;">Login to System</a>
         </div>
+
         <div class="card">
-            <h3>Our Services</h3>
-            <ul style="margin-top:12px; padding-left:20px;">
-                <li>General Dentistry & Checkups</li>
-                <li>Root Canal Treatment</li>
-                <li>Teeth Cleaning & Whitening</li>
-                <li>Dental Implants & Crowns</li>
-                <li>Orthodontics (Braces)</li>
-                <li>Oral Surgery</li>
-            </ul>
+            <h2 style="text-align:center;margin-bottom:20px;">Our Services</h2>
+            <div class="services-grid">
+                <div class="service-card"><span class="service-icon">🪥</span><h3>General Dentistry</h3><p>Checkups, cleanings, and preventive care</p></div>
+                <div class="service-card"><span class="service-icon">🦴</span><h3>Root Canal Treatment</h3><p>Expert endodontic care for damaged teeth</p></div>
+                <div class="service-card"><span class="service-icon">✨</span><h3>Teeth Whitening</h3><p>Professional whitening for a brighter smile</p></div>
+                <div class="service-card"><span class="service-icon">🦷</span><h3>Dental Implants</h3><p>Permanent solutions for missing teeth</p></div>
+                <div class="service-card"><span class="service-icon">🔧</span><h3>Orthodontics</h3><p>Braces and alignment treatments</p></div>
+                <div class="service-card"><span class="service-icon">🏥</span><h3>Oral Surgery</h3><p>Safe surgical procedures by experts</p></div>
+            </div>
         </div>
     </div>
 </body>

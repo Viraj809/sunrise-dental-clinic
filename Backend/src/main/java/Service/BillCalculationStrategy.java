@@ -1,6 +1,6 @@
-package Service;
+package service;
 
-// Strategy pattern interface: different bill calculation algorithms
 public interface BillCalculationStrategy {
-    double calculateTreatmentFee(double basePrice, int patientAge);
+    public double calculateTreatmentFee(double var1, int var3);
 }
+

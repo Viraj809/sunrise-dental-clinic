@@ -11,20 +11,32 @@
     <h1>Sunrise Dental Clinic</h1>
     <div class="user-info" id="user-info"></div>
 </div>
-<nav class="nav" id="main-nav"></nav>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
 
 <div class="container">
     <div id="toast-container"></div>
 
     <div class="page-header">
-        <div><h2>Treatment Management</h2><p>View, add, edit and price treatment types</p></div>
+        <div>
+            <h2>Treatment Management</h2>
+            <p>View, add, edit and price treatment types</p>
+        </div>
         <button class="btn btn-primary" onclick="openModal()">➕ Add Treatment</button>
     </div>
 
-    <div class="card" style="margin-bottom:20px;">
+    <div class="card card-stat">
+        <div class="stat-icon">🩺</div>
+        <div class="stat-body">
+            <div class="stat-value" id="totalTreatments">0</div>
+            <div class="stat-label">Total Treatments</div>
+        </div>
+    </div>
+
+    <div class="card">
         <div class="search-bar">
-            <input type="text" id="treatmentSearch" placeholder="Search by treatment name or code..."
-                   oninput="filterTreatments()" style="flex:1;">
+            <input type="text" id="treatmentSearch" placeholder="Search by treatment name or code..." oninput="filterTreatments()">
             <button class="btn btn-ghost" onclick="clearSearch()">Clear</button>
         </div>
     </div>
@@ -34,7 +46,7 @@
         <div class="table-wrapper">
             <table class="table" id="treatmentTable">
                 <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Consultation (LKR)</th><th>Treatment (LKR)</th><th>Duration</th><th>Actions</th></tr></thead>
-                <tbody><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr></tbody>
+                <tbody><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tbody>
             </table>
         </div>
     </div>
@@ -87,12 +99,12 @@
     requireAuth(['ADMIN', 'SYSTEM_ADMIN']);
 
     let editingCode = null;
-
     let allTreatments = [];
 
     async function loadTreatments() {
         try {
             allTreatments = await apiGet('/treatments');
+            document.getElementById('totalTreatments').textContent = allTreatments.length;
             renderTable(allTreatments);
         } catch (e) { showToast('Failed to load treatments', 'error'); }
     }
@@ -111,7 +123,7 @@
                 <td>LKR ${Number(t.consultationFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
                 <td>LKR ${Number(t.basePrice).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
                 <td>${t.durationMinutes ? t.durationMinutes + ' min' : '–'}</td>
-                <td style="display:flex;gap:6px;">
+                <td>
                     <button class="btn btn-sm btn-warning" onclick="openEditModal('${t.treatmentCode}')">✏️ Edit</button>
                     <button class="btn btn-sm btn-danger" onclick="deleteTreatment('${t.treatmentCode}')">🗑️ Delete</button>
                 </td>

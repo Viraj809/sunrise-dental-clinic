@@ -1,9 +1,12 @@
-package Service;
+package service;
 
-// Standard billing: full base price
-public class StandardBillStrategy implements BillCalculationStrategy {
+import service.BillCalculationStrategy;
+
+public class StandardBillStrategy
+implements BillCalculationStrategy {
     @Override
     public double calculateTreatmentFee(double basePrice, int patientAge) {
         return basePrice;
     }
 }
+

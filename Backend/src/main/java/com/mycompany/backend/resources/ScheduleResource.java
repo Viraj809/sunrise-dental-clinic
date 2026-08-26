@@ -1,8 +1,8 @@
 package com.mycompany.backend.resources;
 
-import Model.DentistSchedule;
-import DAO.DentistScheduleDAO;
-import Service.SecurityUtil;
+import model.DentistSchedule;
+import dao.DentistScheduleDAO;
+import service.SecurityUtil;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;

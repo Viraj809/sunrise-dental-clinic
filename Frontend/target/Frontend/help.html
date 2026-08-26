@@ -6,215 +6,58 @@
     <title>Help & User Guide – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
     <style>
-        /* ── Modern Premium UI/UX Styles (Resized) ── */
-        body { background: #f4f7f9; }
-        
-        .help-container {
-            max-width: 1100px; /* කලින් 1250px තිබුණේ */
-            margin: 0 auto;
-            padding-bottom: 50px;
-        }
-
-        /* Modern Hero Section */
         .help-hero {
-            position: relative;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            border-radius: 20px;
-            padding: 30px 40px; /* Padding අඩු කළා */
-            color: #ffffff;
-            margin-bottom: 30px; /* Margin අඩු කළා */
-            box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.4);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            position: relative; background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            border-radius: var(--radius-xl); padding: 36px 40px; color: #ffffff;
+            margin-bottom: 28px; box-shadow: var(--card-shadow-lg); overflow: hidden;
+            display: flex; align-items: center; justify-content: space-between;
         }
-
         .help-hero::before {
-            content: '';
-            position: absolute;
-            top: -40px; right: -40px;
-            width: 200px; height: 200px; /* රවුමේ ප්‍රමාණය අඩු කළා */
-            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 200px; height: 200px; background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
             border-radius: 50%;
-            backdrop-filter: blur(10px);
         }
+        .help-hero-content { position: relative; z-index: 1; max-width: 650px; }
+        .help-hero h2 { font-size: 1.8rem; font-weight: 800; margin: 0 0 8px; letter-spacing: -0.5px; }
+        .help-hero p { font-size: 1.05rem; opacity: 0.95; margin: 0; line-height: 1.5; }
+        .help-hero-icon { font-size: 5rem; opacity: 0.15; z-index: 0; transform: rotate(-10deg); }
 
-        .help-hero-content {
-            position: relative;
-            z-index: 1;
-            max-width: 650px;
-        }
-
-        .help-hero h2 {
-            font-size: 1.8rem; /* Font size අඩු කළා */
-            font-weight: 800;
-            margin: 0 0 8px 0;
-            letter-spacing: -0.5px;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .help-hero p {
-            font-size: 1.05rem; /* Font size අඩු කළා */
-            opacity: 0.95;
-            margin: 0;
-            line-height: 1.5;
-            font-weight: 400;
-        }
-
-        .help-hero-icon {
-            font-size: 5rem; /* Icon size අඩු කළා */
-            opacity: 0.15;
-            z-index: 0;
-            transform: rotate(-10deg);
-            transition: transform 0.5s ease;
-        }
-        
-        .help-hero:hover .help-hero-icon {
-            transform: rotate(5deg) scale(1.1);
-        }
-
-        /* Grid Layout for Modules */
-        .help-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Card පළළ අඩු කළා */
-            gap: 20px; /* පරතරය අඩු කළා */
-        }
-
-        /* Premium Cards */
+        .help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .help-module {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 24px; /* Padding අඩු කළා */
-            box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            z-index: 1;
-            display: flex;
-            flex-direction: column;
+            background: var(--surface); border-radius: var(--radius-lg); padding: 24px;
+            box-shadow: var(--card-shadow); border: 1px solid var(--border);
+            transition: all var(--transition); display: flex; flex-direction: column;
         }
-
-        .help-module:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(37, 99, 235, 0.05);
-            border-color: #cbd5e1;
-        }
-
-        /* Module Headers */
-        .module-header {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 16px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .module-icon {
-            width: 44px; height: 44px; /* Icon box ප්‍රමාණය අඩු කළා */
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            color: #ffffff;
-            flex-shrink: 0;
-            transition: transform 0.3s ease;
-        }
-        
-        .help-module:hover .module-icon {
-            transform: scale(1.08) rotate(-5deg);
-        }
-
-        .module-icon.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 6px 15px -4px rgba(37, 99, 235, 0.6); }
-        .module-icon.green { background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 6px 15px -4px rgba(16, 185, 129, 0.6); }
-        .module-icon.orange { background: linear-gradient(135deg, #f59e0b, #b45309); box-shadow: 0 6px 15px -4px rgba(245, 158, 11, 0.6); }
-        .module-icon.purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 6px 15px -4px rgba(139, 92, 246, 0.6); }
-        .module-icon.red { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 6px 15px -4px rgba(239, 68, 68, 0.6); }
-
-        .module-header h3 {
-            margin: 0;
-            font-size: 1.15rem; /* Font size අඩු කළා */
-            color: #0f172a;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
-
-        /* Interactive Row Lists */
-        .module-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            flex-grow: 1;
-        }
-
-        .module-list li {
-            position: relative;
-            padding: 10px 14px 10px 38px; /* Padding අඩු කළා */
-            background: #f8fafc;
-            border-radius: 10px;
-            margin-bottom: 8px; /* පරතරය අඩු කළා */
-            font-size: 0.9rem; /* Font size අඩු කළා */
-            color: #334155;
-            line-height: 1.4;
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-
+        .help-module:hover { transform: translateY(-4px); box-shadow: var(--card-shadow-lg); border-color: var(--primary); }
+        .module-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+        .module-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #ffffff; flex-shrink: 0; }
+        .module-icon.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 6px 15px -4px rgba(37,99,235,0.5); }
+        .module-icon.green { background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 6px 15px -4px rgba(16,185,129,0.5); }
+        .module-icon.orange { background: linear-gradient(135deg, #f59e0b, #b45309); box-shadow: 0 6px 15px -4px rgba(245,158,11,0.5); }
+        .module-icon.purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 6px 15px -4px rgba(139,92,246,0.5); }
+        .module-icon.red { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 6px 15px -4px rgba(239,68,68,0.5); }
+        .module-header h3 { margin: 0; font-size: 1.15rem; color: var(--text-primary); font-weight: 700; }
+        .module-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
+        .module-list li { position: relative; padding: 10px 14px 10px 38px; background: var(--surface-alt); border-radius: var(--radius); margin-bottom: 8px; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4; border: 1px solid transparent; transition: all var(--transition); font-weight: 500; }
         .module-list li:last-child { margin-bottom: 0; }
-
-        .module-list li:hover {
-            background: #ffffff;
-            border-color: #e2e8f0;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.03);
-            transform: translateX(3px);
-            color: #0f172a;
-        }
-
+        .module-list li:hover { background: var(--surface); border-color: var(--border); box-shadow: 0 3px 8px rgba(0,0,0,0.03); transform: translateX(3px); color: var(--text-primary); }
         .module-list li::before {
-            content: '';
-            position: absolute;
-            left: 12px; top: 12px;
-            width: 16px; height: 16px;
+            content: ''; position: absolute; left: 12px; top: 12px; width: 16px; height: 16px;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2310b981'%3E%3Cpath fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
-            background-size: contain;
-            background-repeat: no-repeat;
+            background-size: contain; background-repeat: no-repeat;
         }
-
         .module-list.negative li::before {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23ef4444'%3E%3Cpath fill-rule='evenodd' d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
         }
-
-        .module-list.neutral li::before {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233b82f6'%3E%3Cpath fill-rule='evenodd' d='M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
-        }
-
-        /* Highlight Boxes */
-        .info-card {
-            background: #f8fafc;
-            border-left: 3px solid #94a3b8;
-            padding: 12px 16px;
-            border-radius: 6px 10px 10px 6px;
-            margin-top: 16px;
-            font-size: 0.85rem;
-            color: #475569;
-            line-height: 1.5;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .info-card.alert { background: #fff1f2; border-color: #ef4444; color: #991b1b; }
-        .info-card.safe { background: #f0fdf4; border-color: #10b981; color: #166534; }
+        .info-card { background: var(--surface-alt); border-left: 3px solid var(--border-strong); padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) 0; margin-top: 16px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; display: flex; align-items: flex-start; gap: 10px; }
+        .info-card.alert { background: var(--danger-light); border-color: var(--danger); color: #991b1b; }
+        .info-card.safe { background: var(--success-light); border-color: var(--success); color: #065f46; }
         .info-card .icon { font-size: 1.2rem; margin-top: -2px; }
 
         @media (max-width: 768px) {
-            .help-hero { padding: 25px 20px; flex-direction: column; text-align: center; border-radius: 16px; }
+            .help-hero { padding: 25px 20px; flex-direction: column; text-align: center; border-radius: var(--radius-lg); }
             .help-hero-icon { display: none; }
             .help-grid { grid-template-columns: 1fr; }
-            .help-module { padding: 20px; }
         }
     </style>
 </head>
@@ -227,281 +70,58 @@
     <nav class="nav" id="main-nav"></nav>
 </div>
 
-<div class="container help-container">
+<div class="container">
     <div id="toast-container"></div>
-
-    <div id="role-guide-container">
-        <!-- Role-specific guide will be injected here by JavaScript -->
-        <div style="text-align:center;padding:100px;color:var(--text-muted);">
-            <div style="font-size:2.5rem;margin-bottom:15px;animation: pulse 2s infinite;">⏳</div>
-            <p>Loading your personalized workspace guide...</p>
-        </div>
-    </div>
+    <div id="role-guide-container"></div>
 </div>
 
 <script src="/Frontend/js/app.js"></script>
 <script>
     requireAuth();
-
     (function() {
         const role = localStorage.getItem('role');
         const name = localStorage.getItem('name') || 'User';
         const container = document.getElementById('role-guide-container');
-
-        if (!role) {
-            window.location.href = '/Frontend/login.html';
-            return;
-        }
+        if (!role) { window.location.href = '/Frontend/login.html'; return; }
 
         let html = '';
-
         if (role === 'ADMIN' || role === 'SYSTEM_ADMIN') {
-            html = `
-            <div class="help-hero" style="background: linear-gradient(135deg, #0f172a 0%, #475569 100%);">
-                <div class="help-hero-content">
-                    <h2>Hello, ${name}</h2>
-                    <p>Welcome to the System Administrator Guide. Here you will find everything you need to manage clinic operations, staff, and financial data.</p>
-                </div>
+            html = `<div class="help-hero" style="background: linear-gradient(135deg, #0f172a 0%, #475569 100%);">
+                <div class="help-hero-content"><h2>Hello, ${name}</h2><p>Welcome to the System Administrator Guide. Here you will find everything you need to manage clinic operations, staff, and financial data.</p></div>
                 <div class="help-hero-icon">⚙️</div>
             </div>
-
             <div class="help-grid">
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon blue">📊</div>
-                        <h3>Dashboard Analytics</h3>
-                    </div>
-                    <ul class="module-list neutral">
-                        <li>View total registered patients & active dentists</li>
-                        <li>Monitor today's appointment statuses</li>
-                        <li>Track daily and monthly revenue dynamically</li>
-                        <li>Quick-access links to all major modules</li>
-                    </ul>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon green">👥</div>
-                        <h3>Patient Management</h3>
-                    </div>
-                    <ul class="module-list">
-                        <li>Register, update, and search patient profiles</li>
-                        <li>View complete medical & treatment histories</li>
-                        <li>Track past appointments and pending bills</li>
-                        <li>Permanently delete patient records</li>
-                    </ul>
-                    <div class="info-card alert">
-                        <div class="icon">⚠️</div>
-                        <div><strong>Warning:</strong> Deleting a patient will permanently remove all their historical data from the system.</div>
-                    </div>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon purple">🦷</div>
-                        <h3>Dentist Rosters</h3>
-                    </div>
-                    <ul class="module-list">
-                        <li>Register new dentists with login credentials</li>
-                        <li>Assign specializations and contact info</li>
-                        <li>Configure working days using the schedule selector</li>
-                        <li>Monitor assigned appointment loads</li>
-                    </ul>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon orange">📅</div>
-                        <h3>Appointments</h3>
-                    </div>
-                    <ul class="module-list">
-                        <li>Manage clinic-wide appointment schedules</li>
-                        <li>Update statuses (Scheduled, Confirmed, Completed)</li>
-                        <li>Cancel or reschedule patient visits</li>
-                        <li>Generate final bills straight from the schedule</li>
-                    </ul>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon blue" style="background: linear-gradient(135deg, #0284c7, #0369a1); box-shadow: 0 6px 15px -4px rgba(2, 132, 199, 0.6);">💳</div>
-                        <h3>Billing & Finance</h3>
-                    </div>
-                    <ul class="module-list">
-                        <li>Generate automated invoices for treatments</li>
-                        <li>Apply Senior Citizen discounts seamlessly</li>
-                        <li>Process payments via Cash, Card, or Insurance</li>
-                        <li>Print official clinic receipts for patients</li>
-                    </ul>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon red">🛡️</div>
-                        <h3>Admin Privileges</h3>
-                    </div>
-                    <p style="color: #64748b; font-size: 0.85rem; margin: -5px 0 10px 0;">Only Administrators have the authority to:</p>
-                    <ul class="module-list">
-                        <li>Permanently delete records (Patients/Dentists)</li>
-                        <li>Create and deactivate Staff user accounts</li>
-                        <li>Access comprehensive financial reports</li>
-                    </ul>
-                </div>
+                <div class="help-module"><div class="module-header"><div class="module-icon blue">📊</div><h3>Dashboard Analytics</h3></div><ul class="module-list neutral"><li>View total registered patients & active dentists</li><li>Monitor today's appointment statuses</li><li>Track daily and monthly revenue dynamically</li><li>Quick-access links to all major modules</li></ul></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon green">👥</div><h3>Patient Management</h3></div><ul class="module-list"><li>Register, update, and search patient profiles</li><li>View complete medical & treatment histories</li><li>Track past appointments and pending bills</li><li>Permanently delete patient records</li></ul><div class="info-card alert"><div class="icon">⚠️</div><div><strong>Warning:</strong> Deleting a patient will permanently remove all their historical data from the system.</div></div></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon purple">🦷</div><h3>Dentist Rosters</h3></div><ul class="module-list"><li>Register new dentists with login credentials</li><li>Assign specializations and contact info</li><li>Configure working days using the schedule selector</li><li>Monitor assigned appointment loads</li></ul></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon orange">📅</div><h3>Appointments</h3></div><ul class="module-list"><li>Manage clinic-wide appointment schedules</li><li>Update statuses (Scheduled, Confirmed, Completed)</li><li>Cancel or reschedule patient visits</li><li>Generate final bills straight from the schedule</li></ul></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon blue" style="background:linear-gradient(135deg,#0284c7,#0369a1);box-shadow:0 6px 15px -4px rgba(2,132,199,0.5);">💳</div><h3>Billing & Finance</h3></div><ul class="module-list"><li>Generate automated invoices for treatments</li><li>Apply Senior Citizen discounts seamlessly</li><li>Process payments via Cash, Card, or Insurance</li><li>Print official clinic receipts for patients</li></ul></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon red">🛡️</div><h3>Admin Privileges</h3></div><p style="color:var(--text-secondary);font-size:0.85rem;margin:-5px 0 10px 0;">Only Administrators have the authority to:</p><ul class="module-list negative"><li>Permanently delete records (Patients/Dentists)</li><li>Create and deactivate Staff user accounts</li><li>Access comprehensive financial reports</li></ul></div>
             </div>`;
-
         } else if (role === 'RECEPTIONIST') {
-            html = `
-            <div class="help-hero">
-                <div class="help-hero-content">
-                    <h2>Hello, ${name}</h2>
-                    <p>Welcome to the Front Desk Operations Guide. Learn how to efficiently manage bookings, process payments, and assist patients.</p>
-                </div>
+            html = `<div class="help-hero">
+                <div class="help-hero-content"><h2>Hello, ${name}</h2><p>Welcome to the Front Desk Operations Guide. Learn how to efficiently manage bookings, process payments, and assist patients.</p></div>
                 <div class="help-hero-icon">👩‍💼</div>
             </div>
-
             <div class="help-grid">
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon blue">📅</div>
-                        <h3>Booking Appointments</h3>
-                    </div>
-                    <ul class="module-list neutral">
-                        <li>Click "New Appointment" from the dashboard</li>
-                        <li>Search and select existing patients</li>
-                        <li>Choose treatment types and preferred dentists</li>
-                        <li>Select available dates and time slots</li>
-                        <li>Generate unique Appointment Numbers automatically</li>
-                    </ul>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon purple">👥</div>
-                        <h3>Patient Registration</h3>
-                    </div>
-                    <ul class="module-list">
-                        <li>Register walk-in or new patients accurately</li>
-                        <li>Record essential details (NIC, Contact, Allergies)</li>
-                        <li>Search and update existing patient profiles</li>
-                        <li>Review past treatment records to assist queries</li>
-                    </ul>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon green">💳</div>
-                        <h3>Processing Billing</h3>
-                    </div>
-                    <ul class="module-list neutral">
-                        <li>Find completed appointments in the Billing tab</li>
-                        <li>Generate detailed invoices automatically</li>
-                        <li>Select payment methods (Cash/Card/Insurance)</li>
-                        <li>Mark as PAID and print official receipts</li>
-                    </ul>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon orange">⚡</div>
-                        <h3>Queue Management</h3>
-                    </div>
-                    <ul class="module-list">
-                        <li>Monitor today's active schedule</li>
-                        <li>Update status to "Waiting" when patients arrive</li>
-                        <li>Update status to "With Dentist" when called in</li>
-                        <li>Ensure smooth flow between waiting area and doctors</li>
-                    </ul>
-                </div>
-
-                <div class="help-module" style="grid-column: 1 / -1;">
-                    <div class="module-header">
-                        <div class="module-icon red">🛑</div>
-                        <h3>System Restrictions</h3>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                        <div>
-                            <p style="color: #64748b; font-size: 0.85rem; margin: -5px 0 10px 0;">For security, you <strong>cannot</strong> do the following:</p>
-                            <ul class="module-list negative">
-                                <li>Delete patient records or appointments</li>
-                                <li>Modify dentist schedules or staff accounts</li>
-                                <li>Access clinic financial analytics</li>
-                            </ul>
-                        </div>
-                        <div class="info-card" style="margin: 0; align-self: start;">
-                            <div class="icon">💡</div>
-                            <div>If an appointment or patient record was created by mistake and needs to be deleted, please contact the System Administrator to reverse it.</div>
-                        </div>
-                    </div>
-                </div>
+                <div class="help-module"><div class="module-header"><div class="module-icon blue">📅</div><h3>Booking Appointments</h3></div><ul class="module-list neutral"><li>Click "New Appointment" from the dashboard</li><li>Search and select existing patients</li><li>Choose treatment types and preferred dentists</li><li>Select available dates and time slots</li></ul></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon purple">👥</div><h3>Patient Registration</h3></div><ul class="module-list"><li>Register walk-in or new patients accurately</li><li>Record essential details (NIC, Contact, Allergies)</li><li>Search and update existing patient profiles</li><li>Review past treatment records to assist queries</li></ul></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon green">💳</div><h3>Processing Billing</h3></div><ul class="module-list neutral"><li>Find completed appointments in the Billing tab</li><li>Generate detailed invoices automatically</li><li>Select payment methods (Cash/Card/Insurance)</li><li>Mark as PAID and print official receipts</li></ul></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon orange">⚡</div><h3>Queue Management</h3></div><ul class="module-list"><li>Monitor today's active schedule</li><li>Update status to "Waiting" when patients arrive</li><li>Update status to "With Dentist" when called in</li><li>Ensure smooth flow between waiting area and doctors</li></ul></div>
+                <div class="help-module" style="grid-column:1/-1;"><div class="module-header"><div class="module-icon red">🛑</div><h3>System Restrictions</h3></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;"><div><p style="color:var(--text-secondary);font-size:0.85rem;margin:-5px 0 10px 0;">For security, you <strong>cannot</strong> do the following:</p><ul class="module-list negative"><li>Delete patient records or appointments</li><li>Modify dentist schedules or staff accounts</li><li>Access clinic financial analytics</li></ul></div><div class="info-card" style="margin:0;align-self:start;"><div class="icon">💡</div><div>If an appointment or patient record was created by mistake and needs to be deleted, please contact the System Administrator to reverse it.</div></div></div></div>
             </div>`;
-
         } else if (role === 'DENTIST') {
-            html = `
-            <div class="help-hero" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
-                <div class="help-hero-content">
-                    <h2>Hello, Dr. ${name.replace(/^Dr\.\s*/i, '')}</h2>
-                    <p>Welcome to your Clinical Dashboard Guide. This workspace is customized to show only your schedules and your assigned patients.</p>
-                </div>
+            html = `<div class="help-hero" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                <div class="help-hero-content"><h2>Hello, Dr. ${name.replace(/^Dr\.\s*/i, '')}</h2><p>Welcome to your Clinical Dashboard Guide. This workspace is customized to show only your schedules and your assigned patients.</p></div>
                 <div class="help-hero-icon">🦷</div>
             </div>
-
             <div class="help-grid">
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon green">📅</div>
-                        <h3>Today's Schedule</h3>
-                    </div>
-                    <ul class="module-list neutral">
-                        <li>View a summarized list of today's patients</li>
-                        <li>Track completed vs. remaining appointments</li>
-                        <li>Quick-access links to patient medical profiles</li>
-                    </ul>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon blue">📁</div>
-                        <h3>Patient History</h3>
-                    </div>
-                    <ul class="module-list">
-                        <li>Search patients by Name, ID, or NIC</li>
-                        <li>Review past treatments done at the clinic</li>
-                        <li>Check critical data like allergies & blood groups</li>
-                        <li>Read historical treatment notes for better care</li>
-                    </ul>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon orange">⚕️</div>
-                        <h3>Managing Consultations</h3>
-                    </div>
-                    <ul class="module-list neutral">
-                        <li>Open the specific appointment details</li>
-                        <li>Update status to "Treatment In Progress"</li>
-                        <li>Review requested treatments and notes</li>
-                        <li>Update status to "Completed" to trigger billing</li>
-                    </ul>
-                </div>
-
-                <div class="help-module">
-                    <div class="module-header">
-                        <div class="module-icon purple">🔒</div>
-                        <h3>Data Privacy</h3>
-                    </div>
-                    <ul class="module-list">
-                        <li>Exclusive access to your assigned bookings</li>
-                        <li>Secure environment isolated from other dentists</li>
-                        <li>Protected from accidental deletions</li>
-                    </ul>
-                    <div class="info-card safe">
-                        <div class="icon">✅</div>
-                        <div>Your workspace is designed purely for clinical focus. Administrative tasks are handled by the reception and admin teams.</div>
-                    </div>
-                </div>
+                <div class="help-module"><div class="module-header"><div class="module-icon green">📅</div><h3>Today's Schedule</h3></div><ul class="module-list neutral"><li>View a summarized list of today's patients</li><li>Track completed vs. remaining appointments</li><li>Quick-access links to patient medical profiles</li></ul></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon blue">📁</div><h3>Patient History</h3></div><ul class="module-list"><li>Search patients by Name, ID, or NIC</li><li>Review past treatments done at the clinic</li><li>Check critical data like allergies</li><li>Read historical treatment notes for better care</li></ul></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon orange">⚕️</div><h3>Managing Consultations</h3></div><ul class="module-list neutral"><li>Open the specific appointment details</li><li>Update status to "Treatment In Progress"</li><li>Review requested treatments and notes</li><li>Update status to "Completed" to trigger billing</li></ul></div>
+                <div class="help-module"><div class="module-header"><div class="module-icon purple">🔒</div><h3>Data Privacy</h3></div><ul class="module-list"><li>Exclusive access to your assigned bookings</li><li>Secure environment isolated from other dentists</li><li>Protected from accidental deletions</li></ul><div class="info-card safe"><div class="icon">✅</div><div>Your workspace is designed purely for clinical focus. Administrative tasks are handled by the reception and admin teams.</div></div></div>
             </div>`;
         }
-
         container.innerHTML = html;
     })();
 </script>

@@ -1,10 +1,11 @@
-package Service;
+package service;
 
-import DAO.NotificationDAO;
-import Model.Notification;
+import dao.NotificationDAO;
+import model.Notification;
+import service.NotificationObserver;
 
-// In-app notification observer
-public class StaffNotificationObserver implements NotificationObserver {
+public class StaffNotificationObserver
+implements NotificationObserver {
     private NotificationDAO dao = new NotificationDAO();
 
     @Override
@@ -15,7 +16,8 @@ public class StaffNotificationObserver implements NotificationObserver {
         n.setRecipient(recipient);
         n.setMessage("[" + eventType + "] " + message);
         n.setStatus("SENT");
-        dao.insert(n);
+        this.dao.insert(n);
         System.out.println("[IN_APP] " + message);
     }
 }
+

@@ -1,18 +1,18 @@
 package com.mycompany.backend.resources;
 
-import Model.Bill;
-import Model.Appointment;
-import Model.Patient;
-import Model.Dentist;
-import Model.Treatment;
-import DAO.BillDAO;
-import DAO.AppointmentDAO;
-import DAO.PatientDAO;
-import DAO.TreatmentDAO;
-import DAO.DentistDAO;
-import Service.BillFactory;
-import Service.BillCalculationStrategy;
-import Service.SecurityUtil;
+import model.Bill;
+import model.Appointment;
+import model.Patient;
+import model.Dentist;
+import model.Treatment;
+import dao.BillDAO;
+import dao.AppointmentDAO;
+import dao.PatientDAO;
+import dao.TreatmentDAO;
+import dao.DentistDAO;
+import service.BillFactory;
+import service.BillCalculationStrategy;
+import service.SecurityUtil;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -40,7 +40,7 @@ public class BillResource {
     private final TreatmentDAO   treatmentDao   = new TreatmentDAO();
     private final DentistDAO     dentistDao     = new DentistDAO();
 
-    // ── GET /bills  ────────────────────────────────────────────────────────
+    // â”€â”€ GET /bills  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @GET
     public Response getAll() {
         SecurityUtil.requireReceptionOrAdmin();
@@ -48,7 +48,7 @@ public class BillResource {
         return Response.ok(bills).build();
     }
 
-    // ── GET /bills/appointment/{appointmentId}  ────────────────────────────
+    // â”€â”€ GET /bills/appointment/{appointmentId}  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @GET
     @Path("/appointment/{appointmentId}")
     public Response getByAppointmentId(@PathParam("appointmentId") int appointmentId) {
@@ -60,7 +60,7 @@ public class BillResource {
         return Response.ok(bill).build();
     }
 
-    // ── GET /bills/{billId}  ───────────────────────────────────────────────
+    // â”€â”€ GET /bills/{billId}  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @GET
     @Path("/{billId}")
     public Response getByBillId(@PathParam("billId") int billId) {
@@ -74,7 +74,7 @@ public class BillResource {
         return Response.ok(bill).build();
     }
 
-    // ── GET /bills/{billId}/receipt  ──────────────────────────────────────
+    // â”€â”€ GET /bills/{billId}/receipt  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @GET
     @Path("/{billId}/receipt")
     public Response getReceipt(@PathParam("billId") int billId) {
@@ -89,7 +89,7 @@ public class BillResource {
         return Response.ok(receipt).build();
     }
 
-    // ── GET /bills/appointment/{appointmentId}/receipt  ───────────────────
+    // â”€â”€ GET /bills/appointment/{appointmentId}/receipt  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @GET
     @Path("/appointment/{appointmentId}/receipt")
     public Response getReceiptByAppointment(@PathParam("appointmentId") int appointmentId) {
@@ -101,7 +101,7 @@ public class BillResource {
         return Response.ok(buildReceipt(bill)).build();
     }
 
-    // ── POST /bills/generate  ─────────────────────────────────────────────
+    // â”€â”€ POST /bills/generate  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @POST
     @Path("/generate")
     public Response generateBill(Map<String, Integer> request) {
@@ -170,7 +170,7 @@ public class BillResource {
         return Response.status(500).entity(error("Failed to generate bill")).build();
     }
 
-    // ── PUT /bills/{billId}/payment  ──────────────────────────────────────
+    // â”€â”€ PUT /bills/{billId}/payment  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @PUT
     @Path("/{billId}/payment")
     public Response updatePayment(@PathParam("billId") int billId, Map<String, String> body) {
@@ -191,7 +191,7 @@ public class BillResource {
         return Response.status(500).entity(error("Failed to update payment")).build();
     }
 
-    // ── RBAC helper: patients may only access bills for their own appointments ─
+    // â”€â”€ RBAC helper: patients may only access bills for their own appointments â”€
     private void enforceBillAccess(int appointmentId) {
         if (!SecurityUtil.isPatient()) {
             SecurityUtil.requireReceptionOrAdmin();
@@ -203,7 +203,7 @@ public class BillResource {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
+    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private Map<String, Object> buildReceipt(Bill bill) {
         Map<String, Object> receipt = new LinkedHashMap<>();
         receipt.put("billId",          bill.getBillId());

@@ -31,9 +31,9 @@ public class AuthResource {
 
     @POST
     @Path("/login")
-    public Response login(Map<String, String> credentials) {
-        String email = credentials.get("email");
-        String password = credentials.get("password");
+    public Response login(LoginRequest credentials) {
+        String email = credentials.getEmail();
+        String password = credentials.getPassword();
         if (email == null || password == null) {
             return Response.status(400)
                     .header("Access-Control-Allow-Origin", "*")

@@ -12,6 +12,7 @@ service\SeniorBillStrategy.class
 dao\NoticeDAO.class
 com\mycompany\backend\resources\TokenAuthFilter.class
 service\TokenManager.class
+com\mycompany\backend\resources\LoginRequest.class
 dao\StaffDAO.class
 validation\ClinicHoursValidator.class
 service\EmailNotificationObserver.class

@@ -35,9 +35,18 @@
     </div>
 
     <div class="card">
-        <div class="search-bar">
-            <input type="text" id="staffSearch" placeholder="Search by name, email, NIC or contact..." oninput="filterStaff()">
-            <button class="btn btn-ghost" onclick="clearSearch()">Clear</button>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            <div class="search-bar" style="flex:1;min-width:220px;">
+                <input type="text" id="staffSearch" placeholder="Search by name, email, NIC or contact..." oninput="filterStaff()">
+                <button class="btn btn-ghost" onclick="clearSearch()">Clear</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);">Sort:</label>
+                <select id="idSort" onchange="applySort()" style="padding:8px 12px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface);font-size:0.85rem;font-weight:600;color:var(--text-primary);cursor:pointer;">
+                    <option value="asc">ID ↑ Ascending</option>
+                    <option value="desc">ID ↓ Descending</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -45,10 +54,22 @@
         <div class="table-wrapper">
             <table class="table" id="staffTable">
                 <thead>
-                    <tr><th>ID</th><th>Name</th><th>Email</th><th>Contact</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+                    <tr><th>ID</th><th>Name</th><th>Email</th><th>Contact</th><th>Role</th><th>Status</th><th style="text-align:right;">Actions</th></tr>
                 </thead>
                 <tbody><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Deactivate Confirmation Modal -->
+<div id="deactivateModal" class="modal-overlay" style="display:none;">
+    <div class="modal" style="max-width:420px;">
+        <h3>⚠️ Deactivate Staff Account</h3>
+        <p style="margin:12px 0 20px;color:var(--text-secondary);font-size:0.9rem;">Are you sure you want to deactivate this staff account? They will no longer be able to log in.</p>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="document.getElementById('deactivateModal').style.display='none'">Cancel</button>
+            <button class="btn btn-danger" id="confirmDeactivateBtn" onclick="">Deactivate</button>
         </div>
     </div>
 </div>
@@ -148,6 +169,10 @@
         } catch (e) { showToast('Failed to load staff', 'error'); }
     }
 
+    function formatStaffId(id) {
+        return 'ST' + String(id).padStart(3, '0');
+    }
+
     function renderTable(staff) {
         const tbody = document.querySelector('#staffTable tbody');
         if (!staff.length) {
@@ -156,48 +181,61 @@
         }
         tbody.innerHTML = staff.map(s => {
             const isSystemAdmin = s.role === 'SYSTEM_ADMIN';
-            const actions = [];
+            const roleBadge = isSystemAdmin ? 'badge-admin' : `badge-${s.role.toLowerCase()}`;
+            const statusBadge = `<span class="badge ${s.active ? 'badge-paid' : 'badge-cancelled'}">${s.active ? 'Active' : 'Inactive'}</span>`;
 
-            actions.push(`<button class="btn btn-sm btn-ghost" onclick="detectStaff(${s.staffId})">🔍 Detect</button>`);
-
-            if (!isSystemAdmin) {
-                actions.push(`<button class="btn btn-sm btn-warning" onclick="openEditModal(${s.staffId})">✏️ Edit</button>`);
-                actions.push(`<button class="btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}" onclick="toggleStatus(${s.staffId}, ${s.active})">${s.active ? '🔒 Deactivate' : '🔓 Activate'}</button>`);
-                actions.push(`<button class="btn btn-sm btn-danger" onclick="deleteStaff(${s.staffId}, '${(s.name || '').replace(/'/g,"\\'")}')">🗑️ Delete</button>`);
+            let actionsHtml = '';
+            if (isSystemAdmin) {
+                actionsHtml = `<span class="badge badge-admin" style="display:inline-flex;align-items:center;gap:4px;">🔒 Protected</span>`;
             } else {
-                actions.push(`<span class="badge badge-admin">🔒 Protected</span>`);
+                actionsHtml = `
+                    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+                        <button class="btn btn-sm btn-ghost" onclick="detectStaff(${s.staffId})" style="width:100%;justify-content:center;">🔍 Detect</button>
+                        <button class="btn btn-sm btn-warning" onclick="openEditModal(${s.staffId})" style="width:100%;justify-content:center;">✏️ Edit</button>
+                        <button class="btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}" onclick="confirmDeactivate(${s.staffId}, ${s.active})" style="width:100%;justify-content:center;">${s.active ? '🔒 Deactivate' : '🔓 Activate'}</button>
+                    </div>`;
             }
 
-            const roleBadge = isSystemAdmin ? 'badge-admin' : `badge-${s.role.toLowerCase()}`;
-
             return `<tr>
-                <td><strong>${s.staffId}</strong></td>
+                <td><strong>${formatStaffId(s.staffId)}</strong></td>
                 <td>${s.name}</td>
                 <td>${s.email}</td>
                 <td>${s.contact || '–'}</td>
                 <td><span class="badge ${roleBadge}">${s.role}</span></td>
-                <td><span class="badge ${s.active ? 'badge-paid' : 'badge-cancelled'}">${s.active ? 'Active' : 'Inactive'}</span></td>
-                <td>${actions.join(' ')}</td>
+                <td>${statusBadge}</td>
+                <td style="text-align:right;">${actionsHtml}</td>
             </tr>`;
         }).join('');
     }
 
-    function filterStaff() {
+    function applySort() {
+        const sortDir = document.getElementById('idSort').value;
         const q = document.getElementById('staffSearch').value.toLowerCase().trim();
-        if (!q) { renderTable(allStaff); return; }
-        const filtered = allStaff.filter(s =>
-            (s.name && s.name.toLowerCase().includes(q)) ||
-            (s.email && s.email.toLowerCase().includes(q)) ||
-            (s.nic && s.nic.toLowerCase().includes(q)) ||
-            (s.contact && s.contact.includes(q)) ||
-            (s.role && s.role.toLowerCase().includes(q))
-        );
+        let filtered = allStaff;
+        if (q) {
+            filtered = allStaff.filter(s =>
+                (s.name && s.name.toLowerCase().includes(q)) ||
+                (s.email && s.email.toLowerCase().includes(q)) ||
+                (s.nic && s.nic.toLowerCase().includes(q)) ||
+                (s.contact && s.contact.includes(q)) ||
+                (s.role && s.role.toLowerCase().includes(q))
+            );
+        }
+        filtered = [...filtered].sort((a, b) => {
+            if (sortDir === 'asc') return a.staffId - b.staffId;
+            return b.staffId - a.staffId;
+        });
         renderTable(filtered);
+    }
+
+    function filterStaff() {
+        applySort();
     }
 
     function clearSearch() {
         document.getElementById('staffSearch').value = '';
-        renderTable(allStaff);
+        document.getElementById('idSort').value = 'asc';
+        applySort();
     }
 
     async function detectStaff(id) {
@@ -300,13 +338,33 @@
         btn.disabled = false; btn.textContent = '💾 Update Staff';
     }
 
-    async function toggleStatus(staffId, isActive) {
+    let deactivateTargetId = null;
+    let deactivateCurrentStatus = null;
+
+    async function confirmDeactivate(staffId, isActive) {
+        deactivateTargetId = staffId;
+        deactivateCurrentStatus = isActive;
+        document.getElementById('deactivateModal').style.display = 'flex';
+    }
+
+    async function executeDeactivate() {
+        if (!deactivateTargetId) return;
+        const btn = document.getElementById('confirmDeactivateBtn');
+        btn.disabled = true;
+        btn.textContent = deactivateCurrentStatus ? 'Deactivating...' : 'Activating...';
         try {
-            await apiPut('/staff/' + staffId + '/toggle', {});
-            showToast((isActive ? 'Staff deactivated' : 'Staff activated') + ' ✅');
+            await apiPut('/staff/' + deactivateTargetId + '/toggle', {});
+            showToast((deactivateCurrentStatus ? 'Staff deactivated' : 'Staff activated') + ' ✅');
             loadStaff();
         } catch (e) { showToast('Failed to update status', 'error'); }
+        btn.disabled = false;
+        btn.textContent = deactivateCurrentStatus ? 'Deactivate' : 'Activate';
+        document.getElementById('deactivateModal').style.display = 'none';
+        deactivateTargetId = null;
+        deactivateCurrentStatus = null;
     }
+
+    document.getElementById('confirmDeactivateBtn').addEventListener('click', executeDeactivate);
 
     async function deleteStaff(id, name) {
         if (!confirm('Are you sure you want to delete staff member "' + name + '"?\n\nThis action cannot be undone.')) return;

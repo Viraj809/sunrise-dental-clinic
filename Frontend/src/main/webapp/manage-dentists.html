@@ -71,7 +71,7 @@
                         <th>Email</th>
                         <th style="min-width: 200px;">Available Days</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th style="text-align:right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tbody>
@@ -208,7 +208,7 @@
                 <td>${d.email || '–'}</td>
                 <td><div style="max-width:250px; white-space:normal; line-height:1.4; color:var(--text-secondary); font-size:0.85rem;">${days}</div></td>
                 <td>${statusBadge}</td>
-                <td>
+                <td style="text-align:right;">
                     <button class="btn btn-sm btn-warning" onclick="openEditModal(${d.dentistId})">✏️ Edit</button>
                     <button class="btn btn-sm btn-danger" onclick="confirmDeleteDentist(${d.dentistId}, '${(d.name || '').replace(/'/g,"\\'")}')">🗑️ Delete</button>
                 </td>

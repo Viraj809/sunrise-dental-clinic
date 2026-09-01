@@ -157,6 +157,21 @@
 
     document.getElementById('appointmentDate').min = new Date().toISOString().split('T')[0];
 
+    async function loadPatientFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const patientId = params.get('patientId');
+        if (!patientId) return;
+        try {
+            const p = await apiGet('/patients/' + encodeURIComponent(patientId));
+            selectPatient(p.patientId, p.name, p.nic || '', p.contact || '');
+        } catch (e) {
+            const res = document.getElementById('patientResult');
+            res.className = 'alert alert-error';
+            res.style.display = 'flex';
+            res.textContent = 'Please select a valid patient.';
+        }
+    }
+
     async function loadDropdowns() {
         try {
             const [dentists, treatments] = await Promise.all([
@@ -181,6 +196,7 @@
                 tSelect.appendChild(opt);
             });
         } catch (e) { showToast('Failed to load options', 'error'); }
+        await loadPatientFromQuery();
     }
 
     function previewPrice() {

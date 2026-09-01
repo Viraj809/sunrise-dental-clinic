@@ -187,4 +187,13 @@ document.addEventListener('DOMContentLoaded', function() {
         userInfo.textContent = userName + ' (' + (userRole || '') + ')';
     }
     resetSessionTimer();
+
+    const headerTitle = document.querySelector('.header h1');
+    if (headerTitle) {
+        headerTitle.style.cursor = 'pointer';
+        headerTitle.title = 'Go to Dashboard';
+        headerTitle.addEventListener('click', function() {
+            redirectToDashboard(userRole);
+        });
+    }
 });

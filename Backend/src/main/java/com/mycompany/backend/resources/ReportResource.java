@@ -14,10 +14,26 @@ public class ReportResource {
     private ReportFacade facade = new ReportFacade();
 
     @GET
+    @Path("/summary")
+    public Response getSummary() {
+        SecurityUtil.requireAdmin();
+        Map<String, Object> report = facade.getSummaryCards();
+        return Response.ok(report).build();
+    }
+
+    @GET
     @Path("/daily/{date}")
     public Response getDaily(@PathParam("date") String date) {
         SecurityUtil.requireAdmin();
-        Map<String, Object> report = facade.getDailyAppointmentReport(date);
+        Map<String, Object> report = facade.getDailyReport(date);
+        return Response.ok(report).build();
+    }
+
+    @GET
+    @Path("/monthly/{year}/{month}")
+    public Response getMonthly(@PathParam("year") int year, @PathParam("month") int month) {
+        SecurityUtil.requireAdmin();
+        Map<String, Object> report = facade.getMonthlyReport(year, month);
         return Response.ok(report).build();
     }
 

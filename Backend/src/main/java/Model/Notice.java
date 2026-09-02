@@ -6,6 +6,7 @@ public class Notice {
     private String description;
     private String priority;
     private String targetRole;
+    private Integer targetDentistId;
     private String publishDate;
     private String expiryDate;
     private String status;
@@ -23,6 +24,8 @@ public class Notice {
     public void setPriority(String priority) { this.priority = priority; }
     public String getTargetRole() { return targetRole; }
     public void setTargetRole(String targetRole) { this.targetRole = targetRole; }
+    public Integer getTargetDentistId() { return targetDentistId; }
+    public void setTargetDentistId(Integer targetDentistId) { this.targetDentistId = targetDentistId; }
     public String getPublishDate() { return publishDate; }
     public void setPublishDate(String publishDate) { this.publishDate = publishDate; }
     public String getExpiryDate() { return expiryDate; }

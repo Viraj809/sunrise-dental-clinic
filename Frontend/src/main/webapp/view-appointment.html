@@ -16,6 +16,11 @@
             font-size: 0.8rem;
             font-family: inherit;
         }
+        .btn-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -135,6 +140,13 @@
                 allAppointments = rawAppointments;
             }
 
+            allAppointments.sort((a, b) => {
+                const dateA = a.appointmentDate || '';
+                const dateB = b.appointmentDate || '';
+                if (dateA !== dateB) return dateA.localeCompare(dateB);
+                return (a.appointmentTime || '').localeCompare(b.appointmentTime || '');
+            });
+
             renderTable(allAppointments);
         } catch (e) { showToast('Failed to load appointments', 'error'); }
     }
@@ -145,91 +157,46 @@
             tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No appointments found</td></tr>';
             return;
         }
+        const canBill = role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN';
         tbody.innerHTML = appointments.map(a => {
-            const canEdit = role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN' || role === 'DENTIST';
-            const canBill = role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN';
-            const canDelete = role === 'ADMIN' || role === 'SYSTEM_ADMIN';
-            let actions = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
-            actions += '<button class="btn btn-sm btn-ghost" onclick="showDetail(' + a.appointmentId + ')">View</button>';
-            if (canEdit) {
-                actions += '<select class="btn btn-sm status-select" onchange="quickUpdateStatus(' + a.appointmentId + ', this.value)">' +
-                    '<option value="Scheduled" ' + (a.status === 'Scheduled' ? 'selected' : '') + '>Scheduled</option>' +
-                    '<option value="Confirmed" ' + (a.status === 'Confirmed' ? 'selected' : '') + '>Confirmed</option>' +
-                    '<option value="Waiting" ' + (a.status === 'Waiting' ? 'selected' : '') + '>Waiting</option>' +
-                    '<option value="With Dentist" ' + (a.status === 'With Dentist' ? 'selected' : '') + '>With Dentist</option>' +
-                    '<option value="Treatment In Progress" ' + (a.status === 'Treatment In Progress' ? 'selected' : '') + '>Treatment In Progress</option>' +
-                    '<option value="Completed" ' + (a.status === 'Completed' ? 'selected' : '') + '>Completed</option>' +
-                    '<option value="Cancelled" ' + (a.status === 'Cancelled' ? 'selected' : '') + '>Cancelled</option>' +
-                '</select>';
-            }
-            if (canBill) {
-                actions += '<a class="btn btn-sm btn-success" href="/Frontend/billing.html?appt_id=' + a.appointmentId + '">Bill</a>';
-            }
-            if (canDelete) {
-                actions += '<button class="btn btn-sm btn-danger" onclick="deleteAppointment(' + a.appointmentId + ', \'' + a.appointmentNo + '\')">Delete</button>';
-            }
-            actions += '</div>';
+            const billDisabled = a.status !== 'Completed';
+            const billClass = billDisabled ? 'btn-disabled' : '';
+            const billTitle = a.status === 'Cancelled' ? 'Cancelled appointments cannot be billed.' : 'Bill can only be generated after the appointment is completed.';
             return '<tr>' +
                 '<td><strong>' + a.appointmentNo + '</strong></td>' +
                 '<td>' + (patientMap[a.patientId] || 'Patient #' + a.patientId) + '</td>' +
-                '<td>' + (dentistMap[a.dentistId] || 'Dr. #' + a.dentistId) + '</td>' +
+                '<td>' + (dentistMap[a.dentistId] || 'Dentist #' + a.dentistId) + '</td>' +
                 '<td>' + a.treatmentType + '</td>' +
                 '<td>' + a.appointmentDate + '</td>' +
                 '<td>' + (a.appointmentTime ? a.appointmentTime.substring(0,5) : '') + '</td>' +
                 '<td>' + getStatusBadge(a.status) + '</td>' +
-                '<td>' + actions + '</td>' +
+                '<td style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">' +
+                    '<button class="btn btn-sm btn-ghost" onclick="showDetail(' + a.appointmentId + ')">View</button>' +
+                    (role !== 'DENTIST' ? '<button class="btn btn-sm btn-warning" onclick="window.location.href=\'/Frontend/edit-appointment.html?appt_id=' + a.appointmentId + '\'">Edit</button>' : '') +
+                    (role === 'ADMIN' || role === 'SYSTEM_ADMIN' ? '<button class="btn btn-sm btn-danger" onclick="deleteAppointment(' + a.appointmentId + ', \'' + a.appointmentNo + '\')">Delete</button>' : '') +
+                    (canBill ? '<a class="btn btn-sm btn-success ' + billClass + '" href="/Frontend/billing.html?appt_id=' + a.appointmentId + '" title="' + billTitle + '">Bill</a>' : '') +
+                '</td>' +
             '</tr>';
         }).join('');
     }
 
-    async function quickUpdateStatus(apptId, status) {
-        try {
-            const response = await fetch(API_BASE + '/appointments/' + apptId + '/status', {
-                method: 'PUT',
-                headers: getHeaders(),
-                body: JSON.stringify({ status: status })
-            });
-
-            if (!response.ok) {
-                let errText = 'Server Error ' + response.status;
-                try {
-                    const data = await response.json();
-                    if (data && data.error) errText = data.error;
-                } catch(e) {}
-
-                showToast(errText, 'error');
-                await loadAll();
-                return;
-            }
-
-            showToast('Status updated to ' + status + ' ✅');
-            await loadAll();
-
-            if (document.getElementById('detailCard').style.display !== 'none' && currentApptId === apptId) {
-                showDetail(apptId);
-            }
-        } catch (e) {
-            console.error(e);
-            showToast('Network error while updating status', 'error');
-            await loadAll();
-        }
+    function getStatusBadge(status) {
+        const cls = 'status-' + String(status).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        return '<span class="status-badge ' + cls + '">' + status + '</span>';
     }
 
     function filterTable() {
         const status = document.getElementById('statusFilter').value;
-        const date   = document.getElementById('dateFilter').value;
+        const date = document.getElementById('dateFilter').value;
         let filtered = allAppointments;
         if (status) filtered = filtered.filter(a => a.status === status);
-        if (date)   filtered = filtered.filter(a => a.appointmentDate === date);
+        if (date) filtered = filtered.filter(a => a.appointmentDate === date);
         renderTable(filtered);
     }
 
     function searchAppointment() {
         const q = document.getElementById('searchInput').value.trim().toLowerCase();
-        if (!q) {
-            resetSearch();
-            return;
-        }
+        if (!q) { resetSearch(); return; }
 
         const res = document.getElementById('searchResult');
         let matched = allAppointments.filter(a =>
@@ -289,27 +256,13 @@
             const btns = document.getElementById('actionButtons');
             btns.innerHTML = '';
 
-            if (role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN' || role === 'DENTIST') {
-                btns.innerHTML +=
-                    '<select class="btn btn-sm status-select" onchange="quickUpdateStatus(' + a.appointmentId + ', this.value)" style="margin-right:4px;">' +
-                        '<option value="Scheduled" ' + (a.status === 'Scheduled' ? 'selected' : '') + '>Scheduled</option>' +
-                        '<option value="Confirmed" ' + (a.status === 'Confirmed' ? 'selected' : '') + '>Confirmed</option>' +
-                        '<option value="Checked In" ' + (a.status === 'Checked In' ? 'selected' : '') + '>Checked In</option>' +
-                        '<option value="Waiting" ' + (a.status === 'Waiting' ? 'selected' : '') + '>Waiting</option>' +
-                        '<option value="With Dentist" ' + (a.status === 'With Dentist' ? 'selected' : '') + '>With Dentist</option>' +
-                        '<option value="Treatment In Progress" ' + (a.status === 'Treatment In Progress' ? 'selected' : '') + '>Treatment In Progress</option>' +
-                        '<option value="Completed" ' + (a.status === 'Completed' ? 'selected' : '') + '>Completed</option>' +
-                        '<option value="Cancelled" ' + (a.status === 'Cancelled' ? 'selected' : '') + '>Cancelled</option>' +
-                    '</select>';
-                if (a.patientId) {
-                    btns.innerHTML += '<a class="btn btn-ghost btn-sm" href="/Frontend/patient-history.html?patient_id=' + a.patientId + '">Patient History</a>';
-                }
-            }
             if (role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN') {
-                btns.innerHTML += '<a class="btn btn-success btn-sm" href="/Frontend/billing.html?appt_id=' + a.appointmentId + '">Generate Bill</a>';
-            }
-            if (role === 'ADMIN' || role === 'SYSTEM_ADMIN') {
-                btns.innerHTML += '<button class="btn btn-danger btn-sm" onclick="deleteAppointment(' + a.appointmentId + ', \'' + a.appointmentNo + '\')">Delete</button>';
+                btns.innerHTML += '<button class="btn btn-sm btn-warning" onclick="window.location.href=\'/Frontend/edit-appointment.html?appt_id=' + a.appointmentId + '\'" style="margin-right:4px;">Edit</button>';
+                btns.innerHTML += '<button class="btn btn-sm btn-danger" onclick="deleteAppointment(' + a.appointmentId + ', \'' + a.appointmentNo + '\')" style="margin-right:4px;">Delete</button>';
+                const billDisabled = a.status !== 'Completed';
+                const billClass = billDisabled ? 'btn-disabled' : '';
+                const billTitle = billDisabled ? 'Cancelled appointments cannot be billed.' : 'Generate Bill';
+                btns.innerHTML += '<a class="btn btn-sm btn-success ' + billClass + '" href="/Frontend/billing.html?appt_id=' + a.appointmentId + '" title="' + billTitle + '">Generate Bill</a>';
             }
 
             currentApptId = a.appointmentId;

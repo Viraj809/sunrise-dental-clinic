@@ -37,9 +37,9 @@ public class NoticeResource {
         SecurityUtil.requireStaff();
         String role = SecurityUtil.currentRole();
         int staffId = SecurityUtil.currentId();
-        int count = dao.countUnread(staffId, role);
+        List<Notice> notices = dao.findPublishedForRole(role, staffId);
         Map<String, Object> res = new HashMap<>();
-        res.put("count", count);
+        res.put("count", notices.size());
         return Response.ok(res).build();
     }
 
@@ -88,17 +88,6 @@ public class NoticeResource {
             return Response.ok(success("Notice deleted")).build();
         }
         return Response.status(500).entity(error("Failed to delete notice")).build();
-    }
-
-    @POST
-    @Path("/{id}/read")
-    public Response markRead(@PathParam("id") int id) {
-        SecurityUtil.requireStaff();
-        int staffId = SecurityUtil.currentId();
-        if (dao.markRead(id, staffId)) {
-            return Response.ok(success("Marked as read")).build();
-        }
-        return Response.status(500).entity(error("Failed to mark as read")).build();
     }
 
     private Map<String, String> error(String message) {

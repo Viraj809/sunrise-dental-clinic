@@ -42,6 +42,7 @@
                         <th>Title</th>
                         <th>Priority</th>
                         <th>Target Role</th>
+                        <th>Target Dentist</th>
                         <th>Status</th>
                         <th>Expiry Date</th>
                         <th>Actions</th>
@@ -49,7 +50,7 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td>
+                        <td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td>
                     </tr>
                 </tbody>
             </table>
@@ -82,11 +83,20 @@
                 </div>
                 <div class="form-group">
                     <label>Target Role</label>
-                    <select id="noticeTargetRole">
+                    <select id="noticeTargetRole" onchange="toggleDentistSelector()">
                         <option value="ALL">ALL</option>
                         <option value="ADMIN">ADMIN</option>
-                        <option value="DENTIST">DENTIST</option>
                         <option value="RECEPTIONIST">RECEPTIONIST</option>
+                        <option value="DENTIST">DENTIST</option>
+                        <option value="SPECIFIC_DENTIST">SPECIFIC_DENTIST</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row" id="dentistSelectorRow" style="display:none;">
+                <div class="form-group">
+                    <label>Target Dentist</label>
+                    <select id="noticeTargetDentist">
+                        <option value="">-- Select Dentist --</option>
                     </select>
                 </div>
             </div>
@@ -115,20 +125,29 @@
 <script>
     requireAuth(['ADMIN', 'SYSTEM_ADMIN']);
 
+    let allDentists = [];
+
     async function loadNotices() {
         try {
             const notices = await apiGet('/notices');
             const tbody = document.querySelector('#noticeTable tbody');
             if (!notices || notices.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">No notices found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">No notices found</td></tr>';
                 return;
             }
-            tbody.innerHTML = notices.map(n => `
-                <tr>
+            const dentistMap = {};
+            allDentists.forEach(d => { dentistMap[d.dentistId] = d.name; });
+            tbody.innerHTML = notices.map(n => {
+                let targetDentistDisplay = '-';
+                if (n.targetRole === 'SPECIFIC_DENTIST' && n.targetDentistId) {
+                    targetDentistDisplay = (dentistMap[n.targetDentistId] || 'Dentist #' + n.targetDentistId);
+                }
+                return `<tr>
                     <td>${n.noticeId}</td>
                     <td><strong>${escapeHtml(n.title)}</strong></td>
                     <td><span class="badge ${n.priority === 'Urgent' ? 'badge-danger' : n.priority === 'Important' ? 'badge-warning' : 'badge-info'}">${n.priority || 'General'}</span></td>
                     <td>${n.targetRole || '-'}</td>
+                    <td>${targetDentistDisplay}</td>
                     <td><span class="badge ${n.status === 'Published' ? 'badge-success' : 'badge-pending'}">${n.status || '-'}</span></td>
                     <td>${n.expiryDate || '-'}</td>
                     <td>
@@ -140,11 +159,11 @@
                             </button>
                         </div>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
         } catch (e) {
             const tbody = document.querySelector('#noticeTable tbody');
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Failed to load notices</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Failed to load notices</td></tr>';
         }
     }
 
@@ -152,6 +171,26 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    async function toggleDentistSelector() {
+        const role = document.getElementById('noticeTargetRole').value;
+        const row = document.getElementById('dentistSelectorRow');
+        if (role === 'SPECIFIC_DENTIST') {
+            row.style.display = 'flex';
+            if (!allDentists.length) {
+                try {
+                    allDentists = await apiGet('/dentists');
+                } catch (e) { allDentists = []; }
+            }
+            const select = document.getElementById('noticeTargetDentist');
+            select.innerHTML = '<option value="">-- Select Dentist --</option>' +
+                allDentists.filter(d => d.active).map(d =>
+                    `<option value="${d.dentistId}">${escapeHtml(d.name)} – D${String(d.dentistId).padStart(3, '0')}</option>`
+                ).join('');
+        } else {
+            row.style.display = 'none';
+        }
     }
 
     function openNoticeModal(notice) {
@@ -164,6 +203,10 @@
         document.getElementById('noticeTargetRole').value = notice ? (notice.targetRole || 'ALL') : 'ALL';
         document.getElementById('noticeStatus').value = notice ? (notice.status || 'Unpublished') : 'Unpublished';
         document.getElementById('noticeExpiryDate').value = notice ? (notice.expiryDate || '') : '';
+        toggleDentistSelector();
+        if (notice && notice.targetDentistId) {
+            document.getElementById('noticeTargetDentist').value = notice.targetDentistId;
+        }
     }
 
     function closeNoticeModal() {
@@ -174,11 +217,14 @@
     async function saveNotice(e) {
         e.preventDefault();
         const id = document.getElementById('noticeId').value;
+        const targetRole = document.getElementById('noticeTargetRole').value;
+        const targetDentistId = targetRole === 'SPECIFIC_DENTIST' ? parseInt(document.getElementById('noticeTargetDentist').value) : null;
         const data = {
             title: document.getElementById('noticeTitle').value,
             description: document.getElementById('noticeDescription').value,
             priority: document.getElementById('noticePriority').value,
-            targetRole: document.getElementById('noticeTargetRole').value,
+            targetRole: targetRole,
+            targetDentistId: targetDentistId,
             status: document.getElementById('noticeStatus').value,
             expiryDate: document.getElementById('noticeExpiryDate').value || null,
             publishDate: new Date().toISOString().split('T')[0]

@@ -123,12 +123,15 @@ public class AppointmentResource {
     private int resolveDentistId(TokenManager.Session session) {
         if (!"DENTIST".equals(session.role)) return session.id;
         try {
+            DentistDAO dentistDao = new DentistDAO();
+            model.Dentist d = dentistDao.findById(session.id);
+            if (d != null) return d.getDentistId();
             StaffDAO staffDao = new StaffDAO();
             model.Staff staff = staffDao.findById(session.id);
-            if (staff == null || staff.getEmail() == null) return -1;
-            DentistDAO dentistDao = new DentistDAO();
-            model.Dentist d = dentistDao.findByEmail(staff.getEmail());
-            if (d != null) return d.getDentistId();
+            if (staff != null && staff.getEmail() != null) {
+                d = dentistDao.findByEmail(staff.getEmail());
+                if (d != null) return d.getDentistId();
+            }
         } catch (Exception e) { e.printStackTrace(); }
         return -1;
     }

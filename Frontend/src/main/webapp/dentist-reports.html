@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Reports – Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .report-filters {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--card-shadow);
+        }
+        .report-filters label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .report-filters input, .report-filters select {
+            padding: 9px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            background: var(--surface);
+            color: var(--text-primary);
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        .report-filters input:focus, .report-filters select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+        .report-section {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            border: 1px solid var(--border);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 24px;
+        }
+        .report-section h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0 0 16px;
+            color: var(--text-primary);
+        }
+        .report-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .kpi-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            border: 1px solid var(--border);
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            transition: all var(--transition);
+        }
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--card-shadow-lg);
+        }
+        .kpi-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .kpi-icon.blue { background: var(--primary-light); }
+        .kpi-icon.green { background: var(--success-light); }
+        .kpi-icon.amber { background: var(--warning-light); }
+        .kpi-icon.red { background: var(--danger-light); }
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--text-primary);
+        }
+        .kpi-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-top: 2px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .data-table th, .data-table td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .data-table th {
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            background: var(--surface-alt);
+        }
+        .data-table tbody tr:hover {
+            background: var(--surface-alt);
+        }
+        .data-table td {
+            color: var(--text-primary);
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .badge-success { background: var(--success-light); color: #065f46; }
+        .badge-warning { background: var(--warning-light); color: #92400e; }
+        .badge-danger { background: var(--danger-light); color: #991b1b; }
+        .badge-info { background: var(--info-light); color: #155e75; }
+        .badge-secondary { background: #f1f5f9; color: #475569; }
+        @media (max-width: 768px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+            .report-filters { flex-direction: column; align-items: stretch; }
+            .data-table { font-size: 0.8rem; }
+            .data-table th, .data-table td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1 style="cursor:pointer;" onclick="goToDashboard()">Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
+
+<div class="container">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>My Reports</h2>
+            <p>Daily and monthly appointment reports for your schedule</p>
+        </div>
+        <button class="btn btn-ghost" onclick="loadAll()">Refresh</button>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon blue">📅</div>
+            <div><div class="kpi-value" id="kpi-today-appts">–</div><div class="kpi-label">Today's Appointments</div></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon green">✅</div>
+            <div><div class="kpi-value" id="kpi-completed">–</div><div class="kpi-label">Completed</div></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon amber">⏳</div>
+            <div><div class="kpi-value" id="kpi-pending">–</div><div class="kpi-label">Pending</div></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon red">❌</div>
+            <div><div class="kpi-value" id="kpi-cancelled">–</div><div class="kpi-label">Cancelled</div></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon blue">🦷</div>
+            <div><div class="kpi-value" id="kpi-treatments">–</div><div class="kpi-label">Treatment Types</div></div>
+        </div>
+    </div>
+
+    <!-- Daily Report -->
+    <div class="report-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+            <h3 style="margin:0;">Daily Report</h3>
+            <div class="report-actions" style="margin-bottom:0;">
+                <button class="btn btn-sm btn-primary" onclick="downloadDailyPDF()">Download Daily Report PDF</button>
+            </div>
+        </div>
+        <div class="report-filters">
+            <label for="dailyDate">Date:</label>
+            <input type="date" id="dailyDate" onchange="loadDailyReport()">
+        </div>
+        <div class="table-wrapper" style="overflow-x:auto;">
+            <table class="data-table" id="dailyReportTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th class="text-center">Total Appointments</th>
+                        <th class="text-center">Completed</th>
+                        <th class="text-center">Cancelled</th>
+                        <th class="text-center">Pending</th>
+                        <th class="text-center">Treatment Types</th>
+                    </tr>
+                </thead>
+                <tbody><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Monthly Report -->
+    <div class="report-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+            <h3 style="margin:0;">Monthly Report</h3>
+            <div class="report-actions" style="margin-bottom:0;">
+                <button class="btn btn-sm btn-primary" onclick="downloadMonthlyPDF()">Download Monthly Report PDF</button>
+            </div>
+        </div>
+        <div class="report-filters">
+            <label for="monthlyMonth">Month:</label>
+            <input type="month" id="monthlyMonth" onchange="loadMonthlyReport()">
+        </div>
+        <div class="table-wrapper" style="overflow-x:auto;">
+            <table class="data-table" id="monthlyReportTable">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th class="text-center">Total Appointments</th>
+                        <th class="text-center">Completed</th>
+                        <th class="text-center">Cancelled</th>
+                        <th class="text-center">Pending</th>
+                        <th class="text-center">Treatment Summary</th>
+                    </tr>
+                </thead>
+                <tbody><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth(['DENTIST', 'ADMIN', 'SYSTEM_ADMIN']);
+    let dailyReportData = null;
+    let monthlyReportData = null;
+    let myAppointmentsCache = [];
+
+    function goToDashboard() {
+        const role = localStorage.getItem('role');
+        if (role === 'ADMIN' || role === 'SYSTEM_ADMIN') {
+            window.location.href = '/Frontend/admin-dashboard.html';
+        } else if (role === 'RECEPTIONIST') {
+            window.location.href = '/Frontend/receptionist-dashboard.html';
+        } else if (role === 'DENTIST') {
+            window.location.href = '/Frontend/dentist-dashboard.html';
+        }
+    }
+
+    async function loadMyAppointments() {
+        try {
+            const role = localStorage.getItem('role');
+            if (role === 'DENTIST') {
+                myAppointmentsCache = await apiGet('/appointments/mine');
+            } else {
+                const all = await apiGet('/appointments');
+                const dentists = await apiGet('/dentists');
+                const email = (localStorage.getItem('email') || '').toLowerCase();
+                const me = dentists.find(d => (d.email || '').toLowerCase() === email);
+                const myDentistId = me ? me.dentistId : null;
+                myAppointmentsCache = myDentistId ? all.filter(a => a.dentistId === myDentistId) : [];
+            }
+        } catch (e) {
+            myAppointmentsCache = [];
+        }
+    }
+
+    async function loadAll() {
+        await loadMyAppointments();
+        const appts = myAppointmentsCache;
+        const today = new Date().toISOString().split('T')[0];
+        const todayAppts = appts.filter(a => a.appointmentDate === today);
+        const completed = appts.filter(a => a.status === 'Completed').length;
+        const cancelled = appts.filter(a => a.status === 'Cancelled').length;
+        const pending = appts.filter(a => a.status !== 'Completed' && a.status !== 'Cancelled').length;
+        const treatmentTypes = new Set(appts.map(a => a.treatmentType).filter(Boolean)).size;
+
+        document.getElementById('kpi-today-appts').textContent = todayAppts.length;
+        document.getElementById('kpi-completed').textContent = completed;
+        document.getElementById('kpi-pending').textContent = pending;
+        document.getElementById('kpi-cancelled').textContent = cancelled;
+        document.getElementById('kpi-treatments').textContent = treatmentTypes;
+
+        await loadDailyReport();
+        await loadMonthlyReport();
+    }
+
+    async function loadDailyReport() {
+        const dateInput = document.getElementById('dailyDate');
+        const date = dateInput.value || new Date().toISOString().split('T')[0];
+        dateInput.value = date;
+
+        const tbody = document.querySelector('#dailyReportTable tbody');
+        const appts = myAppointmentsCache.filter(a => a.appointmentDate === date);
+        const completed = appts.filter(a => a.status === 'Completed').length;
+        const cancelled = appts.filter(a => a.status === 'Cancelled').length;
+        const pending = appts.filter(a => a.status !== 'Completed' && a.status !== 'Cancelled').length;
+        const treatmentTypes = new Set(appts.map(a => a.treatmentType).filter(Boolean)).size;
+
+        dailyReportData = {
+            date, appointmentCount: appts.length, completed, cancelled, pending, treatmentTypes
+        };
+
+        if (!appts.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No data for selected date</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = `<tr>
+            <td>${date}</td>
+            <td class="text-center">${appts.length}</td>
+            <td class="text-center">${completed}</td>
+            <td class="text-center">${cancelled}</td>
+            <td class="text-center">${pending}</td>
+            <td class="text-center">${treatmentTypes}</td>
+        </tr>`;
+    }
+
+    async function loadMonthlyReport() {
+        const monthInput = document.getElementById('monthlyMonth');
+        const month = monthInput.value || new Date().toISOString().slice(0, 7);
+        monthInput.value = month;
+
+        const tbody = document.querySelector('#monthlyReportTable tbody');
+        const [year, mon] = month.split('-').map(Number);
+        const monthName = new Date(year, mon - 1).toLocaleString('en-LK', { month: 'long', year: 'numeric' });
+
+        const monthAppts = myAppointmentsCache.filter(a => {
+            if (!a.appointmentDate) return false;
+            const [ay, am] = a.appointmentDate.split('-').map(Number);
+            return ay === year && am === mon;
+        });
+
+        const completed = monthAppts.filter(a => a.status === 'Completed').length;
+        const cancelled = monthAppts.filter(a => a.status === 'Cancelled').length;
+        const pending = monthAppts.filter(a => a.status !== 'Completed' && a.status !== 'Cancelled').length;
+        const treatmentMap = {};
+        monthAppts.forEach(a => { if (a.treatmentType) treatmentMap[a.treatmentType] = (treatmentMap[a.treatmentType] || 0) + 1; });
+        const treatmentSummary = Object.entries(treatmentMap).map(([k,v]) => k + ' (' + v + ')').join(', ') || '-';
+
+        monthlyReportData = {
+            month: monthName, totalAppointments: monthAppts.length, completed, cancelled, pending, treatmentSummary
+        };
+
+        if (!monthAppts.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No data for selected month</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = `<tr>
+            <td>${monthName}</td>
+            <td class="text-center">${monthAppts.length}</td>
+            <td class="text-center">${completed}</td>
+            <td class="text-center">${cancelled}</td>
+            <td class="text-center">${pending}</td>
+            <td class="text-center">${treatmentSummary}</td>
+        </tr>`;
+    }
+
+    function downloadDailyPDF() {
+        if (!dailyReportData) { showToast('No daily report data to export', 'error'); return; }
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const d = dailyReportData;
+            doc.setFontSize(18);
+            doc.text('Sunrise Dental Clinic', 14, 18);
+            doc.setFontSize(14);
+            doc.text('Dentist Daily Report', 14, 26);
+            doc.setFontSize(10);
+            doc.text('Generated: ' + new Date().toLocaleString('en-LK'), 14, 34);
+            doc.text('Report Date: ' + d.date, 14, 40);
+
+            doc.autoTable({
+                startY: 48,
+                head: [['Date', 'Total Appointments', 'Completed', 'Cancelled', 'Pending', 'Treatment Types']],
+                body: [[d.date, d.appointmentCount, d.completed, d.cancelled, d.pending, d.treatmentTypes]],
+                theme: 'grid',
+                headStyles: { fillColor: [37, 99, 235], textColor: 255, fontSize: 10 },
+                styles: { fontSize: 10, cellPadding: 4 },
+            });
+
+            doc.save('dentist-daily-report-' + d.date + '.pdf');
+            showToast('Daily report PDF downloaded');
+        } catch (e) {
+            showToast('Failed to generate PDF', 'error');
+            console.error(e);
+        }
+    }
+
+    function downloadMonthlyPDF() {
+        if (!monthlyReportData) { showToast('No monthly report data to export', 'error'); return; }
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const m = monthlyReportData;
+            doc.setFontSize(18);
+            doc.text('Sunrise Dental Clinic', 14, 18);
+            doc.setFontSize(14);
+            doc.text('Dentist Monthly Report', 14, 26);
+            doc.setFontSize(10);
+            doc.text('Generated: ' + new Date().toLocaleString('en-LK'), 14, 34);
+            doc.text('Report Month: ' + m.month, 14, 40);
+
+            doc.autoTable({
+                startY: 48,
+                head: [['Month', 'Total Appointments', 'Completed', 'Cancelled', 'Pending', 'Treatment Summary']],
+                body: [[m.month, m.totalAppointments, m.completed, m.cancelled, m.pending, m.treatmentSummary]],
+                theme: 'grid',
+                headStyles: { fillColor: [37, 99, 235], textColor: 255, fontSize: 10 },
+                styles: { fontSize: 10, cellPadding: 4 },
+            });
+
+            doc.save('dentist-monthly-report-' + m.month.replace(/\s+/g, '-') + '.pdf');
+            showToast('Monthly report PDF downloaded');
+        } catch (e) {
+            showToast('Failed to generate PDF', 'error');
+            console.error(e);
+        }
+    }
+
+    loadAll();
+</script>
+</body>
+</html>

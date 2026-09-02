@@ -2,8 +2,10 @@ package com.mycompany.backend.resources;
 
 import model.Staff;
 import model.Patient;
+import model.Dentist;
 import dao.StaffDAO;
 import dao.PatientDAO;
+import dao.DentistDAO;
 import service.TokenManager;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -17,6 +19,7 @@ import java.util.Map;
 public class AuthResource {
     private StaffDAO staffDao = new StaffDAO();
     private PatientDAO patientDao = new PatientDAO();
+    private DentistDAO dentistDao = new DentistDAO();
 
     // Handle CORS preflight (OPTIONS) for /auth/login
     @OPTIONS
@@ -40,7 +43,6 @@ public class AuthResource {
                     .entity(error("Email and password are required")).build();
         }
 
-        // 1) Try staff accounts (ADMIN / RECEPTIONIST / DENTIST)
         Staff staff = staffDao.findByEmail(email);
         if (staff != null) {
             String stored = staff.getPassword();
@@ -52,6 +54,19 @@ public class AuthResource {
             String token = TokenManager.getInstance().createStaff(staff.getStaffId(), staff.getRole());
             return buildTokenResponse(token, staff.getRole(), staff.getName(),
                     staff.getStaffId(), email, 0);
+        }
+
+        Dentist dentist = dentistDao.findByEmail(email);
+        if (dentist != null) {
+            String stored = dentist.getPassword();
+            if (stored == null || !stored.equals(password)) {
+                return Response.status(401)
+                        .header("Access-Control-Allow-Origin", "*")
+                        .entity(error("Invalid email or password")).build();
+            }
+            String token = TokenManager.getInstance().createStaff(dentist.getDentistId(), "DENTIST");
+            return buildTokenResponse(token, "DENTIST", dentist.getName(),
+                    dentist.getDentistId(), email, 0);
         }
 
         return Response.status(401)

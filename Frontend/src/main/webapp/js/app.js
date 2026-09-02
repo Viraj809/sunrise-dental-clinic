@@ -169,6 +169,7 @@ function showNav() {
         html += '<a href="/Frontend/dentist-dashboard.html" class="' + (current.includes('dentist-dashboard') ? 'active' : '') + '">Dashboard</a>';
         html += '<a href="/Frontend/dentist-schedule.html" class="' + (current.includes('dentist-schedule') ? 'active' : '') + '">My Schedule</a>';
         html += '<a href="/Frontend/patient-history.html" class="' + (current.includes('patient-history') ? 'active' : '') + '">Patient History</a>';
+        html += '<a href="/Frontend/dentist-reports.html" class="' + (current.includes('dentist-reports') ? 'active' : '') + '">Reports</a>';
         html += '<a href="/Frontend/notices.html" class="' + (current.includes('notices') ? 'active' : '') + '">Notices</a>';
         html += '<a href="/Frontend/help.html" class="' + (current.includes('help') ? 'active' : '') + '">Help</a>';
         html += '<a href="#" onclick="logout(); return false;" class="logout-link">Logout</a>';

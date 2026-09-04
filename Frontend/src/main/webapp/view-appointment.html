@@ -57,7 +57,7 @@
 
     <!-- Appointment Detail Card -->
     <div id="detailCard" class="card" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;justify-content:center;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
             <h2>Appointment Details</h2>
             <div id="actionButtons"></div>
         </div>
@@ -259,10 +259,6 @@
             if (role === 'ADMIN' || role === 'RECEPTIONIST' || role === 'SYSTEM_ADMIN') {
                 btns.innerHTML += '<button class="btn btn-sm btn-warning" onclick="window.location.href=\'/Frontend/edit-appointment.html?appt_id=' + a.appointmentId + '\'" style="margin-right:4px;">Edit</button>';
                 btns.innerHTML += '<button class="btn btn-sm btn-danger" onclick="deleteAppointment(' + a.appointmentId + ', \'' + a.appointmentNo + '\')" style="margin-right:4px;">Delete</button>';
-                const billDisabled = a.status !== 'Completed';
-                const billClass = billDisabled ? 'btn-disabled' : '';
-                const billTitle = billDisabled ? 'Cancelled appointments cannot be billed.' : 'Generate Bill';
-                btns.innerHTML += '<a class="btn btn-sm btn-success ' + billClass + '" href="/Frontend/billing.html?appt_id=' + a.appointmentId + '" title="' + billTitle + '">Generate Bill</a>';
             }
 
             currentApptId = a.appointmentId;

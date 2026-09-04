@@ -23,11 +23,13 @@
             <h2>Staff Management</h2>
             <p>View, add and manage staff accounts</p>
         </div>
-        <button class="btn btn-primary" onclick="openModal()">➕ Add Staff</button>
+        <button class="btn btn-primary" onclick="openModal()">Add Staff</button>
     </div>
 
     <div class="card card-stat">
-        <div class="stat-icon">👥</div>
+        <div class="stat-icon">
+            <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#0f172a;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
         <div class="stat-body">
             <div class="stat-value" id="totalStaff">0</div>
             <div class="stat-label">Total Staff</div>
@@ -65,7 +67,7 @@
 <!-- Deactivate Confirmation Modal -->
 <div id="deactivateModal" class="modal-overlay" style="display:none;">
     <div class="modal" style="max-width:420px;">
-        <h3>⚠️ Deactivate Staff Account</h3>
+        <h3>Deactivate Staff Account</h3>
         <p style="margin:12px 0 20px;color:var(--text-secondary);font-size:0.9rem;">Are you sure you want to deactivate this staff account? They will no longer be able to log in.</p>
         <div class="modal-actions">
             <button class="btn btn-ghost" onclick="document.getElementById('deactivateModal').style.display='none'">Cancel</button>
@@ -77,7 +79,7 @@
 <!-- Add Staff Modal -->
 <div id="addModal" class="modal-overlay" style="display:none;">
     <div class="modal">
-        <h3>➕ Add New Staff</h3>
+        <h3>Add New Staff</h3>
         <div id="modalError" class="alert alert-error" style="display:none;"></div>
         <div id="regResult" class="alert alert-success" style="display:none;"></div>
         <div class="form-row">
@@ -104,7 +106,7 @@
         </p>
         <div class="modal-actions" id="addModalActions">
             <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="saveStaff()" id="saveStaffBtn">💾 Save Staff</button>
+            <button class="btn btn-primary" onclick="saveStaff()" id="saveStaffBtn">Save Staff</button>
         </div>
     </div>
 </div>
@@ -112,7 +114,7 @@
 <!-- Edit Staff Modal -->
 <div id="editModal" class="modal-overlay" style="display:none;">
     <div class="modal">
-        <h3>✏️ Edit Staff Details</h3>
+        <h3>Edit Staff Details</h3>
         <div id="editModalError" class="alert alert-error" style="display:none;"></div>
         <input type="hidden" id="e-id">
         <div class="form-row">
@@ -138,7 +140,7 @@
         </div>
         <div class="modal-actions" id="editModalActions">
             <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
-            <button class="btn btn-warning" onclick="updateStaff()" id="updateStaffBtn">💾 Update Staff</button>
+            <button class="btn btn-warning" onclick="updateStaff()" id="updateStaffBtn">Update Staff</button>
         </div>
     </div>
 </div>
@@ -146,7 +148,7 @@
 <!-- Detect Modal -->
 <div id="detectModal" class="modal-overlay" style="display:none;">
     <div class="modal">
-        <h3>🔍 Staff Details</h3>
+        <h3>Staff Details</h3>
         <div id="detectResult"></div>
         <div class="modal-actions">
             <button class="btn btn-ghost" onclick="document.getElementById('detectModal').style.display='none'">Close</button>
@@ -186,13 +188,13 @@
 
             let actionsHtml = '';
             if (isSystemAdmin) {
-                actionsHtml = `<span class="badge badge-admin" style="display:inline-flex;align-items:center;gap:4px;">🔒 Protected</span>`;
+                actionsHtml = `<span class="badge badge-admin" style="display:inline-flex;align-items:center;gap:4px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Protected</span>`;
             } else {
                 actionsHtml = `
                     <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-                        <button class="btn btn-sm btn-ghost" onclick="detectStaff(${s.staffId})" style="width:100%;justify-content:center;">🔍 Detect</button>
-                        <button class="btn btn-sm btn-warning" onclick="openEditModal(${s.staffId})" style="width:100%;justify-content:center;">✏️ Edit</button>
-                        <button class="btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}" onclick="confirmDeactivate(${s.staffId}, ${s.active})" style="width:100%;justify-content:center;">${s.active ? '🔒 Deactivate' : '🔓 Activate'}</button>
+                        <button class="btn btn-sm btn-ghost" onclick="detectStaff(${s.staffId})" style="width:100%;justify-content:center;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Detect</button>
+                        <button class="btn btn-sm btn-warning" onclick="openEditModal(${s.staffId})" style="width:100%;justify-content:center;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit</button>
+                        <button class="btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}" onclick="confirmDeactivate(${s.staffId}, ${s.active})" style="width:100%;justify-content:center;">${s.active ? '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Deactivate' : '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9 1"/></svg> Activate'}</button>
                     </div>`;
             }
 
@@ -335,7 +337,7 @@
             errDiv.textContent = 'Failed to update staff.';
             errDiv.style.display = 'flex';
         }
-        btn.disabled = false; btn.textContent = '💾 Update Staff';
+        btn.disabled = false; btn.textContent = 'Update Staff';
     }
 
     let deactivateTargetId = null;
@@ -435,7 +437,7 @@
             errDiv.textContent = 'Failed to add staff.';
             errDiv.style.display = 'flex';
         }
-        btn.disabled = false; btn.textContent = '💾 Save Staff';
+        btn.disabled = false; btn.textContent = 'Save Staff';
     }
 
     loadStaff();

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Appointment – Sunrise Dental Clinic</title>
+    <link rel="stylesheet" href="/Frontend/css/style.css">
+</head>
+<body>
+<div class="header">
+    <h1>Sunrise Dental Clinic</h1>
+    <div class="user-info" id="user-info"></div>
+</div>
+<div class="sticky-nav">
+    <nav class="nav" id="main-nav"></nav>
+</div>
+
+<div class="container">
+    <div id="toast-container"></div>
+
+    <div class="page-header">
+        <div><h2>Edit Appointment</h2><p id="apptSubtitle">Loading appointment details...</p></div>
+        <a href="/Frontend/view-appointment.html" class="btn btn-ghost btn-sm">← Back to Appointments</a>
+    </div>
+
+    <div id="loadError" class="alert alert-error" style="display:none;"></div>
+
+    <div class="card" id="editCard" style="display:none;">
+        <div id="error-msg" class="alert alert-error" style="display:none;"></div>
+        <form id="editForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Treatment Type *</label>
+                    <select id="treatmentType" required>
+                        <option value="">— Select Treatment —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dentist *</label>
+                    <select id="dentistId" required>
+                        <option value="">— Select Dentist —</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Appointment Date *</label>
+                    <input type="date" id="appointmentDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Appointment Time (08:00–18:00) *</label>
+                    <input type="time" id="appointmentTime" required min="08:00" max="18:00">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Patient *</label>
+                    <select id="patientId" required>
+                        <option value="">— Select Patient —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Contact Number *</label>
+                    <input type="text" id="contact" required placeholder="07XXXXXXXX" maxlength="10">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Notes</label>
+                <input type="text" id="notes" placeholder="Optional notes">
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:8px;">
+                <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">Save Changes</button>
+                <a href="/Frontend/view-appointment.html" class="btn btn-ghost btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/Frontend/js/app.js"></script>
+<script>
+    requireAuth();
+
+    const params = new URLSearchParams(window.location.search);
+    const apptId = params.get('appt_id');
+
+    async function loadDropdowns() {
+        try {
+            const [dentists, patients, treatments] = await Promise.all([
+                apiGet('/dentists'),
+                apiGet('/patients'),
+                apiGet('/treatments')
+            ]);
+
+            const dSelect = document.getElementById('dentistId');
+            dentists.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.dentistId;
+                opt.textContent = d.name + (d.specialization ? ' – ' + d.specialization : '');
+                dSelect.appendChild(opt);
+            });
+
+            const pSelect = document.getElementById('patientId');
+            patients.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.patientId;
+                opt.textContent = p.name + ' (NIC: ' + (p.nic || '–') + ')';
+                pSelect.appendChild(opt);
+            });
+
+            const tSelect = document.getElementById('treatmentType');
+            treatments.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.treatmentCode;
+                opt.textContent = t.treatmentName + ' (LKR ' + t.basePrice.toLocaleString() + ')';
+                tSelect.appendChild(opt);
+            });
+        } catch (e) { showToast('Failed to load options', 'error'); }
+    }
+
+    async function loadAppointment() {
+        if (!apptId) {
+            document.getElementById('loadError').textContent = 'No appt_id specified in URL.';
+            document.getElementById('loadError').style.display = 'flex';
+            return;
+        }
+        try {
+            await loadDropdowns();
+
+            const a = await apiGet('/appointments/' + apptId);
+            document.getElementById('apptSubtitle').textContent = 'Appointment No: ' + a.appointmentNo;
+
+            document.getElementById('patientId').value = a.patientId || '';
+            document.getElementById('dentistId').value = a.dentistId || '';
+            document.getElementById('treatmentType').value = a.treatmentType || '';
+            document.getElementById('appointmentDate').value = a.appointmentDate || '';
+            document.getElementById('appointmentTime').value = a.appointmentTime ? a.appointmentTime.substring(0,5) : '';
+            document.getElementById('contact').value = a.contact || '';
+            document.getElementById('notes').value = a.notes || '';
+
+            document.getElementById('editCard').style.display = 'block';
+        } catch (e) {
+            document.getElementById('loadError').textContent = 'Appointment not found (ID: ' + apptId + ')';
+            document.getElementById('loadError').style.display = 'flex';
+        }
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const errorDiv = document.getElementById('error-msg');
+        errorDiv.style.display = 'none';
+
+        const contact = document.getElementById('contact').value.trim();
+        if (!/^0\d{9}$/.test(contact)) {
+            errorDiv.textContent = 'Contact number must be 10 digits starting with 0.';
+            errorDiv.style.display = 'flex';
+            return;
+        }
+
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        const data = {
+            patientId:       parseInt(document.getElementById('patientId').value),
+            dentistId:       parseInt(document.getElementById('dentistId').value),
+            treatmentType:   document.getElementById('treatmentType').value,
+            appointmentDate: document.getElementById('appointmentDate').value,
+            appointmentTime: document.getElementById('appointmentTime').value + ':00',
+            contact:         contact,
+            notes:           document.getElementById('notes').value
+        };
+
+        if (!data.patientId || !data.dentistId || !data.treatmentType || !data.appointmentDate || !data.appointmentTime) {
+            errorDiv.textContent = 'Please fill in all required fields.';
+            errorDiv.style.display = 'flex';
+            btn.disabled = false;
+            btn.textContent = 'Save Changes';
+            return;
+        }
+
+        try {
+            const res = await apiPut('/appointments/' + apptId, data);
+            if (res.error) {
+                errorDiv.textContent = res.error;
+                errorDiv.style.display = 'flex';
+            } else {
+                showToast('Appointment updated successfully ✅');
+                window.location.href = '/Frontend/view-appointment.html?no=' + (res.appointmentNo || '');
+            }
+        } catch (e) {
+            errorDiv.textContent = 'Failed to update appointment.';
+            errorDiv.style.display = 'flex';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+    });
+
+    loadAppointment();
+</script>
+</body>
+</html>

@@ -29,6 +29,22 @@ public class DentistDAO {
         return list;
     }
 
+    public List<Dentist> findAllIncludingInactive() {
+        ArrayList<Dentist> list = new ArrayList<Dentist>();
+        String sql = "SELECT * FROM dentists ORDER BY name";
+        try (Connection conn = this.db.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql);){
+            while (rs.next()) {
+                list.add(this.mapDentist(rs));
+            }
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     /*
      * Enabled aggressive block sorting
      * Enabled unnecessary exception pruning

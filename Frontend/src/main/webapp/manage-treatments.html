@@ -23,11 +23,13 @@
             <h2>Treatment Management</h2>
             <p>View, add, edit and price treatment types</p>
         </div>
-        <button class="btn btn-primary" onclick="openModal()">➕ Add Treatment</button>
+        <button class="btn btn-primary" onclick="openModal()">Add Treatment</button>
     </div>
 
     <div class="card card-stat">
-        <div class="stat-icon">🩺</div>
+        <div class="stat-icon">
+            <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#0f172a;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 13h6M9 17h6M9 9h2"/></svg>
+        </div>
         <div class="stat-body">
             <div class="stat-value" id="totalTreatments">0</div>
             <div class="stat-label">Total Treatments</div>
@@ -42,7 +44,7 @@
     </div>
 
     <div class="card">
-        <h2>🦷 Treatment Types</h2>
+        <h2>Treatment Types</h2>
         <div class="table-wrapper">
             <table class="table" id="treatmentTable">
                 <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Consultation (LKR)</th><th>Treatment (LKR)</th><th>Duration</th><th>Actions</th></tr></thead>
@@ -55,7 +57,7 @@
 <!-- Add/Edit Treatment Modal -->
 <div id="treatmentModal" class="modal-overlay" style="display:none;">
     <div class="modal">
-        <h3 id="modalTitle">➕ Add Treatment</h3>
+        <h3 id="modalTitle">Add Treatment</h3>
         <div id="modalError" class="alert alert-error" style="display:none;"></div>
         <div class="form-row">
             <div class="form-group"><label>Treatment Code *</label><input type="text" id="m-code" placeholder="e.g. WHITENING"></div>
@@ -89,7 +91,7 @@
         <input type="hidden" id="m-originalCode">
         <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="saveTreatment()" id="saveBtn">💾 Save Treatment</button>
+            <button class="btn btn-primary" onclick="saveTreatment()" id="saveBtn">Save Treatment</button>
         </div>
     </div>
 </div>
@@ -124,8 +126,14 @@
                 <td>LKR ${Number(t.basePrice).toLocaleString('en-LK',{minimumFractionDigits:2})}</td>
                 <td>${t.durationMinutes ? t.durationMinutes + ' min' : '–'}</td>
                 <td>
-                    <button class="btn btn-sm btn-warning" onclick="openEditModal('${t.treatmentCode}')">✏️ Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteTreatment('${t.treatmentCode}')">🗑️ Delete</button>
+                    <button class="btn btn-sm btn-warning" onclick="openEditModal('${t.treatmentCode}')">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Edit
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteTreatment('${t.treatmentCode}')">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        Delete
+                    </button>
                 </td>
             </tr>`).join('');
     }
@@ -147,7 +155,7 @@
 
     function openModal() {
         editingCode = null;
-        document.getElementById('modalTitle').textContent = '➕ Add Treatment';
+            document.getElementById('modalTitle').textContent = 'Add Treatment';
         ['m-code','m-name','m-consult','m-price','m-category','m-duration','m-desc'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('m-code').readOnly = false;
         document.getElementById('modalError').style.display = 'none';
@@ -158,7 +166,7 @@
         try {
             const t = await apiGet('/treatments/' + encodeURIComponent(code));
             editingCode = code;
-            document.getElementById('modalTitle').textContent = '✏️ Edit Treatment';
+            document.getElementById('modalTitle').textContent = 'Edit Treatment';
             document.getElementById('m-code').value = t.treatmentCode;
             document.getElementById('m-code').readOnly = true;
             document.getElementById('m-name').value = t.treatmentName || '';
@@ -211,7 +219,7 @@
                 closeModal(); loadTreatments();
             }
         } catch (e) { errDiv.textContent = 'Failed to save treatment.'; errDiv.style.display = 'flex'; }
-        btn.disabled = false; btn.textContent = '💾 Save Treatment';
+        btn.disabled = false; btn.textContent = 'Save Treatment';
     }
 
     async function deleteTreatment(code) {

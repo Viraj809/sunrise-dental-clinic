@@ -19,8 +19,8 @@ public class DentistResource {
     private final DentistDAO dao = new DentistDAO();
 
     @GET
-    public Response getAll() {
-        List<Dentist> list = dao.findAll();
+    public Response getAll(@QueryParam("all") @DefaultValue("false") String all) {
+        List<Dentist> list = "true".equalsIgnoreCase(all) ? dao.findAllIncludingInactive() : dao.findAll();
         return Response.ok(list).build();
     }
 

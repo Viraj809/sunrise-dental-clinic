@@ -12,10 +12,15 @@
             display: flex; align-items: center; gap: 18px; transition: all var(--transition);
         }
         .stat-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-lg); }
-        .stat-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
-        .stat-icon.blue { background: var(--primary-light); }
-        .stat-icon.green { background: var(--success-light); }
-        .stat-icon.amber { background: var(--warning-light); }
+        .stat-icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; background: #f1f5f9;
+        }
+        .stat-icon svg {
+            width: 26px; height: 26px; stroke: #0f172a; fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
         .stat-value { font-size: 1.8rem; font-weight: 800; line-height: 1.1; color: var(--text-primary); }
         .stat-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
         .section-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
@@ -65,19 +70,27 @@
     <!-- Stats -->
     <div id="statsRow" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
         <div class="stat-card">
-            <div class="stat-icon blue">📅</div>
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
             <div><div class="stat-value" id="s-total">0</div><div class="stat-label">Total</div></div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon green">✅</div>
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
             <div><div class="stat-value" id="s-completed">0</div><div class="stat-label">Completed</div></div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon amber">⏳</div>
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
             <div><div class="stat-value" id="s-pending">0</div><div class="stat-label">Pending</div></div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon red">❌</div>
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
             <div><div class="stat-value" id="s-cancelled">0</div><div class="stat-label">Cancelled</div></div>
         </div>
     </div>
@@ -130,10 +143,8 @@
             appointments.sort((a, b) => {
                 const dateA = a.appointmentDate || '';
                 const dateB = b.appointmentDate || '';
-                const timeA = a.appointmentTime || '';
-                const timeB = b.appointmentTime || '';
                 if (dateA !== dateB) return dateA.localeCompare(dateB);
-                return timeA.localeCompare(timeB);
+                return (a.appointmentTime || '').localeCompare(b.appointmentTime || '');
             });
 
             document.getElementById('s-total').textContent = appointments.length;

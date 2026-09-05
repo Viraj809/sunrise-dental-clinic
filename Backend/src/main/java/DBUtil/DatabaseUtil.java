@@ -9,18 +9,53 @@ import java.util.Deque;
 public class DatabaseUtil {
     private static DatabaseUtil instance;
     private Deque<Connection> pool = new ArrayDeque<Connection>();
-    private String url = "jdbc:mysql://localhost:3306/sunrise_dental_db?useSSL=false&serverTimezone=UTC";
-    private String user = "root";
-    private String password = "VIP7788@viraj";
+    private String url;
+    private String user;
+    private String password;
     private int poolSize = 5;
 
     private DatabaseUtil() {
+        this("jdbc:mysql://localhost:3306/sunrise_dental_db?useSSL=false&serverTimezone=UTC",
+             "root", "VIP7788@viraj", 5);
+    }
+
+    private DatabaseUtil(String url, String user, String password, int poolSize) {
+        this.url = url;
+        this.user = user;
+        this.password = password;
+        this.poolSize = poolSize;
         this.initPool();
+    }
+
+    public static synchronized DatabaseUtil getInstance() {
+        if (instance == null) {
+            String testMode = System.getProperty("test.mode");
+            if ("true".equals(testMode)) {
+                instance = new DatabaseUtil(
+                    "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL",
+                    "sa", "", 5
+                );
+            } else {
+                instance = new DatabaseUtil();
+            }
+        }
+        return instance;
+    }
+
+    public static synchronized void resetInstance() {
+        if (instance != null) {
+            instance.closeAll();
+            instance = null;
+        }
     }
 
     private void initPool() {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            if (this.url.startsWith("jdbc:h2:")) {
+                Class.forName("org.h2.Driver");
+            } else {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+            }
             for (int i = 0; i < this.poolSize; ++i) {
                 Connection conn = DriverManager.getConnection(this.url, this.user, this.password);
                 this.pool.push(conn);
@@ -29,13 +64,6 @@ public class DatabaseUtil {
         catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Failed to initialize database connection pool: " + e.getMessage(), e);
         }
-    }
-
-    public static synchronized DatabaseUtil getInstance() {
-        if (instance == null) {
-            instance = new DatabaseUtil();
-        }
-        return instance;
     }
 
     public synchronized Connection getConnection() {
@@ -60,7 +88,6 @@ public class DatabaseUtil {
                 }
             }
             catch (SQLException sQLException) {
-                // empty catch block
             }
         }
     }
@@ -75,4 +102,3 @@ public class DatabaseUtil {
         this.pool.clear();
     }
 }
-

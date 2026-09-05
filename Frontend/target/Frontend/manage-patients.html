@@ -5,6 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Patients – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
+    <style>
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1.5px solid transparent;
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .action-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+        .action-btn:hover { transform: translateY(-1px); box-shadow: var(--card-shadow); }
+        .action-view { background: var(--surface); color: var(--text-primary); border-color: var(--border); }
+        .action-view:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+        .action-edit { background: var(--surface); color: var(--text-primary); border-color: var(--border); }
+        .action-edit:hover { background: #fef3c7; border-color: var(--warning); color: #92400e; }
+        .action-history { background: var(--surface); color: var(--text-primary); border-color: var(--border); }
+        .action-history:hover { background: #dbeafe; border-color: var(--primary); color: var(--primary); }
+        .action-book { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .action-book:hover { background: #1d4ed8; border-color: #1d4ed8; }
+        .action-delete { background: var(--surface); color: var(--text-primary); border-color: var(--border); }
+        .action-delete:hover { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+    </style>
 </head>
 <body>
 <div class="header">
@@ -23,11 +60,13 @@
             <h2>Patient Management</h2>
             <p>Search, view and manage patient records</p>
         </div>
-        <a href="/Frontend/add-patient.html" class="btn btn-primary">➕ Add New Patient</a>
+        <a href="/Frontend/add-patient.html" class="btn btn-primary">Add New Patient</a>
     </div>
 
     <div class="card card-stat">
-        <div class="stat-icon">👥</div>
+        <div class="stat-icon">
+            <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#0f172a;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
         <div class="stat-body">
             <div class="stat-value" id="totalPatients">0</div>
             <div class="stat-label">Total Patients</div>
@@ -35,18 +74,27 @@
     </div>
 
     <div class="card">
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="Search by name, NIC or contact..." oninput="filterPatients()">
-            <button class="btn btn-ghost" onclick="clearSearch()">Clear</button>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            <div class="search-bar" style="flex:1;min-width:220px;">
+                <input type="text" id="searchInput" placeholder="Search by name, NIC or contact..." oninput="filterPatients()">
+                <button class="btn btn-ghost" onclick="clearSearch()">Clear</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);">Sort:</label>
+                <select id="idSort" onchange="applySort()" style="padding:8px 12px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface);font-size:0.85rem;font-weight:600;color:var(--text-primary);cursor:pointer;">
+                    <option value="asc">ID ↑ Ascending</option>
+                    <option value="desc">ID ↓ Descending</option>
+                </select>
+            </div>
         </div>
         <p id="resultCount"></p>
 
         <div class="table-wrapper">
             <table class="table" id="patientTable">
                 <thead>
-                    <tr><th>ID</th><th>Name</th><th>NIC</th><th>Contact</th><th>Email</th><th>Actions</th></tr>
+                    <tr><th>ID</th><th>Name</th><th>NIC</th><th>Contact</th><th>Email</th><th style="text-align:center;">Actions</th></tr>
                 </thead>
-                <tbody><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tbody>
+                <tbody><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -72,9 +120,13 @@
         try {
             const res = await apiDelete('/patients/' + id);
             if (res.error) { showToast(res.error, 'error'); return; }
-            showToast('Patient deleted ✅');
+            showToast('Patient deleted');
             loadPatients();
         } catch (e) { showToast('Failed to delete patient', 'error'); }
+    }
+
+    function formatPatientId(id) {
+        return 'P' + String(id).padStart(3, '0');
     }
 
     function renderTable(patients) {
@@ -83,41 +135,70 @@
 
         const tbody = document.querySelector('#patientTable tbody');
         if (!patients.length) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No patients found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No patients found</td></tr>';
             return;
         }
         tbody.innerHTML = patients.map(p => `
             <tr>
-                <td><strong>${p.patientId}</strong></td>
+                <td><strong>${formatPatientId(p.patientId)}</strong></td>
                 <td>${p.name}</td>
                 <td>${p.nic}</td>
                 <td>${p.contact}</td>
                 <td>${p.email || '–'}</td>
-                <td>
-                    <a href="/Frontend/edit-patient.html?patient_id=${p.patientId}" class="btn btn-sm btn-warning">✏️ Edit</a>
-                    <a href="/Frontend/patient-history.html?patient_id=${p.patientId}" class="btn btn-sm btn-ghost">📁 History</a>
-                    <a href="/Frontend/register-appointment.html" class="btn btn-sm btn-primary"
-                       onclick="localStorage.setItem('quickNic','${p.nic}')">📅 Book</a>
-                    ${(role === 'ADMIN' || role === 'SYSTEM_ADMIN') ? `<button class="btn btn-sm btn-danger" onclick="deletePatient(${p.patientId}, '${p.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>` : ''}
+                <td style="text-align:center;">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+                        <a href="/Frontend/view-patient.html?patient_id=${p.patientId}" class="action-btn action-view" title="View">
+                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            View
+                        </a>
+                        <a href="/Frontend/edit-patient.html?patient_id=${p.patientId}" class="action-btn action-edit" title="Edit">
+                            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            Edit
+                        </a>
+                        <a href="/Frontend/patient-history.html?patient_id=${p.patientId}" class="action-btn action-history" title="History">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            History
+                        </a>
+                        <a href="/Frontend/register-appointment.html?patientId=${p.patientId}" class="action-btn action-book" title="Book">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            Book
+                        </a>
+                        ${(role === 'ADMIN' || role === 'SYSTEM_ADMIN') ? `<button class="action-btn action-delete" onclick="deletePatient(${p.patientId}, '${p.name.replace(/'/g,"\\'")}')" title="Delete">
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            Delete
+                        </button>` : ''}
+                    </div>
                 </td>
             </tr>`).join('');
     }
 
-    function filterPatients() {
+    function applySort() {
+        const sortDir = document.getElementById('idSort').value;
         const q = document.getElementById('searchInput').value.toLowerCase().trim();
-        if (!q) { renderTable(allPatients); return; }
-        const filtered = allPatients.filter(p =>
-            p.name.toLowerCase().includes(q) ||
-            (p.nic && p.nic.toLowerCase().includes(q)) ||
-            (p.contact && p.contact.includes(q)) ||
-            (p.email && p.email.toLowerCase().includes(q))
-        );
+        let filtered = allPatients;
+        if (q) {
+            filtered = allPatients.filter(p =>
+                p.name.toLowerCase().includes(q) ||
+                (p.nic && p.nic.toLowerCase().includes(q)) ||
+                (p.contact && p.contact.includes(q)) ||
+                (p.email && p.email.toLowerCase().includes(q))
+            );
+        }
+        filtered = [...filtered].sort((a, b) => {
+            if (sortDir === 'asc') return a.patientId - b.patientId;
+            return b.patientId - a.patientId;
+        });
         renderTable(filtered);
+    }
+
+    function filterPatients() {
+        applySort();
     }
 
     function clearSearch() {
         document.getElementById('searchInput').value = '';
-        renderTable(allPatients);
+        document.getElementById('idSort').value = 'asc';
+        applySort();
     }
 
     loadPatients();

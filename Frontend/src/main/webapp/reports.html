@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reports & Analytics – Sunrise Dental Clinic</title>
     <link rel="stylesheet" href="/Frontend/css/style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
     <style>
         .report-filters {
             display: flex;
@@ -283,6 +281,8 @@
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="/Frontend/js/app.js"></script>
 <script>
     requireAuth(['ADMIN', 'SYSTEM_ADMIN']);
@@ -395,6 +395,7 @@
 
     function downloadDailyPDF() {
         if (!dailyReportData) { showToast('No daily report data to export', 'error'); return; }
+        if (typeof window.jspdf === 'undefined') { showToast('PDF export is unavailable', 'error'); return; }
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -429,6 +430,7 @@
 
     function downloadMonthlyPDF() {
         if (!monthlyReportData) { showToast('No monthly report data to export', 'error'); return; }
+        if (typeof window.jspdf === 'undefined') { showToast('PDF export is unavailable', 'error'); return; }
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();

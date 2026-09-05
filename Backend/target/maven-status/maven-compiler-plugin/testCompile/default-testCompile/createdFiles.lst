@@ -1,0 +1,10 @@
+tests\DentistDAOTest.class
+tests\AppointmentDAOTest.class
+tests\NotificationDAOTest.class
+tests\DentistScheduleDAOTest.class
+tests\StaffDAOTest.class
+tests\TreatmentDAOTest.class
+tests\BaseTest.class
+tests\PatientDAOTest.class
+tests\NoticeDAOTest.class
+tests\BillDAOTest.class

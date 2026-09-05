@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Project Information -->
     <groupId>com.sunrisedental</groupId>
     <artifactId>Backend</artifactId>
     <version>1.0</version>
@@ -11,64 +15,191 @@
 
     <name>Sunrise Dental Backend</name>
 
+    <!-- Properties -->
+   <!-- Properties -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Java -->
         <maven.compiler.release>17</maven.compiler.release>
+
+        <!-- Jersey -->
+        <jersey.version>4.0.2</jersey.version>
+
+        <!-- JUnit (මෙහි 5.11.0 ලෙස වෙනස් කරන්න) -->
+        <junit.version>5.11.0</junit.version>
+
         <failOnMissingWebXml>false</failOnMissingWebXml>
-        <jersey.version>3.1.2</jersey.version>
     </properties>
 
+
+    <!-- ============================= -->
+    <!-- DEPENDENCIES -->
+    <!-- ============================= -->
+
     <dependencies>
-        <!-- JAX-RS API (Jakarta EE 10) -->
+
+        <!-- ================================= -->
+        <!-- Jakarta REST API -->
+        <!-- ================================= -->
         <dependency>
             <groupId>jakarta.ws.rs</groupId>
             <artifactId>jakarta.ws.rs-api</artifactId>
             <version>4.0.0</version>
         </dependency>
 
-        <!-- Jersey Implementation -->
+
+        <!-- ================================= -->
+        <!-- Jersey -->
+        <!-- ================================= -->
+
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-servlet</artifactId>
             <version>${jersey.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
             <version>${jersey.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-binding</artifactId>
             <version>${jersey.version}</version>
         </dependency>
 
-        <!-- MySQL Connector -->
+
+        <!-- ================================= -->
+        <!-- MySQL JDBC Driver -->
+        <!-- ================================= -->
+
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>8.4.0</version>
         </dependency>
 
-        <!-- jBCrypt for password hashing -->
+
+        <!-- ================================= -->
+        <!-- jBCrypt Password Hashing -->
+        <!-- ================================= -->
+
         <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
         </dependency>
+
+
+        <!-- ================================= -->
+        <!-- JUNIT 6 -->
+        <!-- ================================= -->
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+
+        <!-- ================================= -->
+        <!-- Mockito -->
+        <!-- ================================= -->
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.23.0</version>
+            <scope>test</scope>
+        </dependency>
+
+
+        <!-- ================================= -->
+        <!-- H2 Database for Tests -->
+        <!-- ================================= -->
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.3.232</version>
+            <scope>test</scope>
+        </dependency>
+
+
+        <!-- ================================= -->
+        <!-- Jersey Common for Tests -->
+        <!-- ================================= -->
+
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+            <version>${jersey.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
+
+    <!-- ============================= -->
+    <!-- BUILD -->
+    <!-- ============================= -->
+
     <build>
+
         <finalName>Backend</finalName>
+
         <plugins>
+
+            <!-- Maven Compiler -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>17</release>
+                </configuration>
+            </plugin>
+
+
+            <!-- Maven Surefire - JUnit Tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.3</version>
+            </plugin>
+
+
+            <!-- Maven WAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
+                <version>3.4.0</version>
+
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
+
         </plugins>
+
     </build>
+
 </project>

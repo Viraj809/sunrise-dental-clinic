@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="header">
-    <h1>Sunrise Dental Clinic</h1>
+    <h1 style="cursor:pointer;" onclick="goToDashboard()">Sunrise Dental Clinic</h1>
     <div class="user-info" id="user-info"></div>
 </div>
 <div class="sticky-nav">
@@ -45,13 +45,30 @@
         return div.innerHTML;
     }
 
+    function getReadNoticeIds() {
+        try {
+            const raw = localStorage.getItem('readNoticeIds');
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) { return []; }
+    }
+
+    function markNoticeReadLocal(noticeId) {
+        const ids = getReadNoticeIds();
+        if (!ids.includes(noticeId)) {
+            ids.push(noticeId);
+            localStorage.setItem('readNoticeIds', JSON.stringify(ids));
+        }
+    }
+
     function renderNoticeCard(notice) {
         const badgeCls = notice.priority === 'Urgent' ? 'badge-danger'
             : notice.priority === 'Important' ? 'badge-warning'
             : 'badge-info';
 
-        const unreadClass = !notice.readAt ? 'notice-unread' : '';
-        const readLabel = !notice.readAt
+        const readIds = getReadNoticeIds();
+        const isRead = readIds.includes(notice.noticeId);
+        const unreadClass = !isRead ? 'notice-unread' : '';
+        const readLabel = !isRead
             ? `<button class="btn btn-sm btn-primary" onclick="markAsRead(${notice.noticeId})">Mark as Read</button>`
             : `<span style="font-size:0.8rem;color:var(--text-muted);">Read</span>`;
 
@@ -66,6 +83,7 @@
                     <div style="font-size:0.8rem;color:var(--text-muted);display:flex;gap:16px;flex-wrap:wrap;">
                         <span>Published: ${notice.publishDate || '-'}</span>
                         ${notice.expiryDate ? '<span>Expires: ' + notice.expiryDate + '</span>' : ''}
+                        ${notice.targetRole ? '<span>Target: ' + notice.targetRole + '</span>' : ''}
                     </div>
                     ${readLabel}
                 </div>
@@ -100,12 +118,19 @@
     }
 
     async function markAsRead(noticeId) {
-        try {
-            await apiPost('/notices/' + noticeId + '/read', {});
-            showToast('Notice marked as read');
-            loadNotices();
-        } catch (e) {
-            showToast('Failed to mark notice as read', 'error');
+        markNoticeReadLocal(noticeId);
+        showToast('Notice marked as read');
+        loadNotices();
+    }
+
+    function goToDashboard() {
+        const role = localStorage.getItem('role');
+        if (role === 'ADMIN' || role === 'SYSTEM_ADMIN') {
+            window.location.href = '/Frontend/admin-dashboard.html';
+        } else if (role === 'RECEPTIONIST') {
+            window.location.href = '/Frontend/receptionist-dashboard.html';
+        } else if (role === 'DENTIST') {
+            window.location.href = '/Frontend/dentist-dashboard.html';
         }
     }
 

@@ -76,6 +76,12 @@
         } catch (e) { console.error(e); }
     }
 
+    function getStatusBadge(status) {
+        if (!status) return '–';
+        const cls = 'status-' + String(status).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        return '<span class="status-badge ' + cls + '">' + status + '</span>';
+    }
+
     async function load() {
         if (!patientId) {
             document.querySelector('#apptTable tbody').innerHTML = '<tr><td colspan="6" class="empty-state">No patient selected</td></tr>';

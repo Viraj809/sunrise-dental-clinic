@@ -1,316 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login – Sunrise Dental Clinic</title>
-    <link rel="stylesheet" href="/Frontend/css/style.css">
-    <style>
-        body { margin: 0; background: #f4f6fb; }
-        .login-page {
-            min-height: 100vh;
-            display: flex;
-        }
-        .brand-panel {
-            flex: 1.15;
-            background: url('/Frontend/image/img.jpg') center/cover no-repeat;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 80px;
-            color: white;
-            position: relative;
-        }
-        .brand-panel::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(15,28,63,0.92) 0%, rgba(37,99,235,0.65) 100%);
-        }
-        .brand-content {
-            position: relative;
-            z-index: 1;
-            max-width: 480px;
-        }
-        .brand-logo-icon {
-            font-size: 3.2rem;
-            margin-bottom: 22px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 88px; height: 88px;
-            background: rgba(255, 255, 255, 0.18);
-            border-radius: 22px;
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.28);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-        }
-        .brand-content h1 {
-            font-size: 3.2rem;
-            font-weight: 800;
-            margin: 0 0 14px 0;
-            line-height: 1.05;
-            letter-spacing: -1px;
-        }
-        .brand-content p {
-            font-size: 1.1rem;
-            opacity: 0.92;
-            line-height: 1.6;
-            font-weight: 400;
-        }
-        .form-panel {
-            flex: 1;
-            background: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-        }
-        .login-card {
-            width: 100%;
-            max-width: 420px;
-        }
-        .login-card h2 {
-            font-size: 2rem;
-            color: #0f172a;
-            margin: 0 0 6px 0;
-            font-weight: 800;
-        }
-        .login-card .sub {
-            color: #64748b;
-            margin: 0 0 32px 0;
-            font-size: 1rem;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 7px;
-            font-weight: 700;
-            color: #334155;
-            font-size: 0.88rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.2s ease;
-            background: #f8fafc;
-            color: #0f172a;
-        }
-        .form-group input:focus {
-            border-color: #2563eb;
-            background: #ffffff;
-            outline: none;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-        }
-        .password-container {
-            position: relative;
-        }
-        .password-toggle {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #64748b;
-            font-size: 1.15rem;
-            padding: 4px;
-        }
-        .btn-login {
-            width: 100%;
-            padding: 15px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.05rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-top: 6px;
-            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
-        }
-        .btn-login:hover {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
-        }
-        .btn-login:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .error-msg {
-            background: #fef2f2;
-            color: #dc2626;
-            padding: 13px 16px;
-            border-radius: 10px;
-            margin-bottom: 22px;
-            font-size: 0.9rem;
-            border: 1px solid #fecaca;
-            display: none;
-            align-items: center;
-            gap: 10px;
-            font-weight: 500;
-        }
-        .login-foot {
-            text-align: center;
-            margin-top: 32px;
-            font-size: 0.82rem;
-            color: #94a3b8;
-        }
-        @media (max-width: 900px) {
-            .login-page { flex-direction: column; }
-            .brand-panel { flex: none; padding: 60px 20px; text-align: center; }
-            .brand-content { margin: 0 auto; }
-            .brand-logo-icon { width: 68px; height: 68px; font-size: 2.2rem; margin-bottom: 14px; }
-            .brand-content h1 { font-size: 2.4rem; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In – Sunrise Dental Clinic</title>
+  <link rel="icon" type="image/svg+xml" href="/Frontend/favicon.svg">
+  <meta name="description" content="Sign in to Sunrise Dental Clinic management system. Secure access for staff, dentists, and administrators.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/Frontend/css/login.css">
 </head>
 <body>
-    <div class="login-page">
-        <aside class="brand-panel">
-            <div class="brand-content">
-                <div class="brand-logo-icon">🦷</div>
-                <h1>Sunrise<br>Dental Clinic</h1>
-                <p>Your Smile, Our Care.<br>Modern dental management for a modern practice.</p>
-            </div>
-        </aside>
 
-        <main class="form-panel">
-            <div class="login-card">
-                <h2>Welcome Back</h2>
-                <p class="sub">Sign in to access your dashboard.</p>
+<div class="login-page">
 
-                <div id="error-msg" class="error-msg" style="display: none;">
-                    <span>⚠️</span> <span id="error-text"></span>
-                </div>
+  <!-- ════════════════════════════════════════════════════════
+       LEFT  –  Visual / Image Panel
+  ════════════════════════════════════════════════════════ -->
+  <section class="visual-panel" aria-hidden="true">
 
-                <form id="loginForm" novalidate>
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <input type="email" id="email" name="email" required placeholder="name@sunrisedental.lk" autocomplete="email">
-                    </div>
+    <!-- Background image -->
+    <div class="visual-bg"></div>
 
-                    <div class="form-group">
-                        <label>Password</label>
-                        <div class="password-container">
-                            <input type="password" id="password" name="password" required placeholder="Enter your password" autocomplete="current-password">
-                            <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
-                        </div>
-                    </div>
+    <!-- Gradient overlay -->
+    <div class="visual-overlay"></div>
 
-                    <button type="submit" class="btn-login" id="submitBtn">Sign In</button>
-                </form>
+    <!-- Decorative animated orbs -->
+    <div class="visual-orb visual-orb-1"></div>
+    <div class="visual-orb visual-orb-2"></div>
+    <div class="visual-orb visual-orb-3"></div>
 
-                <p class="login-foot">© 2026 Sunrise Dental Clinic · Sri Lanka</p>
-            </div>
-        </main>
+    <!-- Content -->
+    <div class="visual-content">
+
+      <!-- Live badge -->
+      <div class="visual-badge">
+        <span class="visual-badge-dot"></span>
+        Clinic Management System
+      </div>
+
+      <!-- Headline -->
+      <h1 class="visual-headline">
+        Your Smile,<br>
+        <span>Our Priority.</span>
+      </h1>
+
+      <p class="visual-sub">
+        Advanced dental practice management platform — streamlining appointments,
+        billing, and patient care for Sunrise Dental Clinic.
+      </p>
+
+      <!-- Stats -->
+      <div class="visual-stats">
+        <div class="stat-item">
+          <span class="stat-value">5000+</span>
+          <span class="stat-label">Patients Served</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">10+</span>
+          <span class="stat-label">Specialist Dentists</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">15 Yrs</span>
+          <span class="stat-label">Excellence</span>
+        </div>
+      </div>
+
     </div>
+  </section>
 
-    <script>
-        (function() {
-            const token = localStorage.getItem('token');
-            const role  = localStorage.getItem('role');
-            if (token && role) {
-                const userRole = role.toUpperCase();
-                if (userRole === 'SYSTEM_ADMIN' || userRole === 'ADMIN') window.location.href = '/Frontend/admin-dashboard.html';
-                else if (userRole === 'RECEPTIONIST') window.location.href = '/Frontend/receptionist-dashboard.html';
-                else if (userRole === 'DENTIST')      window.location.href = '/Frontend/dentist-dashboard.html';
-                else if (userRole === 'PATIENT')      window.location.href = '/Frontend/login.html';
-            }
-        })();
 
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+  <!-- ════════════════════════════════════════════════════════
+       RIGHT  –  Login Card Panel
+  ════════════════════════════════════════════════════════ -->
+  <main class="login-panel">
+    <div class="login-card">
 
-            const email    = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const btn      = document.getElementById('submitBtn');
-            const errDiv   = document.getElementById('error-msg');
-            const errText  = document.getElementById('error-text');
+      <!-- Brand header -->
+      <div class="brand-header">
+        <div class="brand-logo-wrap" role="img" aria-label="Sunrise Dental Clinic logo">
+          <!-- Dental / tooth SVG icon -->
+          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M20 4C16.5 4 13 6.5 11 9C9.5 6.5 7 5 5 5C3 5 1.5 7 1.5 10C1.5 14 4 19 6 23C7 25 8 28 8.5 31C9 34 9.5 36 11.5 36C13.5 36 14 33 15 30C16 27 17.5 25 20 25C22.5 25 24 27 25 30C26 33 26.5 36 28.5 36C30.5 36 31 34 31.5 31C32 28 33 25 34 23C36 19 38.5 14 38.5 10C38.5 7 37 5 35 5C33 5 30.5 6.5 29 9C27 6.5 23.5 4 20 4Z"
+              fill="white" fill-opacity="0.92"/>
+            <circle cx="28" cy="9" r="3" fill="white" fill-opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="brand-text-group">
+          <span class="brand-name">Sunrise Dental Clinic</span>
+          <span class="brand-tagline">Your Smile, Our Priority</span>
+        </div>
+      </div>
 
-            errDiv.style.display = 'none';
+      <!-- Welcome text -->
+      <h2 class="welcome-heading">Welcome Back</h2>
+      <p class="welcome-sub">Login to access your account</p>
 
-            if (!email || !password) {
-                errText.textContent = 'Please enter both email and password.';
-                errDiv.style.display = 'flex';
-                return;
-            }
+      <!-- Error Message -->
+      <div id="error-msg" class="error-msg" role="alert" aria-live="polite">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="error-text"></span>
+      </div>
 
-            btn.textContent = 'Signing in...';
-            btn.disabled = true;
+      <!-- Login Form -->
+      <form id="loginForm" novalidate autocomplete="on">
 
-            try {
-                const res = await fetch('http://localhost:8080/Backend/resources/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, password: password })
-                });
+        <!-- Username / Email -->
+        <div class="form-field">
+          <label class="field-label" for="email">Username / Email</label>
+          <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="field-input"
+              placeholder="Username / Email"
+              autocomplete="email"
+              required
+            >
+          </div>
+        </div>
 
-                const data = await res.json();
+        <!-- Password -->
+        <div class="form-field">
+          <label class="field-label" for="password">Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="field-input"
+              placeholder="Password"
+              autocomplete="current-password"
+              required
+            >
+            <button
+              type="button"
+              id="pwToggle"
+              class="pw-toggle"
+              aria-label="Show password"
+            >
+              <!-- Eye icon (visible by default = password is hidden) -->
+              <svg id="iconEye" viewBox="0 0 24 24">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <!-- Eye-off icon (hidden by default) -->
+              <svg id="iconEyeOff" viewBox="0 0 24 24" style="display:none;">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8
+                         a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4
+                         c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07
+                         a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
 
-                if (!res.ok) {
-                    errText.textContent = data.error || 'Invalid email or password.';
-                    errDiv.style.display = 'flex';
-                    btn.textContent = 'Sign In';
-                    btn.disabled = false;
-                    return;
-                }
+        <!-- Remember me + Forgot password -->
+        <div class="form-options">
+          <label class="remember-wrap">
+            <input type="checkbox" id="rememberMe" class="remember-checkbox">
+            <span class="remember-label">Remember me</span>
+          </label>
+          <a href="#" class="forgot-link" id="forgotLink">Forgot Password?</a>
+        </div>
 
-                localStorage.setItem('token',   data.token);
-                localStorage.setItem('role',    data.role);
-                localStorage.setItem('name',    data.name);
-                localStorage.setItem('staffId', data.staffId);
-                localStorage.setItem('patientId', data.patientId);
-                localStorage.setItem('email',   data.email);
+        <!-- Sign In button -->
+        <button type="submit" id="submitBtn" class="btn-signin">
+          <span class="btn-signin-inner">
+            <span class="spinner" id="btnSpinner"></span>
+            <span id="btnLabel">Sign In</span>
+            <svg id="btnArrow" width="18" height="18" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </span>
+        </button>
 
-                const activeRole = (data.role || '').toUpperCase();
+      </form>
 
-                if (activeRole === 'SYSTEM_ADMIN' || activeRole === 'ADMIN') {
-                    window.location.href = '/Frontend/admin-dashboard.html';
-                } else if (activeRole === 'RECEPTIONIST') {
-                    window.location.href = '/Frontend/receptionist-dashboard.html';
-                } else if (activeRole === 'DENTIST') {
-                    window.location.href = '/Frontend/dentist-dashboard.html';
-                } else if (activeRole === 'PATIENT') {
-                    showToast('Patient portal is not available. Please contact the clinic.', 'error');
-                    setTimeout(() => window.location.href = '/Frontend/login.html', 2000);
-                } else {
-                    window.location.href = '/Frontend/login.html';
-                }
+      <!-- Footer -->
+      <footer class="login-footer">
+        <p>© 2026 Sunrise Dental Clinic &mdash; Sri Lanka</p>
+        <p>Authorized personnel only. All access is monitored.</p>
+      </footer>
 
-            } catch (err) {
-                errText.textContent = 'Cannot connect to server. Ensure the backend is running.';
-                errDiv.style.display = 'flex';
-                btn.textContent = 'Sign In';
-                btn.disabled = false;
-            }
-        });
+    </div>
+  </main>
 
-        function togglePassword() {
-            const input = document.getElementById('password');
-            input.type = input.type === 'password' ? 'text' : 'password';
-        }
+</div>
 
-        function showToast(message, type) {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
-            const toast = document.createElement('div');
-            toast.className = 'toast toast-' + type;
-            toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-    </script>
+<!-- Login logic (separate JS file) -->
+<script src="/Frontend/js/login.js"></script>
+
 </body>
 </html>

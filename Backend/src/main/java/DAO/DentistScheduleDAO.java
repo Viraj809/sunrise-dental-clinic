@@ -15,7 +15,7 @@ public class DentistScheduleDAO {
 
     public List<DentistSchedule> findByDentist(int dentistId) {
         ArrayList<DentistSchedule> list = new ArrayList<DentistSchedule>();
-        String sql = "SELECT * FROM dentist_schedule WHERE dentist_id = ? ORDER BY FIELD(day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')";
+        String sql = "SELECT * FROM dentist_schedule WHERE dentist_id = ? ORDER BY CASE day_of_week WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6 WHEN 'Sunday' THEN 7 END";
         try (Connection conn = this.db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);){
             ps.setInt(1, dentistId);

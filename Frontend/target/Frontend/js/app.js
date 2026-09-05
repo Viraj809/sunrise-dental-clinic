@@ -156,6 +156,7 @@ function showNav() {
         html += '<a href="/Frontend/manage-staff.html" class="' + (current.includes('manage-staff') ? 'active' : '') + '">Staff</a>';
         html += '<a href="/Frontend/manage-notices.html" class="' + (current.includes('manage-notices') ? 'active' : '') + '">Notices</a>';
         html += '<a href="/Frontend/help.html" class="' + (current.includes('help') ? 'active' : '') + '">Help</a>';
+        html += '<a href="/Frontend/profile.html" class="' + (current.includes('profile') ? 'active' : '') + '">Profile</a>';
         html += '<a href="#" onclick="logout(); return false;" class="logout-link">Logout</a>';
     } else if (role === 'RECEPTIONIST') {
         html += '<a href="/Frontend/receptionist-dashboard.html" class="' + (current.includes('receptionist-dashboard') ? 'active' : '') + '">Dashboard</a>';
@@ -164,13 +165,16 @@ function showNav() {
         html += '<a href="/Frontend/billing.html" class="' + (current.includes('billing') ? 'active' : '') + '">Billing</a>';
         html += '<a href="/Frontend/notices.html" class="' + (current.includes('notices') ? 'active' : '') + '">Notices</a>';
         html += '<a href="/Frontend/help.html" class="' + (current.includes('help') ? 'active' : '') + '">Help</a>';
+        html += '<a href="/Frontend/profile.html" class="' + (current.includes('profile') ? 'active' : '') + '">Profile</a>';
         html += '<a href="#" onclick="logout(); return false;" class="logout-link">Logout</a>';
     } else if (role === 'DENTIST') {
         html += '<a href="/Frontend/dentist-dashboard.html" class="' + (current.includes('dentist-dashboard') ? 'active' : '') + '">Dashboard</a>';
-        html += '<a href="/Frontend/dentist-schedule.html" class="' + (current.includes('dentist-schedule') ? 'active' : '') + '">My Schedule</a>';
+        html += '<a href="/Frontend/dentist-schedule.html" class="' + (current.includes('dentist-schedule') ? 'active' : '') + '">My Appointments</a>';
         html += '<a href="/Frontend/patient-history.html" class="' + (current.includes('patient-history') ? 'active' : '') + '">Patient History</a>';
+        html += '<a href="/Frontend/dentist-reports.html" class="' + (current.includes('dentist-reports') ? 'active' : '') + '">Reports</a>';
         html += '<a href="/Frontend/notices.html" class="' + (current.includes('notices') ? 'active' : '') + '">Notices</a>';
         html += '<a href="/Frontend/help.html" class="' + (current.includes('help') ? 'active' : '') + '">Help</a>';
+        html += '<a href="/Frontend/profile.html" class="' + (current.includes('profile') ? 'active' : '') + '">Profile</a>';
         html += '<a href="#" onclick="logout(); return false;" class="logout-link">Logout</a>';
     } else if (role === 'PATIENT') {
         showToast('Patient portal is not available. Please contact the clinic.', 'error');
@@ -187,4 +191,13 @@ document.addEventListener('DOMContentLoaded', function() {
         userInfo.textContent = userName + ' (' + (userRole || '') + ')';
     }
     resetSessionTimer();
+
+    const headerTitle = document.querySelector('.header h1');
+    if (headerTitle) {
+        headerTitle.style.cursor = 'pointer';
+        headerTitle.title = 'Go to Dashboard';
+        headerTitle.addEventListener('click', function() {
+            redirectToDashboard(userRole);
+        });
+    }
 });

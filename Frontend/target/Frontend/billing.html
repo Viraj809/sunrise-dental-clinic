@@ -8,23 +8,78 @@
     <style>
         @media print {
             body > *:not(#printArea) { display: none !important; }
-            #printArea { display: block !important; padding: 20px; }
+            #printArea { display: block !important; padding: 0; transform: scale(0.9); transform-origin: top center; width: 100%; margin: 0 auto; }
             .no-print { display: none !important; }
-            .header, .nav, .page-header, .container > .card:not(#billCard), #toast-container { display: none !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+            @page { margin: 0mm; size: A4 portrait; }
         }
-        .receipt-card {
-            background: var(--surface); border-radius: var(--radius-lg); padding: 28px;
-            border: 1px solid var(--border); box-shadow: var(--card-shadow); max-width: 540px; margin: 0 auto;
-        }
-        .receipt-header { text-align: center; padding-bottom: 18px; border-bottom: 2px dashed var(--border-strong); margin-bottom: 18px; }
-        .receipt-header h2 { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin: 0 0 4px; }
-        .receipt-header p { font-size: 0.82rem; color: var(--text-muted); margin: 2px 0; }
-        .receipt-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-        .receipt-row:last-child { border-bottom: none; }
-        .receipt-row .r-label { color: var(--text-secondary); font-weight: 500; }
-        .receipt-row .r-value { font-weight: 600; }
-        .receipt-total { display: flex; justify-content: space-between; padding: 14px 0; border-top: 2.5px solid var(--text-primary); margin-top: 10px; font-size: 1.1rem; font-weight: 800; }
-        .receipt-footer { text-align: center; margin-top: 18px; font-size: 0.82rem; color: var(--text-muted); }
+        .btn-disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+        /* ── Premium inline receipt styles ── */
+        .rx-card { background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 6px 32px rgba(14,35,90,0.12); max-width:640px; margin:0 auto; font-family:'Inter',system-ui,sans-serif; }
+        .rx-header { background:linear-gradient(135deg,#0f2d72 0%,#1e40af 50%,#2563eb 100%); padding:28px 32px 22px; position:relative; overflow:hidden; }
+        .rx-header::before { content:''; position:absolute; top:-50px; right:-50px; width:180px; height:180px; background:rgba(255,255,255,0.06); border-radius:50%; }
+        .rx-header-inner { display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1; gap:12px; }
+        .rx-brand { display:flex; align-items:center; gap:14px; }
+        .rx-brand-icon { width:56px; height:56px; background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.22); border-radius:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .rx-brand-icon svg { width:30px; height:30px; }
+        .rx-brand-name { font-size:1.25rem; font-weight:900; color:white; letter-spacing:-0.4px; margin:0; line-height:1.1; }
+        .rx-brand-tagline { font-size:0.75rem; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px; margin-top:3px; }
+        .rx-brand-tagline::before,.rx-brand-tagline::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.3); }
+        .rx-bill-badge { background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.25); border-radius:12px; padding:10px 16px; text-align:center; color:white; flex-shrink:0; }
+        .rx-bill-badge-label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; opacity:0.75; display:block; }
+        .rx-bill-badge-no { font-size:1.5rem; font-weight:900; line-height:1.1; display:block; }
+        .rx-contact-strip { display:flex; margin-top:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); border-radius:9px; overflow:hidden; position:relative; z-index:1; }
+        .rx-contact-item { display:flex; align-items:center; gap:7px; padding:9px 14px; flex:1; color:rgba(255,255,255,0.85); font-size:0.75rem; font-weight:500; }
+        .rx-contact-item+.rx-contact-item { border-left:1px solid rgba(255,255,255,0.14); }
+        .rx-contact-item svg { width:13px; height:13px; stroke:rgba(255,255,255,0.65); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+        .rx-title-bar { background:#f8fafc; border-bottom:1.5px solid #e8edf5; padding:15px 32px; display:flex; align-items:center; justify-content:center; gap:14px; }
+        .rx-title-dot { width:6px; height:6px; background:#2563eb; border-radius:50%; flex-shrink:0; }
+        .rx-title-text { font-size:0.92rem; font-weight:800; color:#1e3a8a; letter-spacing:2px; text-transform:uppercase; }
+        .rx-body { padding:26px 32px; }
+        .rx-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:24px; }
+        .rx-detail-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f1f5f9; }
+        .rx-detail-row:nth-last-child(-n+2) { border-bottom:none; }
+        .rx-detail-icon { width:32px; height:32px; background:linear-gradient(135deg,#eff6ff,#dbeafe); border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .rx-detail-icon svg { width:15px; height:15px; stroke:#2563eb; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+        .rx-detail-label { font-size:0.68rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:1px; }
+        .rx-detail-value { font-size:0.87rem; font-weight:700; color:#1e293b; display:block; }
+        .rx-detail-value.primary { color:#2563eb; }
+        .rx-fee-table { border-radius:12px; overflow:hidden; border:1.5px solid #e2e8f0; margin-bottom:24px; }
+        .rx-fee-thead { background:linear-gradient(135deg,#1e3a8a,#2563eb); padding:12px 18px; display:flex; justify-content:space-between; }
+        .rx-fee-thead span { font-size:0.73rem; font-weight:700; color:rgba(255,255,255,0.9); text-transform:uppercase; letter-spacing:0.7px; }
+        .rx-fee-row { display:flex; justify-content:space-between; align-items:center; padding:11px 18px; border-bottom:1px dashed #e8edf5; }
+        .rx-fee-row:last-child { border-bottom:none; }
+        .rx-fee-desc { font-size:0.85rem; color:#334155; font-weight:500; }
+        .rx-fee-amount { font-size:0.87rem; font-weight:700; color:#1e293b; }
+        .rx-fee-amount.discount { color:#16a34a; }
+        .rx-total-row { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:linear-gradient(135deg,#eff6ff,#dbeafe); border-top:2px solid #2563eb; }
+        .rx-total-label { font-size:0.95rem; font-weight:800; color:#1e3a8a; text-transform:uppercase; letter-spacing:0.8px; }
+        .rx-total-amount { font-size:1.2rem; font-weight:900; color:#1e3a8a; }
+        .rx-payment-section { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 20px; background:#f8fafc; border-radius:12px; border:1.5px solid #e8edf5; margin-bottom:0; }
+        .rx-payment-details { display:flex; flex-direction:column; gap:10px; flex:1; }
+        .rx-payment-row { display:flex; align-items:center; gap:10px; }
+        .rx-payment-icon { width:30px; height:30px; background:linear-gradient(135deg,#eff6ff,#dbeafe); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .rx-payment-icon svg { width:14px; height:14px; stroke:#2563eb; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+        .rx-payment-label { font-size:0.68rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; display:block; }
+        .rx-payment-value { font-size:0.87rem; font-weight:700; color:#1e293b; display:block; }
+        .rx-paid-stamp { display:flex; flex-direction:column; align-items:center; justify-content:center; width:96px; height:96px; border-radius:50%; border:3px dashed #16a34a; flex-shrink:0; }
+        .rx-paid-stamp-inner { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#dcfce7,#bbf7d0); border:2px solid #16a34a; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+        .rx-paid-stamp-top { font-size:0.52rem; font-weight:800; color:#15803d; letter-spacing:1px; text-transform:uppercase; }
+        .rx-paid-stamp-main { font-size:1.15rem; font-weight:900; color:#15803d; letter-spacing:1.5px; line-height:1; }
+        .rx-paid-stamp-bottom { font-size:0.42rem; font-weight:700; color:#15803d; letter-spacing:0.5px; text-transform:uppercase; text-align:center; }
+        .rx-pending-badge { background:linear-gradient(135deg,#fef3c7,#fde68a); border:2px solid #f59e0b; border-radius:10px; padding:10px 18px; font-size:0.82rem; font-weight:800; color:#92400e; letter-spacing:1px; text-transform:uppercase; flex-shrink:0; }
+        .rx-footer { background:linear-gradient(135deg,#0f2d72 0%,#1e40af 50%,#2563eb 100%); }
+        .rx-footer-wave { width:100%; display:block; margin-bottom:-2px; fill:#ffffff; }
+        .rx-footer-content { padding:8px 32px 22px; }
+        .rx-footer-thank { text-align:center; margin-bottom:14px; }
+        .rx-footer-thank-sub { font-size:0.78rem; color:rgba(255,255,255,0.7); font-weight:400; margin:0; }
+        .rx-footer-thank-name { font-size:1.15rem; font-weight:900; color:white; margin:3px 0 2px; }
+        .rx-footer-thank-tag { font-size:0.7rem; color:rgba(255,255,255,0.7); display:flex; align-items:center; justify-content:center; gap:6px; }
+        .rx-footer-thank-tag::before,.rx-footer-thank-tag::after { content:''; flex:1; height:1px; max-width:50px; background:rgba(255,255,255,0.3); }
+        .rx-footer-bar { display:flex; align-items:center; justify-content:space-between; padding-top:12px; border-top:1px solid rgba(255,255,255,0.15); gap:8px; flex-wrap:wrap; }
+        .rx-footer-bar-item { display:flex; align-items:center; gap:6px; color:rgba(255,255,255,0.8); font-size:0.73rem; font-weight:500; }
+        .rx-footer-bar-item svg { width:12px; height:12px; stroke:rgba(255,255,255,0.65); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
     </style>
 </head>
 <body>
@@ -46,7 +101,7 @@
 
     <div class="card" style="padding:20px;margin-bottom:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <h3 style="margin:0;font-size:1.05rem;font-weight:700;">🔍 Find Appointment</h3>
+            <h3 style="margin:0;font-size:1.05rem;font-weight:700;">Find Appointment</h3>
         </div>
         <div class="search-bar">
             <input type="text" id="apptNoSearch" placeholder="Enter appointment number e.g. SDC-2026-0001" style="flex:1;">
@@ -61,23 +116,25 @@
                 <div><div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Dentist</div><div id="s-dentist"></div></div>
                 <div><div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Treatment</div><div id="s-treatment"></div></div>
                 <div><div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Date</div><div id="s-date"></div></div>
+                <div><div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Status</div><div id="s-status"></div></div>
             </div>
+            <div id="billWarning" class="alert alert-error" style="display:none;margin-bottom:12px;"></div>
             <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
                 <div class="form-group" style="margin-bottom:0;flex:1;min-width:180px;">
                     <label>Payment Method</label>
-                    <select id="paymentMethod"><option value="CASH">💵 Cash</option><option value="CARD">💳 Card</option><option value="INSURANCE">🏥 Insurance</option></select>
+                    <select id="paymentMethod"><option value="CASH">Cash</option><option value="CARD">Card</option><option value="INSURANCE">Insurance</option></select>
                 </div>
-                <button class="btn btn-primary" onclick="generateBill()" id="genBtn">🧾 Generate Bill</button>
+                <button class="btn btn-primary" onclick="generateBill()" id="genBtn">Generate Bill</button>
             </div>
         </div>
     </div>
 
     <div id="billCard" class="card" style="display:none;padding:20px;margin-bottom:20px;">
         <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <h3 style="margin:0;font-size:1.05rem;font-weight:700;">🧾 Bill Receipt</h3>
+            <h3 style="margin:0;font-size:1.05rem;font-weight:700;">Bill Receipt</h3>
             <div style="display:flex;gap:6px;">
-                <button class="btn btn-ghost" onclick="printBill()">🖨️ Print Receipt</button>
-                <button id="markPaidBtn" class="btn btn-success" onclick="markPaid()" style="display:none;">✅ Mark as Paid</button>
+                <button class="btn btn-ghost" onclick="printBill()">Print Receipt</button>
+                <button id="markPaidBtn" class="btn btn-success" onclick="markPaid()" style="display:none;">Mark as Paid</button>
             </div>
         </div>
         <div id="billContent"></div>
@@ -85,7 +142,7 @@
 
     <div class="card" style="padding:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <h3 style="margin:0;font-size:1.05rem;font-weight:700;">📋 All Bills</h3>
+            <h3 style="margin:0;font-size:1.05rem;font-weight:700;">All Bills</h3>
         </div>
         <div class="table-wrapper">
             <table class="table" id="billsTable">
@@ -101,7 +158,7 @@
 <script src="/Frontend/js/app.js"></script>
 <script>
     requireAuth(['RECEPTIONIST', 'ADMIN', 'SYSTEM_ADMIN']);
-    let currentBillId = null, foundApptId = null, allDentists = [], allPatients = [];
+    let currentBillId = null, foundApptId = null, foundApptStatus = null, allDentists = [], allPatients = [];
 
     async function init() {
         try {
@@ -109,7 +166,12 @@
             loadBills();
             const params = new URLSearchParams(window.location.search);
             const apptId = params.get('appt_id');
-            if (apptId) { const a = await apiGet('/appointments/' + apptId); prefillFromAppointment(a); }
+            if (apptId) {
+                try {
+                    const a = await apiGet('/appointments/' + apptId);
+                    prefillFromAppointment(a);
+                } catch (e) { console.error(e); }
+            }
         } catch (e) { console.error(e); }
     }
 
@@ -122,13 +184,14 @@
             prefillFromAppointment(a);
             msg.style.display = 'none';
         } catch (e) {
-            msg.className = 'alert alert-error'; msg.style.display = 'flex'; msg.textContent = '❌ Appointment "' + no + '" not found.';
+            msg.className = 'alert alert-error'; msg.style.display = 'flex'; msg.textContent = 'Appointment "' + no + '" not found.';
             document.getElementById('apptSummary').style.display = 'none';
         }
     }
 
     function prefillFromAppointment(a) {
         foundApptId = a.appointmentId;
+        foundApptStatus = a.status || '';
         const dentist = allDentists.find(d => d.dentistId === a.dentistId);
         const patient = allPatients.find(p => p.patientId === a.patientId);
         document.getElementById('s-apptNo').textContent = a.appointmentNo;
@@ -136,12 +199,38 @@
         document.getElementById('s-dentist').textContent = dentist ? dentist.name : 'Dr. #' + a.dentistId;
         document.getElementById('s-treatment').textContent = a.treatmentType;
         document.getElementById('s-date').textContent = a.appointmentDate + ' ' + (a.appointmentTime||'').substring(0,5);
+        document.getElementById('s-status').innerHTML = getStatusBadge(foundApptStatus);
         document.getElementById('apptSummary').style.display = 'block';
+
+        const warningDiv = document.getElementById('billWarning');
+        const genBtn = document.getElementById('genBtn');
+        if (foundApptStatus === 'Cancelled') {
+            warningDiv.textContent = 'Cancelled appointments cannot be billed.';
+            warningDiv.style.display = 'flex';
+            genBtn.disabled = true;
+            genBtn.classList.add('btn-disabled');
+        } else if (foundApptStatus === 'Pending' || foundApptStatus === 'Scheduled' || foundApptStatus === 'Confirmed') {
+            warningDiv.textContent = 'Bill can only be generated after the appointment is completed.';
+            warningDiv.style.display = 'flex';
+            genBtn.disabled = true;
+            genBtn.classList.add('btn-disabled');
+        } else {
+            warningDiv.style.display = 'none';
+            genBtn.disabled = false;
+            genBtn.classList.remove('btn-disabled');
+        }
+
         apiGet('/bills/appointment/' + a.appointmentId).then(bill => showReceipt(bill)).catch(() => {});
+    }
+
+    function getStatusBadge(status) {
+        const cls = 'status-' + String(status).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        return '<span class="status-badge ' + cls + '">' + status + '</span>';
     }
 
     async function generateBill() {
         if (!foundApptId) { showToast('Search for an appointment first', 'error'); return; }
+        if (foundApptStatus !== 'Completed') { showToast('Bill can only be generated for completed appointments', 'error'); return; }
         const btn = document.getElementById('genBtn');
         btn.disabled = true; btn.textContent = 'Generating...';
         try {
@@ -152,35 +241,150 @@
             showReceipt(res); showToast('Bill generated successfully');
             loadBills();
         } catch (e) { showToast('Failed to generate bill', 'error'); }
-        finally { btn.disabled = false; btn.textContent = '🧾 Generate Bill'; }
+        finally { btn.disabled = false; btn.textContent = 'Generate Bill'; }
+    }
+
+    function fmtLKR(n) {
+        return 'LKR ' + Number(n).toLocaleString('en-LK', { minimumFractionDigits: 2 });
     }
 
     function showReceipt(b) {
         currentBillId = b.billId;
         const isPaid = b.paymentStatus === 'PAID';
+
+        const discountRow = (b.discount > 0) ? `
+            <div class="rx-fee-row">
+              <span class="rx-fee-desc">Senior Citizen Discount (10%)</span>
+              <span class="rx-fee-amount discount">− ${fmtLKR(b.discount)}</span>
+            </div>` : '';
+
+        const paymentStamp = isPaid
+          ? `<div class="rx-paid-stamp">
+               <div class="rx-paid-stamp-inner">
+                 <span class="rx-paid-stamp-top">Thank You</span>
+                 <span class="rx-paid-stamp-main">PAID</span>
+                 <span class="rx-paid-stamp-bottom">For Your Visit</span>
+               </div>
+             </div>`
+          : `<div class="rx-pending-badge">⏳ PENDING</div>`;
+
         document.getElementById('billContent').innerHTML = `
-            <div class="receipt-card">
-                <div class="receipt-header">
-                    <h2>🦷 Sunrise Dental Clinic</h2>
-                    <p>123 Dental Road, Colombo 07 | Tel: +94 11 234 5678</p>
-                    <p style="margin-top:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--primary);">Official Receipt</p>
+          <div class="rx-card">
+            <div class="rx-header">
+              <div class="rx-header-inner">
+                <div class="rx-brand">
+                  <div class="rx-brand-icon">
+                    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20 4C16.5 4 13 6.5 11 9C9.5 6.5 7 5 5 5C3 5 1.5 7 1.5 10C1.5 14 4 19 6 23
+                               C7 25 8 28 8.5 31C9 34 9.5 36 11.5 36C13.5 36 14 33 15 30C16 27 17.5 25 20 25
+                               C22.5 25 24 27 25 30C26 33 26.5 36 28.5 36C30.5 36 31 34 31.5 31
+                               C32 28 33 25 34 23C36 19 38.5 14 38.5 10C38.5 7 37 5 35 5
+                               C33 5 30.5 6.5 29 9C27 6.5 23.5 4 20 4Z" fill="white" fill-opacity="0.92"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="rx-brand-name">Sunrise Dental Clinic</p>
+                    <p class="rx-brand-tagline">Healthy Smile, Brighter Life</p>
+                  </div>
                 </div>
-                <div class="receipt-row"><span class="r-label">Bill No.</span><span class="r-value">#${b.billId}</span></div>
-                <div class="receipt-row"><span class="r-label">Appointment No.</span><span class="r-value">${b.appointmentNo || '–'}</span></div>
-                <div class="receipt-row"><span class="r-label">Date</span><span class="r-value">${b.appointmentDate || new Date().toISOString().split('T')[0]}</span></div>
-                <div class="receipt-row"><span class="r-label">Patient</span><span class="r-value">${b.patientName || '–'}</span></div>
-                <div class="receipt-row"><span class="r-label">Contact</span><span class="r-value">${b.patientContact || '–'}</span></div>
-                <div class="receipt-row"><span class="r-label">Dentist</span><span class="r-value">${b.dentistName || '–'}</span></div>
-                <div class="receipt-row"><span class="r-label">Treatment</span><span class="r-value">${b.treatmentName || b.treatmentCode || '–'}</span></div>
-                <div class="receipt-row"><span class="r-label">Consultation Fee</span><span class="r-value">LKR ${Number(b.consultationFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
-                <div class="receipt-row"><span class="r-label">Treatment Fee</span><span class="r-value">LKR ${Number(b.treatmentFee).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
-                ${b.discount > 0 ? `<div class="receipt-row"><span class="r-label">Discount</span><span class="r-value" style="color:var(--success);">– LKR ${Number(b.discount).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>` : ''}
-                <div class="receipt-row"><span class="r-label">Tax (5%)</span><span class="r-value">LKR ${Number(b.tax).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
-                <div class="receipt-total"><span>TOTAL</span><span>LKR ${Number(b.totalAmount).toLocaleString('en-LK',{minimumFractionDigits:2})}</span></div>
-                <div class="receipt-row"><span class="r-label">Payment Method</span><span class="r-value">${b.paymentMethod || '–'}</span></div>
-                <div class="receipt-row"><span class="r-label">Payment Status</span><span class="r-value"><span class="badge ${isPaid?'badge-paid':'badge-pending'}">${b.paymentStatus}</span></span></div>
-                <div class="receipt-footer">Thank you for choosing Sunrise Dental Clinic! 😊</div>
-            </div>`;
+                <div class="rx-bill-badge">
+                  <span class="rx-bill-badge-label">Bill No.</span>
+                  <span class="rx-bill-badge-no">#${b.billId}</span>
+                </div>
+              </div>
+              <div class="rx-contact-strip">
+                <div class="rx-contact-item">
+                  <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  123 Dental Road, Colombo 07
+                </div>
+                <div class="rx-contact-item">
+                  <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.07 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3 1.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 8 8l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17z"/></svg>
+                  +94 11 234 5678
+                </div>
+                <div class="rx-contact-item">
+                  <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  info@sunrisedental.lk
+                </div>
+              </div>
+            </div>
+
+            <div class="rx-title-bar">
+              <span class="rx-title-dot"></span>
+              <span class="rx-title-text">Official Receipt</span>
+              <span class="rx-title-dot"></span>
+            </div>
+
+            <div class="rx-body">
+              <div class="rx-detail-grid">
+                <div class="rx-detail-row">
+                  <div class="rx-detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                  <div><span class="rx-detail-label">Appointment No.</span><span class="rx-detail-value primary">${b.appointmentNo || '–'}</span></div>
+                </div>
+                <div class="rx-detail-row">
+                  <div class="rx-detail-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                  <div><span class="rx-detail-label">Date</span><span class="rx-detail-value">${b.appointmentDate || '–'} ${(b.appointmentTime||'').substring(0,5)}</span></div>
+                </div>
+                <div class="rx-detail-row">
+                  <div class="rx-detail-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                  <div><span class="rx-detail-label">Patient</span><span class="rx-detail-value">${b.patientName || '–'}</span></div>
+                </div>
+                <div class="rx-detail-row">
+                  <div class="rx-detail-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.07 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3 1.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 8 8l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17z"/></svg></div>
+                  <div><span class="rx-detail-label">Contact</span><span class="rx-detail-value">${b.patientContact || '–'}</span></div>
+                </div>
+                <div class="rx-detail-row">
+                  <div class="rx-detail-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                  <div><span class="rx-detail-label">Dentist</span><span class="rx-detail-value">${b.dentistName || '–'}</span></div>
+                </div>
+                <div class="rx-detail-row">
+                  <div class="rx-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5"><path d="M12 2.5C10.4 2.5 9 3.5 8 4.8C7.2 3.5 6 2.7 5 2.7C3.9 2.7 3 3.8 3 5.2C3 7.3 4.3 9.8 5.3 11.8C5.8 12.8 6.3 14.2 6.6 15.6C6.9 17 7.1 18 8.1 18C9.1 18 9.3 16.8 9.8 15.4C10.3 14 11.1 13 12 13C12.9 13 13.7 14 14.2 15.4C14.7 16.8 14.9 18 15.9 18C16.9 18 17.1 17 17.4 15.6C17.7 14.2 18.2 12.8 18.7 11.8C19.7 9.8 21 7.3 21 5.2C21 3.8 20.1 2.7 19 2.7C18 2.7 16.8 3.5 16 4.8C15 3.5 13.6 2.5 12 2.5Z"/></svg></div>
+                  <div><span class="rx-detail-label">Treatment</span><span class="rx-detail-value">${b.treatmentName || b.treatmentCode || '–'}</span></div>
+                </div>
+              </div>
+
+              <div class="rx-fee-table">
+                <div class="rx-fee-thead"><span>Description</span><span>Amount (LKR)</span></div>
+                <div class="rx-fee-row"><span class="rx-fee-desc">Consultation Fee</span><span class="rx-fee-amount">${fmtLKR(b.consultationFee)}</span></div>
+                <div class="rx-fee-row"><span class="rx-fee-desc">Treatment Fee</span><span class="rx-fee-amount">${fmtLKR(b.treatmentFee)}</span></div>
+                ${discountRow}
+                <div class="rx-fee-row"><span class="rx-fee-desc">Tax (5%)</span><span class="rx-fee-amount">${fmtLKR(b.tax)}</span></div>
+                <div class="rx-total-row"><span class="rx-total-label">Total</span><span class="rx-total-amount">${fmtLKR(b.totalAmount)}</span></div>
+              </div>
+
+              <div class="rx-payment-section">
+                <div class="rx-payment-details">
+                  <div class="rx-payment-row">
+                    <div class="rx-payment-icon"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+                    <div><span class="rx-payment-label">Payment Method</span><span class="rx-payment-value">${b.paymentMethod || '–'}</span></div>
+                  </div>
+                  <div class="rx-payment-row">
+                    <div class="rx-payment-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <div><span class="rx-payment-label">Payment Status</span><span class="rx-payment-value">${b.paymentStatus || '–'}</span></div>
+                  </div>
+                </div>
+                ${paymentStamp}
+              </div>
+            </div>
+
+            <div class="rx-footer">
+              <svg class="rx-footer-wave" viewBox="0 0 640 36" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,18 C107,36 213,0 320,18 C427,36 533,0 640,18 L640,0 L0,0 Z" fill="white"/>
+              </svg>
+              <div class="rx-footer-content">
+                <div class="rx-footer-thank">
+                  <p class="rx-footer-thank-sub">Thank you for choosing</p>
+                  <p class="rx-footer-thank-name">Sunrise Dental Clinic.</p>
+                  <p class="rx-footer-thank-tag">We care for your smile.</p>
+                </div>
+                <div class="rx-footer-bar">
+                  <div class="rx-footer-bar-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Mon – Sat: 9:00 AM – 6:00 PM</div>
+                  <div class="rx-footer-bar-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>www.sunrisedental.lk</div>
+                  <div class="rx-footer-bar-item"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>info@sunrisedental.lk</div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+
         document.getElementById('billCard').style.display = 'block';
         document.getElementById('markPaidBtn').style.display = isPaid ? 'none' : 'inline-flex';
         document.getElementById('billCard').scrollIntoView({ behavior: 'smooth' });
@@ -220,7 +424,7 @@
         if (!currentBillId) return;
         const content = document.getElementById('billContent').innerHTML;
         const printArea = document.getElementById('printArea');
-        printArea.innerHTML = '<div style="max-width:500px;margin:0 auto;font-family:Inter,Segoe UI,sans-serif;color:#0f172a;"><div style="text-align:center;border-bottom:3px solid #1e3a8a;padding-bottom:12px;margin-bottom:16px;"><h1 style="margin:0;color:#1e3a8a;font-size:1.6rem;">Sunrise Dental Clinic</h1><p style="margin:4px 0 0;color:#64748b;font-size:0.85rem;">123 Dental Road, Colombo 07 | Tel: +94 11 234 5678</p><p style="margin:6px 0 0;font-weight:700;color:#1e3a8a;text-transform:uppercase;font-size:0.9rem;">Official Receipt</p></div>' + content + '<div style="text-align:center;margin-top:24px;padding-top:14px;border-top:2px dashed #e2e8f0;"><p style="margin:0;color:#64748b;font-size:0.85rem;">Thank you for choosing Sunrise Dental Clinic.</p></div></div>';
+        printArea.innerHTML = content;
         printArea.style.display = 'block';
         setTimeout(() => { window.print(); printArea.style.display = 'none'; }, 150);
     }
